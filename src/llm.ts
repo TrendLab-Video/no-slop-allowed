@@ -42,7 +42,7 @@ export async function complete(call: LlmCall, run?: Run): Promise<string> {
 }
 
 /** Ask for JSON, validate against a zod schema, retry once with the validation error. */
-export async function completeJson<T>(call: LlmCall, schema: z.ZodType<T>, run?: Run, retries = 1): Promise<T> {
+export async function completeJson<S extends z.ZodTypeAny>(call: LlmCall, schema: S, run?: Run, retries = 1): Promise<z.infer<S>> {
   let prompt = `${call.prompt}\n\nReply with JSON only. No prose before or after.`
   let lastError = ''
   for (let attempt = 0; attempt <= retries; attempt++) {

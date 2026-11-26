@@ -1,12 +1,13 @@
 import { type HarnessOptions, defaultOptions } from '../config.ts'
 import { generateMedia } from '../media.ts'
 import { ROLES } from '../models.ts'
-import { type FailedAttempt, motionPrompt } from '../prompts.ts'
+import { type FailedAttempt, heroPrompt, motionPrompt } from '../prompts.ts'
 import { Run } from '../trace.ts'
 import type { Concept, Critique, Render } from '../types.ts'
 import { critique, effectiveScore, revise } from './critic.ts'
 import { diverge } from './director.ts'
 import { tournament } from './selector.ts'
+import { stripStock } from '../util/stock.ts'
 
 // The harness:
 //   1. diverge   - director writes N concepts on different axes
@@ -92,7 +93,7 @@ export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
   // 5. Final hero render. Show it as soon as it exists; critique and video are extras.
   run.state.final = { conceptId: winner.concept.id, image: winner.render, reason }
   try {
-    const heroMedia = await generateMedia(ROLES.final, { prompt: winner.render.prompt }, run)
+    const heroMedia = await generateMedia(ROLES.final, { prompt: heroPrompt(winner.render.prompt) }, run)
     const hero: Render = { ...heroMedia, id: `${winner.concept.id}-final`, conceptId: winner.concept.id, version: winner.render.version + 1, prompt: winner.render.prompt }
     run.state.renders.push(hero)
     run.state.final.image = hero
@@ -198,9 +199,10 @@ async function develop(run: Run, concept: Concept, o: HarnessOptions): Promise<{
 
       const base = best!
       const rev = await revise(concept, base.prompt, base.critique!, failedFromBest, run)
-      prompt = rev.visualPrompt
+      const clean = stripStock(rev.visualPrompt)
+      prompt = clean.prompt
       changeSummary = rev.changeSummary
-      run.emit('revise', `${concept.id} v${version + 1} (from v${base.version}): ${rev.changeSummary}`)
+      run.emit('revise', `${concept.id} v${version + 1} (from v${base.version}): ${rev.changeSummary}${clean.removed.length ? ` [stripped: ${clean.removed.join(', ')}]` : ''}`)
     } catch (err) {
       lastError = err
       run.emit('error', `${concept.id} v${version} failed: ${String(err).slice(0, 200)}`)

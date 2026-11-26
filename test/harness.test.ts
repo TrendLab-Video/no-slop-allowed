@@ -9,6 +9,7 @@ import { Run } from '../src/trace.ts'
 import type { Concept } from '../src/types.ts'
 import { config } from '../src/config.ts'
 import { extractJson } from '../src/util/json.ts'
+import { stripStock } from '../src/util/stock.ts'
 
 test('tests run in mock mode with no key', () => {
   expect(config.mock).toBe(true)
@@ -317,6 +318,33 @@ describe('improve loop (fixes from the first live run)', () => {
   })
 })
 
+describe('stock-photo vocabulary (tuning after run 3)', () => {
+  test('stripStock removes stock phrases and leaves a clean prompt', () => {
+    const s = stripStock('A barista mid-spill, shallow depth of field, soft bokeh lights, cozy cafe, golden hour light, cropped at the elbow.')
+    expect(s.prompt).toBe('A barista mid-spill, cafe, cropped at the elbow.')
+    expect(s.removed).toEqual(expect.arrayContaining(['shallow depth of field', 'soft bokeh lights', 'cozy', 'golden hour light']))
+  })
+  test('stripStock leaves clean prompts untouched', () => {
+    const p = 'A hand knocks a cup off a ledge, cropped at the wrist, low vantage point, hard flash.'
+    expect(stripStock(p)).toEqual({ prompt: p, removed: [] })
+  })
+  test('stripStock drops placement words the image model takes literally', () => {
+    expect(stripStock('A clock centered behind her head, cups perfectly symmetrical on the bar.').prompt).toBe('A clock behind her head, cups on the bar.')
+    expect(stripStock('Mug dead-centred, eye-level.').prompt).toBe('Mug, eye-level.')
+  })
+  test('the director strips stock vocabulary and reports the cliches it refused', async () => {
+    const run = new Run('brief', defaultOptions)
+    const concepts = await diverge('brief', 4, false, run)
+    expect(concepts.every((c) => !/depth of field/i.test(c.visualPrompt))).toBe(true)
+    expect(concepts.every((c) => c.moment.length > 0)).toBe(true)
+    expect(run.state.events.some((e) => e.message.startsWith('Refused the obvious: latte art'))).toBe(true)
+    expect(run.state.events.some((e) => e.message.includes('Stripped stock vocabulary'))).toBe(true)
+  })
+  test('the critic and judge see the moment', () => {
+    expect(criticPrompt('b', { ...fakeConcept(1), moment: 'a cup mid-fall' }, 1, 'p', 'draft')).toContain('Moment: a cup mid-fall')
+  })
+})
+
 function fakeConcept(i: number): Concept {
-  return { id: `c${i}`, title: `Concept ${i}: t${i}`, hook: 'h', idea: 'i', axis: 'a', medium: 'image', visualPrompt: 'p', whyItWorks: 'w', status: 'pending' }
+  return { id: `c${i}`, title: `Concept ${i}: t${i}`, hook: 'h', idea: 'i', moment: 'm', axis: 'a', medium: 'image', visualPrompt: 'p', whyItWorks: 'w', status: 'pending' }
 }

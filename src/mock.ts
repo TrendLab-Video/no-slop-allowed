@@ -20,13 +20,15 @@ export async function mockLlm(call: LlmCall): Promise<string> {
           title: `Concept ${i + 1}: ${axis}`,
           hook: `A ${axis} moment that lands in the first second`,
           idea: `Tell the brief through ${axis}.`,
+          moment: `Someone is caught halfway through something, ${axis}.`,
           axis,
           medium: i % 3 === 0 ? 'video' : 'image',
-          visualPrompt: `${axis}, vertical 9:16, natural light, specific everyday detail, concept ${i + 1}`,
+          // Deliberately includes stock vocabulary, so the director's stripping step is exercised.
+          visualPrompt: `${axis}, vertical 9:16, natural light, shallow depth of field, specific everyday detail, concept ${i + 1}`,
           whyItWorks: `It avoids the obvious image and uses ${axis} to create tension.`,
         }
       })
-      return JSON.stringify({ concepts })
+      return JSON.stringify({ cliches: ['latte art', 'a pour', 'beans on wood'], concepts })
     }
     case 'selector.compare': {
       // Content-based (not order-based), so the swap check stays consistent.

@@ -7,6 +7,8 @@ export const ConceptSchema = z.object({
   /** What stops the scroll in the first second. */
   hook: z.string(),
   idea: z.string(),
+  /** What is actually happening in the frame. Concepts without an event came back as stock photos. */
+  moment: z.string(),
   /** The axis this concept explores, so the set stays diverse (tone, format, mechanism...). */
   axis: z.string(),
   medium: z.enum(['image', 'video']),
@@ -16,7 +18,11 @@ export const ConceptSchema = z.object({
 export type ConceptDraft = z.infer<typeof ConceptSchema>
 export type Concept = ConceptDraft & { id: string; status: 'pending' | 'eliminated' | 'finalist' | 'winner' }
 
-export const DivergeSchema = z.object({ concepts: z.array(ConceptSchema).min(1) })
+export const DivergeSchema = z.object({
+  /** The obvious images for the category, listed first so the director can refuse them. */
+  cliches: z.array(z.string()).default([]),
+  concepts: z.array(ConceptSchema).min(1),
+})
 
 export const CompareSchema = z.object({
   winner: z.enum(['A', 'B']),
@@ -30,7 +36,8 @@ export const CritiqueSchema = z.object({
   slop: z.array(z.object({ flag: z.string(), evidence: z.string() })),
   strengths: z.array(z.string()),
   fixes: z.array(z.string()),
-  verdict: z.enum(['ship', 'revise', 'kill']),
+  // Critics occasionally omit the verdict; defaulting beats dropping a finalist (seen in a live run). Slop still blocks shipping.
+  verdict: z.enum(['ship', 'revise', 'kill']).default('revise'),
 })
 export type Critique = z.infer<typeof CritiqueSchema>
 

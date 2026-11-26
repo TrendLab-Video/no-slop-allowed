@@ -6,6 +6,7 @@ this is where the taste lives. Keep it concrete and checkable.
 ## Attention (what makes someone stop scrolling)
 
 - **First-second hook.** Is there one clear thing the eye lands on immediately?
+- **Something is happening.** An action caught halfway, an interruption, a consequence. Nicely arranged objects are not an event.
 - **Tension or question.** Does it make the viewer want to know what happens next or why?
 - **Specificity.** Real-feeling details beat generic ones. A named place, an odd object, a precise gesture.
 - **Legibility at thumbnail size.** Does it still read on a phone at a glance?
@@ -14,7 +15,7 @@ this is where the taste lives. Keep it concrete and checkable.
 ## Slop flags (any one blocks shipping; list each one you see)
 
 - Generic "AI look": glossy plastic skin, over-smooth gradients, teal-and-orange by default.
-- Stock-photo composition: centred subject, shallow depth of field, nothing happening.
+- Stock-photo composition: it could be the top stock-library result for its category. Subject centred or posed for the camera, background blurred to bokeh, props arranged rather than used, nothing happening.
 - Cliché imagery for the topic (lightbulbs for ideas, handshakes for partnership, brains for AI).
 - Mangled anatomy: hands, teeth, eyes, extra limbs.
 - Garbled or misspelled text in the image.

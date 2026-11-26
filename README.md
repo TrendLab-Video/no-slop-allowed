@@ -13,7 +13,7 @@ Built in Bun and TypeScript on [fal](https://fal.ai), for **No Slop Allowed** (3
 
 That's **about 3 minutes, about $0.34 and 60 model calls, with no errors.** The image on the right is the winner of run 3: *"11pm and Fine With It. The cup that doesn't care what time it is."*
 
-It took three live runs to get the improve loop actually improving. Each run's trace exposed a different design flaw. See [Three live runs](#three-live-runs-and-what-each-one-taught-it).
+Seven live runs so far: three to get the improve loop actually improving, then four tuning its taste, measured with a blind A/B judge. See [Three live runs](#three-live-runs-and-what-each-one-taught-it) and [Tuning taste](#tuning-taste-measured-blind-runs-4-to-7).
 
 <br clear="right">
 
@@ -64,6 +64,10 @@ The showdown judge gets the same draft rules.
 **Revise from the best version, not the latest.** A revision that scores worse is discarded rather than built upon. The reviser is told what was tried and failed, so its next attempt goes a different way. A "kill" verdict only kills a concept on its first draft; on a later draft it means the revision broke the idea, so that draft is discarded.
 
 **Treat model output as untrusted input.** Every LLM response is pulled out of whatever prose surrounds it and validated with a zod schema. On a validation failure it retries once, sending the error back to the model.
+
+**Refuse the obvious, in the prompt and in code.** The director lists the category's clichés before writing anything and must avoid them. Stock-photography phrases are stripped from every image prompt, because models drift back to them however they are told.
+
+**Measure changes blind.** Absolute critic scores drift between runs, so changes to taste are A/B tested by judging final images pairwise, in both orders, with no titles.
 
 **Spend cheaply until the decision is made.** Concepts are compared as text. Drafts use FLUX schnell (about $0.002, 1s). Only the winner gets the expensive model.
 
@@ -122,6 +126,50 @@ The other two finalists didn't improve on their first draft, and the loop correc
 
 The tests cover each behaviour above in mock mode. The critic's scores can be scripted per version (`MOCK_SCORES`, `MOCK_VERDICTS`, `MOCK_SLOP`), so the stopping rules, ranking and ship gate are tested directly.
 
+## Tuning taste, measured blind (runs 4 to 7)
+
+"Stock-photo composition" was flagged on 23 of 30 critiques in runs 1 to 3. The critic's evidence showed three causes:
+- **The director asked for the stock look.** All 8 run-3 prompts asked for a blurred background ("shallow depth of field", "soft focus", "bokeh"). Others asked for "golden hour" and "cozy".
+- **The scenes were moods, not events.** The evidence kept saying "nothing happening" and "arranged rather than lived-in".
+- **The reviser moved things instead of changing them.** It kept shifting the subject off-centre, and the flag came back.
+
+**What changed:**
+- **The director refuses the obvious.** It first lists the category's six most obvious images (shown in the trace as "Refused the obvious: ..."). It then names the *moment* happening in each frame, and never hinges an idea on text, a clock or a screen.
+- **Stock vocabulary is stripped from every image prompt in code** ([src/util/stock.ts](src/util/stock.ts)), because models drift back to it. This includes "centred" and "symmetrical", which image models take literally.
+- **The reviser fixes stock-photo flags by changing what is happening.**
+- **The hero render asks for a candid, unposed photograph.**
+
+**Did the loop improve its concepts?** Yes, more reliably than before (scores here are score minus slop):
+
+| Run | Brief | Finalists' draft scores | Finalists improved |
+|---|---|---|---|
+| 4 | coffee | 2→3→5→4 · 2→1→2 · 1→3→1→**6** | 2 of 3 |
+| 5 | coffee | 3→4→3→4 · 2→(critic error) · 3→3→**6**→4 | 2 of 3 |
+| 6 | coffee | 1→**6**→(kill, discarded)→3 · 3→2→2 · 4→**6**→4→4 | 2 of 3 |
+| 7 | film | 2→**5**→5→2 · 4→4→3 · 4→4→4 | 1 of 3 |
+
+Runs 2 and 3 improved 0 and 1 finalists.
+
+**Were the final images better?** Not measurably. The critic's absolute scores drift, so I compared heroes blind instead, with [scripts/compare.ts](scripts/compare.ts):
+- The same vision judge gets two finished images with no titles.
+- Each pair is judged in both orders, and only counts if both orders agree.
+
+| Comparison | Wins | Ties (orders disagreed) |
+|---|---|---|
+| Tuned heroes (runs 5, 6) vs pre-tuning heroes (runs 1 to 3) | 1 to 2 | 3 of 6 |
+| Run 4's hero (before the no-text fix) vs runs 1 to 3 | 0 to 3 | 0 of 3 |
+
+<p>
+<img src="docs/film-hero.png" alt="Film brief hero: an empty white lifeguard chair on an out-of-season beach, circular grooves dragged in the sand around it, grey sky and shuttered beach huts" width="240">
+<img src="docs/run5-hero.png" alt="Coffee run 5 hero: a woman in a baggy t-shirt pours a French press by the light of an open fridge and a crescent-moon nightlight at 3am" width="240">
+</p>
+
+*Left: the film brief's winner, "The Lifeguard Chair, Occupied Wrong". Right: coffee run 5, "3am Truce".*
+
+So the tuning made the loop more reliable and the concepts more original, but didn't measurably improve the finished image.
+
+The stock-photo flag didn't go away either: the critic now uses it for "the person looks posed". The critic is shown the prompt, and often flags "concept and image disagree" for literal deviations from it. The film hero lost points because the chair faces sideways rather than inland. Judging the result rather than checking it against the prompt is the next lever.
+
 ## Run it
 
 Needs [Bun](https://bun.sh) 1.3+.
@@ -160,6 +208,7 @@ bun run smoke --parallel 6
 | `bun run harness briefs/example-coffee.md` | Run from the terminal. Flags: `--video`, `--concepts N`, `--finalists K`, `--iters N` |
 | `bun run check` | Typecheck and tests (always mock, never spends) |
 | `bun run smoke --video` / `--all` | Also test the video model / every model |
+| `bun run compare --a <runs> --b <runs>` | Blind A/B test of saved runs' final images, both orders (about half a cent per judgement) |
 
 LLM calls go through fal's OpenRouter router, so one `FAL_KEY` covers image, video and text. Set `LLM_MODEL` or `VISION_MODEL` in `.env` to swap models.
 
@@ -176,15 +225,18 @@ LLM calls go through fal's OpenRouter router, so one `FAL_KEY` covers image, vid
 | `src/llm.ts`, `src/fal.ts` | LLM calls with JSON validation and retry; the rate-limited fal client |
 | `src/trace.ts` | Run state and events, saved to `runs/<id>.json` |
 | `src/server.ts`, `public/index.html` | API and single-page live UI |
-| `src/mock.ts` | Offline mock LLM with failure injection |
+| `src/util/stock.ts` | Strips stock-photography vocabulary from image prompts |
+| `scripts/compare.ts` | Blind pairwise A/B test of saved runs |
+| `src/mock.ts` | Offline mock LLM with failure injection and scriptable critic |
 | `test/` | Tournament fairness, rubric enforcement, end-to-end and failure-path tests |
 
 ## Cost and speed
 
-Measured over three live runs with defaults (8 concepts, 3 finalists, up to 3 revisions each): **159 to 213 seconds, $0.30 to $0.34, 50 to 60 calls**. Most of the time goes on LLM calls at concurrency 2. Video adds about $0.20 for 5 seconds. The spend counter uses fal's reported LLM cost plus per-model estimates, so treat it as a guide.
+Measured over seven live runs with defaults (8 concepts, 3 finalists, up to 3 revisions each): **159 to 280 seconds, $0.30 to $0.39, 50 to 64 calls**. Most of the time goes on LLM calls at concurrency 2. Video adds about $0.20 for 5 seconds. The spend counter uses fal's reported LLM cost plus per-model estimates, so treat it as a guide.
 
 ## Ideas not built yet
 
+- **Judge the result, not the prompt**: the critic currently sees the prompt and marks literal deviations as "concept and image disagree", even when the image works.
 - **Revise with image edits, not re-rolls**: pass the previous image and fixes to an edit model so v2 keeps what worked.
 - **Attention predictor**: a separate judge that only scores "would I stop scrolling in the first second".
 - **Storyboarded video**: Kling v4 takes start, end and middle keyframes.
