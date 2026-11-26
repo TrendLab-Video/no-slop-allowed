@@ -1,0 +1,22 @@
+{
+  "name": "creative-harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "harness": "bun src/cli.ts",
+    "smoke": "bun scripts/smoke.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "tsc --noEmit && bun test"
+  },
+  "dependencies": {
+    "@fal-ai/client": "^1.11.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}

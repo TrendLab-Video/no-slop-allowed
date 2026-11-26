@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>creative harness</title>
+<style>
+  :root { --bg:#0e0e10; --panel:#17171a; --line:#2a2a2f; --text:#ececf1; --dim:#8b8b95; --accent:#e8ff6a; --bad:#ff6b6b; --good:#6bffb0; --warn:#ffc46b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 ui-sans-serif,system-ui,-apple-system,sans-serif; }
+  header { display:flex; align-items:center; gap:16px; padding:12px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:2; }
+  header h1 { font-size:15px; margin:0; letter-spacing:.02em; }
+  .badge { font-size:11px; padding:2px 8px; border-radius:99px; border:1px solid var(--line); color:var(--dim); }
+  .badge.mock { color:var(--warn); border-color:var(--warn); }
+  .badge.running { color:var(--accent); border-color:var(--accent); }
+  .badge.done { color:var(--good); border-color:var(--good); }
+  .badge.error { color:var(--bad); border-color:var(--bad); }
+  .stats { margin-left:auto; color:var(--dim); font-variant-numeric:tabular-nums; }
+  main { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 50px); }
+  aside { border-right:1px solid var(--line); padding:16px; display:flex; flex-direction:column; gap:12px; }
+  section { padding:16px 20px; border-bottom:1px solid var(--line); }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:0 0 12px; font-weight:600; }
+  textarea, select, input { width:100%; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:8px; font:inherit; }
+  textarea { min-height:160px; resize:vertical; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row label { flex:1; font-size:12px; color:var(--dim); }
+  .row input[type=number] { width:64px; }
+  button { background:var(--accent); color:#111; border:0; border-radius:6px; padding:10px; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.4; cursor:default; }
+  .runs { display:flex; flex-direction:column; gap:4px; overflow:auto; }
+  .runs a { color:var(--dim); text-decoration:none; font-size:12px; padding:4px 6px; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .runs a:hover, .runs a.active { background:var(--panel); color:var(--text); }
+  .empty { color:var(--dim); padding:40px 20px; }
+  .hero { display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start; }
+  .hero > div { flex:1; min-width:240px; }
+  .hero figure { margin:0; }
+  .hero img, .hero video { width:260px; border-radius:8px; display:block; border:1px solid var(--line); }
+  figcaption { font-size:12px; color:var(--dim); margin-top:6px; }
+  .reason { font-size:16px; max-width:520px; }
+  .lane { margin-bottom:18px; }
+  .lane-head { display:flex; gap:8px; align-items:baseline; margin-bottom:8px; }
+  .lane-head b { font-size:14px; }
+  .lane-head span { color:var(--dim); font-size:12px; }
+  .strip { display:flex; gap:12px; overflow-x:auto; padding-bottom:6px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; width:200px; flex:none; overflow:hidden; }
+  .card.best { border-color:var(--accent); }
+  .card img, .card video { width:100%; aspect-ratio:9/16; object-fit:cover; display:block; background:#000; }
+  .card .body { padding:8px; font-size:12px; }
+  .score { font-weight:700; font-size:16px; font-variant-numeric:tabular-nums; }
+  .chip { display:inline-block; font-size:11px; padding:1px 6px; border-radius:4px; margin:2px 2px 0 0; }
+  .chip.slop { background:#3a1717; color:var(--bad); }
+  .chip.ok { background:#163323; color:var(--good); }
+  .muted { color:var(--dim); }
+  .concepts { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+  .concept { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px; font-size:12px; }
+  .concept.eliminated { opacity:.4; }
+  .concept.finalist { border-color:#55551f; }
+  .concept.winner { border-color:var(--accent); }
+  .concept b { display:block; font-size:13px; margin-bottom:4px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  td { padding:4px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .log { font:12px/1.5 ui-monospace,Menlo,monospace; max-height:320px; overflow:auto; white-space:pre-wrap; color:var(--dim); }
+  .log .error { color:var(--bad); }
+  .stage { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>creative harness</h1>
+  <span id="mode" class="badge">…</span>
+  <span id="status" class="badge" hidden></span>
+  <span class="stats" id="stats"></span>
+</header>
+<main>
+  <aside>
+    <h2>Brief</h2>
+    <select id="presets"><option value="">Load a brief…</option></select>
+    <textarea id="brief" placeholder="Paste the brief here"></textarea>
+    <div class="row"><label>Concepts</label><input id="concepts" type="number" min="2" max="16" /></div>
+    <div class="row"><label>Finalists</label><input id="finalists" type="number" min="1" max="6" /></div>
+    <div class="row"><label>Revise rounds</label><input id="iters" type="number" min="0" max="6" /></div>
+    <div class="row"><label>Animate winner (video)</label><input id="video" type="checkbox" style="width:auto" /></div>
+    <button id="go">Run harness</button>
+    <h2 style="margin-top:12px">Runs</h2>
+    <div class="runs" id="runs"></div>
+  </aside>
+  <div id="view"><div class="empty">Pick a brief and run the harness, or open a past run.</div></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id)
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
+let current = location.hash.slice(1) || null
+let timer = null
+
+async function boot() {
+  const health = await fetch('/api/health').then((r) => r.json())
+  $('mode').textContent = health.mock ? 'MOCK' : 'live fal'
+  $('mode').className = 'badge' + (health.mock ? ' mock' : '')
+  $('concepts').value = health.defaults.concepts
+  $('finalists').value = health.defaults.finalists
+  $('iters').value = health.defaults.maxIters
+  $('video').checked = health.defaults.video
+  const briefs = await fetch('/api/briefs').then((r) => r.json())
+  for (const b of briefs) $('presets').insertAdjacentHTML('beforeend', `<option>${esc(b.name)}</option>`)
+  $('presets').onchange = () => { const b = briefs.find((x) => x.name === $('presets').value); if (b) $('brief').value = b.text }
+  $('go').onclick = start
+  await refreshRuns()
+  if (current) poll()
+}
+
+async function start() {
+  const brief = $('brief').value.trim()
+  if (!brief) return $('brief').focus()
+  $('go').disabled = true
+  const res = await fetch('/api/runs', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ brief, options: {
+    concepts: +$('concepts').value, finalists: +$('finalists').value, maxIters: +$('iters').value, video: $('video').checked } }) }).then((r) => r.json())
+  $('go').disabled = false
+  if (res.id) open(res.id)
+}
+
+// gen guards against a stale in-flight poll drawing or rescheduling after you switch runs.
+let gen = 0
+function open(id) { current = id; location.hash = id; clearTimeout(timer); gen++; poll(gen) }
+
+async function refreshRuns() {
+  const runs = await fetch('/api/runs').then((r) => r.json())
+  $('runs').innerHTML = runs.map((r) => `<a href="#${r.id}" data-id="${r.id}" class="${r.id === current ? 'active' : ''}">${r.status === 'running' ? '● ' : ''}${esc(r.id)} · ${esc(r.brief.slice(0, 60))}</a>`).join('') || '<span class="muted">none yet</span>'
+  for (const a of $('runs').querySelectorAll('a')) a.onclick = (e) => { e.preventDefault(); open(a.dataset.id) }
+}
+
+async function poll(g = gen) {
+  if (!current || g !== gen) return
+  let run
+  try {
+    run = await fetch('/api/runs/' + current).then((r) => r.ok ? r.json() : null)
+  } catch {
+    // Server restarting or briefly unreachable: keep trying rather than freezing the view.
+    if (g === gen) timer = setTimeout(() => poll(g), 3000)
+    return
+  }
+  if (g !== gen) return
+  if (!run) { $('view').innerHTML = '<div class="empty">Run not found.</div>'; return }
+  render(run)
+  refreshRuns().catch(() => {})
+  if (run.status === 'running') timer = setTimeout(() => poll(g), 1200)
+}
+
+function media(r) {
+  if (!r) return ''
+  // Mock mode returns placeholder images even for video, so only use <video> for real clips.
+  const isVideo = r.kind === 'video' && !String(r.endpoint).startsWith('mock:')
+  return isVideo ? `<video src="${esc(r.url)}" autoplay loop muted playsinline controls></video>` : `<img src="${esc(r.url)}" loading="lazy" />`
+}
+
+function render(run) {
+  const elapsed = Math.round(((run.finishedAt ?? Date.now()) - run.startedAt) / 1000)
+  $('status').hidden = false
+  $('status').textContent = run.status
+  $('status').className = 'badge ' + run.status
+  $('stats').textContent = `${elapsed}s · ~$${run.spend.usd.toFixed(3)} · ${run.spend.calls} calls`
+  if (!$('brief').value) $('brief').value = run.brief
+
+  const byId = Object.fromEntries(run.concepts.map((c) => [c.id, c]))
+  // Concept cards count only concept-round wins; showdown wins are a different contest.
+  const wins = {}; for (const m of run.matches) if (m.round.startsWith('Concepts')) wins[m.winner] = (wins[m.winner] ?? 0) + 1
+  let html = ''
+
+  if (run.final) {
+    const first = run.renders.find((r) => r.conceptId === run.final.conceptId && r.version === 1)
+    const c = byId[run.final.conceptId]
+    html += `<section><h2>Winner</h2><div class="hero">
+      ${first ? `<figure>${media(first)}<figcaption>v1 · ${first.critique?.score ?? '–'}/10</figcaption></figure>` : ''}
+      <figure>${media(run.final.video ?? run.final.image)}<figcaption>final · ${run.final.image?.critique?.score ?? '–'}/10 · ${esc(run.final.image?.endpoint)}</figcaption></figure>
+      <div><div class="reason"><b>${esc(c?.title)}</b><br>${esc(c?.hook)}</div><p class="muted">${esc(run.final.reason)}</p></div>
+    </div></section>`
+  }
+
+  const finalists = run.concepts.filter((c) => c.status === 'finalist' || c.status === 'winner')
+  if (finalists.length) {
+    html += '<section><h2>Develop: draft → critique → revise</h2>'
+    for (const c of finalists) {
+      const rs = run.renders.filter((r) => r.conceptId === c.id && r.kind === 'image' && !r.id.endsWith('-final'))
+      const best = rs.reduce((b, r) => (r.critique && (!b || r.critique.score > b.critique.score) ? r : b), null)
+      html += `<div class="lane"><div class="lane-head"><b>${esc(c.title)}</b><span>${esc(c.axis)} · ${esc(c.hook)}</span></div><div class="strip">`
+      html += rs.map((r) => `<div class="card ${r === best ? 'best' : ''}">${media(r)}<div class="body">
+        <div class="row"><span class="score">${r.critique ? r.critique.score : '…'}</span><span class="muted">v${r.version} · ${r.critique?.verdict ?? 'judging'}</span></div>
+        ${r.changeSummary ? `<div class="muted">↻ ${esc(r.changeSummary)}</div>` : ''}
+        ${(r.critique?.slop ?? []).map((s) => `<span class="chip slop" title="${esc(s.evidence)}">${esc(s.flag)}</span>`).join('')}
+        ${r.critique && !r.critique.slop.length ? '<span class="chip ok">no slop</span>' : ''}
+        ${(r.critique?.fixes ?? []).length ? `<div class="muted" style="margin-top:4px">fix: ${esc(r.critique.fixes.join('; '))}</div>` : ''}
+      </div></div>`).join('') || '<span class="muted">rendering…</span>'
+      html += '</div></div>'
+    }
+    html += '</section>'
+  }
+
+  if (run.concepts.length) {
+    html += `<section><h2>Diverge: ${run.concepts.length} concepts</h2><div class="concepts">` + run.concepts.map((c) => `<div class="concept ${c.status}">
+      <b>${esc(c.title)}</b><div class="muted">${esc(c.axis)} · ${esc(c.medium)} · ${wins[c.id] ?? 0} wins</div><div>${esc(c.hook)}</div></div>`).join('') + '</div></section>'
+  }
+
+  if (run.matches.length) {
+    html += '<section><h2>Select: pairwise judging (A/B swapped to catch order bias)</h2><table>' + run.matches.map((m) => `<tr>
+      <td class="muted">${esc(m.round)}</td><td>${esc(m.a)} vs ${esc(m.b)}</td><td><b>${esc(m.winner)}</b></td>
+      <td>${m.consistent ? '<span class="chip ok">consistent</span>' : '<span class="chip slop" title="Swapping A/B changed the verdict, or one pass failed">order-biased</span>'}</td><td class="muted">${esc(m.reason)}</td></tr>`).join('') + '</table></section>'
+  }
+
+  html += '<section><h2>Trace</h2><div class="log">' + run.events.map((e) => `<div class="${e.stage === 'error' ? 'error' : ''}">${(e.t / 1000).toFixed(1).padStart(6)}s <span class="stage">${e.stage.padEnd(9)}</span> ${esc(e.message)}</div>`).join('') + '</div></section>'
+
+  // Skip identical redraws so playing videos don't restart; keep scroll positions across redraws.
+  if (html === lastHtml) return
+  lastHtml = html
+  const oldLog = $('view').querySelector('.log')
+  const follow = !oldLog || oldLog.scrollHeight - oldLog.scrollTop - oldLog.clientHeight < 20
+  const logTop = oldLog?.scrollTop ?? 0
+  const strips = [...$('view').querySelectorAll('.strip')].map((s) => s.scrollLeft)
+  $('view').innerHTML = html
+  const log = $('view').querySelector('.log')
+  if (log) log.scrollTop = follow ? log.scrollHeight : logTop
+  $('view').querySelectorAll('.strip').forEach((s, i) => { s.scrollLeft = strips[i] ?? 0 })
+}
+let lastHtml = ''
+
+window.onhashchange = () => { const id = location.hash.slice(1); if (id && id !== current) open(id) }
+boot()
+</script>
+</body>
+</html>
