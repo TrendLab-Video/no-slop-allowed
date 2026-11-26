@@ -18,11 +18,14 @@ Rules:
 - No clichés for the topic. If the obvious image comes to mind first, throw it away.
 - Specific beats generic: concrete places, objects, gestures, moments.
 - visualPrompt is a production-ready prompt for an image model: subject, composition, framing, lighting, palette, texture, lens. No text in the image unless the idea needs it, and then keep it to three words or fewer.
+- Every concept must work as ONE still frame, because even video is animated from a single keyframe. No montages, cuts, sequences, split screens, panels or before/after layouts.
+- Do not invent brand names, logos or packaging text the brief does not give you.
 - medium: "video" only when motion is the point of the idea; otherwise "image".
 - Keep it tight: visualPrompt under 80 words, every other field one or two sentences.`
 
-export function directorPrompt(brief: string, n: number) {
-  return `BRIEF:\n${brief}\n\nGenerate ${n} concepts.\n\nJSON shape: {"concepts":[{"title":"","hook":"","idea":"","axis":"","medium":"image"|"video","visualPrompt":"","whyItWorks":""}]}`
+export function directorPrompt(brief: string, n: number, video: boolean) {
+  const medium = video ? '' : '\nVideo is switched off for this run: every concept is a still image (medium "image").'
+  return `BRIEF:\n${brief}\n\nGenerate ${n} concepts.${medium}\n\nJSON shape: {"concepts":[{"title":"","hook":"","idea":"","axis":"","medium":"image"|"video","visualPrompt":"","whyItWorks":""}]}`
 }
 
 export const JUDGE_SYSTEM = `You judge creative work for a brief. You pick the one more likely to win human attention AND deliver the brief.
@@ -33,25 +36,49 @@ export function compareTextPrompt(brief: string, a: Concept, b: Concept) {
   return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nOPTION A:\n${describe(a)}\n\nOPTION B:\n${describe(b)}\n\nWhich concept should we make? JSON: {"winner":"A"|"B","reason":"one sentence","confidence":0-1}`
 }
 
+// The showdown compares drafts, so it must ignore the same render faults the draft critic ignores.
+const SHOWDOWN_NOTE = `These are fast drafts. The winner will be re-rendered on a stronger model that draws text and hands properly.
+Do NOT judge garbled text, lettering or anatomy glitches. Judge idea, composition, focal point, lighting and brief fit.`
+
 export function compareImagePrompt(brief: string, a: Concept, b: Concept) {
-  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nImage 1 is OPTION A ("${a.title}"). Image 2 is OPTION B ("${b.title}").\nWhich finished piece should we ship? JSON: {"winner":"A"|"B","reason":"one sentence","confidence":0-1}`
+  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\n${SHOWDOWN_NOTE}\n\nImage 1 is OPTION A ("${a.title}"). Image 2 is OPTION B ("${b.title}").\nWhich draft should we take to the final render? JSON: {"winner":"A"|"B","reason":"one sentence","confidence":0-1}`
 }
 
 export const CRITIC_SYSTEM = `You are a ruthless but fair creative critic. You look at the actual image, not the intention.
 Flag slop with specific visual evidence. Give fixes that a prompt can actually achieve.
 verdict: "ship" if it meets the bar, "revise" if fixable, "kill" if the idea itself does not work.`
 
-export function criticPrompt(brief: string, c: Concept, version: number, prompt: string) {
-  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nCONCEPT:\n${describe(c)}\n\nVERSION: ${version}\nPROMPT USED:\n${prompt}\n\nCritique the attached image. JSON: {"score":0-10,"slop":[],"strengths":["..."],"fixes":["..."],"verdict":"ship"|"revise"|"kill"}
+/** Drafts come from a fast, cheap model; the winner is re-rendered on a stronger one. */
+export type CritiqueStage = 'draft' | 'final'
+
+const DRAFT_NOTE = `STAGE: DRAFT. This is a fast, cheap draft. The winner will be re-rendered on a stronger model that draws text and hands properly.
+Judge the idea, composition, focal point, lighting and brief fit. Do NOT flag or mark down garbled text, lettering or anatomy glitches at this stage.
+Fixes must be things a single-frame image prompt can achieve. Prefer removing distractions over adding elements. Never suggest adding text, captions, labels, panels or montages.`
+
+const FINAL_NOTE = 'STAGE: FINAL. This is the finished render. Judge everything, including text and anatomy.'
+
+export function criticPrompt(brief: string, c: Concept, version: number, prompt: string, stage: CritiqueStage) {
+  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nCONCEPT:\n${describe(c)}\n\n${stage === 'draft' ? DRAFT_NOTE : FINAL_NOTE}\n\nVERSION: ${version}\nPROMPT USED:\n${prompt}\n\nCritique the attached image. JSON: {"score":0-10,"slop":[],"strengths":["..."],"fixes":["..."],"verdict":"ship"|"revise"|"kill"}
 Leave "slop" as [] if there is none. Otherwise each entry is {"flag":"<which rubric slop flag>","evidence":"<what in the image shows it>"}.`
 }
 
 export const REVISER_SYSTEM = `You rewrite image prompts to fix specific critique points while keeping what works.
-Change only what the critique asks for. Be concrete: composition, subject detail, lighting, palette.
+Rules:
+- Change at most the two most important things. Keep everything listed under Keep.
+- Prefer removing or simplifying over adding. A prompt that grows every round gets worse.
+- One single frame. Never add text, captions, title cards, labels, numbers, signage, panels, split screens or montages. If the critique wants a message spelled out, show it with an object, gesture or composition instead.
+- Never invent brand names or logos.
+- Keep the prompt under 80 words. Be concrete: composition, subject detail, lighting, palette.
 Name what you changed in one sentence.`
 
-export function revisePrompt(c: Concept, prompt: string, critique: Critique) {
-  return `CONCEPT:\n${describe(c)}\n\nCURRENT PROMPT:\n${prompt}\n\nCRITIQUE (score ${critique.score}/10):\nSlop: ${critique.slop.map((s) => `${s.flag} (${s.evidence})`).join('; ') || 'none'}\nKeep: ${critique.strengths.join('; ')}\nFix: ${critique.fixes.join('; ')}\n\nJSON: {"visualPrompt":"","changeSummary":""}`
+/** A revision that scored no better than the version it came from, so the reviser tries something else. */
+export type FailedAttempt = { changeSummary: string; score: number }
+
+export function revisePrompt(c: Concept, prompt: string, critique: Critique, failed: FailedAttempt[] = []) {
+  const tried = failed.length
+    ? `\n\nALREADY TRIED FROM THIS PROMPT (did not help, do something different):\n${failed.map((f) => `- ${f.changeSummary} (scored ${f.score}/10)`).join('\n')}`
+    : ''
+  return `CONCEPT:\n${describe(c)}\n\nCURRENT PROMPT:\n${prompt}\n\nCRITIQUE (score ${critique.score}/10):\nSlop: ${critique.slop.map((s) => `${s.flag} (${s.evidence})`).join('; ') || 'none'}\nKeep: ${critique.strengths.join('; ')}\nFix: ${critique.fixes.join('; ')}${tried}\n\nJSON: {"visualPrompt":"","changeSummary":""}`
 }
 
 export function motionPrompt(c: Concept) {

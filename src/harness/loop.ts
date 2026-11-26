@@ -1,10 +1,10 @@
 import { type HarnessOptions, defaultOptions } from '../config.ts'
 import { generateMedia } from '../media.ts'
 import { ROLES } from '../models.ts'
-import { motionPrompt } from '../prompts.ts'
+import { type FailedAttempt, motionPrompt } from '../prompts.ts'
 import { Run } from '../trace.ts'
-import type { Concept, Render } from '../types.ts'
-import { critique, revise } from './critic.ts'
+import type { Concept, Critique, Render } from '../types.ts'
+import { critique, effectiveScore, revise } from './critic.ts'
 import { diverge } from './director.ts'
 import { tournament } from './selector.ts'
 
@@ -35,7 +35,7 @@ export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
   run.emit('brief', brief)
 
   // 1. Diverge
-  const concepts = await diverge(brief, o.concepts, run)
+  const concepts = await diverge(brief, o.concepts, o.video, run)
   run.state.concepts = concepts
   run.emit('diverge', `${concepts.length} concepts across axes: ${concepts.map((c) => c.axis).join(', ')}`)
 
@@ -66,7 +66,8 @@ export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
   if (bests.length === 0) throw new Error('No finalist produced a render')
 
   // 4. Showdown on the actual images. If judging fails, fall back to critic scores.
-  const byScore = [...bests].sort((x, y) => (y.render.critique?.score ?? 0) - (x.render.critique?.score ?? 0))
+  const rank = (d: Developed) => (d.render.critique ? effectiveScore(d.render.critique) : -Infinity)
+  const byScore = [...bests].sort((x, y) => rank(y) - rank(x))
   let winner = byScore[0]!
   let reason = bests.length === 1 ? 'Only finalist standing.' : 'Highest critic score.'
   if (bests.length > 1) {
@@ -86,7 +87,7 @@ export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
     }
   }
   winner.concept.status = 'winner'
-  run.emit('showdown', `Winner: ${winner.concept.id} "${winner.concept.title}" (${winner.render.critique?.score ?? '?'}/10). ${reason}`)
+  run.emit('showdown', `Winner: ${winner.concept.id} "${winner.concept.title}" (${winner.render.critique ? scoreText(winner.render.critique) : '?'}). ${reason}`)
 
   // 5. Final hero render. Show it as soon as it exists; critique and video are extras.
   run.state.final = { conceptId: winner.concept.id, image: winner.render, reason }
@@ -97,8 +98,8 @@ export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
     run.state.final.image = hero
     run.emit('final', `Hero image on ${hero.endpoint}`, { renderId: hero.id })
     try {
-      hero.critique = await critique(brief, winner.concept, hero, run)
-      run.emit('final', `Hero critique: ${hero.critique.score}/10`)
+      hero.critique = await critique(brief, winner.concept, hero, 'final', run)
+      run.emit('final', `Hero critique: ${scoreText(hero.critique)}`)
     } catch (err) {
       run.emit('error', `Hero critique failed (image kept): ${String(err).slice(0, 200)}`)
     }
@@ -124,14 +125,18 @@ export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
 }
 
 /**
- * Draft -> critique -> revise until the critic says ship, the score plateaus, or we run out of rounds.
+ * Draft -> critique -> revise until the critic says ship, the score stops improving, or we run out of rounds.
+ *
+ * Revisions always start from the best version so far, not the latest: a revision that made things worse
+ * is discarded (and named to the reviser so it tries something else), rather than built upon.
  * Returns the best critiqued render so far even if a later call fails; throws only if nothing was scored.
  */
 async function develop(run: Run, concept: Concept, o: HarnessOptions): Promise<{ render: Render; killed: boolean }> {
   const { brief } = run.state
   let prompt = concept.visualPrompt
   let best: Render | undefined
-  let prevScore = -1
+  let stale = 0
+  let failedFromBest: FailedAttempt[] = []
   let changeSummary: string | undefined
   let killed = false
   let lastError: unknown
@@ -143,30 +148,59 @@ async function develop(run: Run, concept: Concept, o: HarnessOptions): Promise<{
       run.state.renders.push(render)
       run.emit('draft', `${render.id} rendered in ${(render.ms / 1000).toFixed(1)}s`, { renderId: render.id })
 
-      const crit = await critique(brief, concept, render, run)
+      const crit = await critique(brief, concept, render, 'draft', run)
       render.critique = crit
       const slop = crit.slop.map((s) => s.flag).join(', ') || 'no slop'
-      run.emit('critique', `${render.id}: ${crit.score}/10, ${crit.verdict} (${slop})`, { renderId: render.id })
+      run.emit('critique', `${render.id}: ${scoreText(crit)}, ${crit.verdict} (${slop})`, { renderId: render.id })
 
-      if (!best || crit.score > best.critique!.score) best = render
-
-      if (crit.verdict === 'kill') {
+      // Only the first draft tests the idea itself. A later "kill" means the revision broke it, so it's discarded.
+      if (crit.verdict === 'kill' && version === 1) {
+        best = render
         killed = true
         run.emit('critique', `${concept.id} killed by the critic: the idea itself does not work`)
         break
       }
-      if (crit.verdict === 'ship' || crit.score >= o.shipScore) break
-      if (prevScore >= 0 && crit.score - prevScore < o.plateau) {
-        run.emit('critique', `${concept.id} plateaued (${prevScore} -> ${crit.score}), stopping`)
-        break
+      const discarded = crit.verdict === 'kill'
+      if (discarded) render.discarded = true
+      if (discarded) run.emit('critique', `${render.id} was judged unworkable; discarding it and keeping v${best!.version}`)
+
+      const prevBest = best
+      const eff = effectiveScore(crit)
+      const bestEff = prevBest ? effectiveScore(prevBest.critique!) : -Infinity
+      const improved = !discarded && eff >= bestEff + o.plateau
+      const newBest = !discarded && eff > bestEff
+      if (newBest) {
+        best = render
+        failedFromBest = []
+      }
+      // Shipping needs a clean image: normaliseCritique already turns a slop-flagged "ship" into "revise".
+      if (!discarded && (crit.verdict === 'ship' || (crit.score >= o.shipScore && crit.slop.length === 0))) break
+
+      if (improved) stale = 0
+      else {
+        stale++
+        // Tell the reviser what didn't work, unless this attempt became the new (marginally) best base.
+        if (!newBest) failedFromBest.push({ changeSummary: changeSummary ?? '(revision)', score: eff })
+        if (stale > o.patience) {
+          run.emit('critique', `${concept.id} stopped improving (best v${best!.version} at ${scoreText(best!.critique!)})`)
+          break
+        }
+        if (version < o.maxIters + 1) {
+          run.emit(
+            'critique',
+            newBest
+              ? `${render.id} is the new best, but only by ${(eff - bestEff).toFixed(1)}; revising it again`
+              : `${render.id} did not beat v${best!.version} (${scoreText(best!.critique!)}); revising v${best!.version} again`,
+          )
+        }
       }
       if (version === o.maxIters + 1) break
 
-      prevScore = crit.score
-      const rev = await revise(concept, prompt, crit, run)
+      const base = best!
+      const rev = await revise(concept, base.prompt, base.critique!, failedFromBest, run)
       prompt = rev.visualPrompt
       changeSummary = rev.changeSummary
-      run.emit('revise', `${concept.id} v${version + 1}: ${rev.changeSummary}`)
+      run.emit('revise', `${concept.id} v${version + 1} (from v${base.version}): ${rev.changeSummary}`)
     } catch (err) {
       lastError = err
       run.emit('error', `${concept.id} v${version} failed: ${String(err).slice(0, 200)}`)
@@ -175,4 +209,9 @@ async function develop(run: Run, concept: Concept, o: HarnessOptions): Promise<{
   }
   if (!best) throw lastError ?? new Error(`${concept.id}: no render was critiqued`)
   return { render: best, killed }
+}
+
+/** "7/10" for a clean render, "7/10 - 2 slop = 5" when flags cost points in the ranking. */
+function scoreText(c: Critique): string {
+  return c.slop.length ? `${c.score}/10 - ${c.slop.length} slop = ${effectiveScore(c)}` : `${c.score}/10`
 }

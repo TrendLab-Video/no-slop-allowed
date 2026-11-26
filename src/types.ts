@@ -54,6 +54,8 @@ export type Render = {
   estUsd: number
   critique?: Critique
   changeSummary?: string
+  /** A revision the critic judged unworkable; never used as a base or a winner. */
+  discarded?: boolean
 }
 
 export type Match = {

@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import { defaultOptions } from '../src/config.ts'
-import { normaliseCritique } from '../src/harness/critic.ts'
+import { effectiveScore, normaliseCritique } from '../src/harness/critic.ts'
+import { diverge } from '../src/harness/director.ts'
+import { criticPrompt, revisePrompt } from '../src/prompts.ts'
 import { runHarness } from '../src/harness/loop.ts'
 import { tournament } from '../src/harness/selector.ts'
 import { Run } from '../src/trace.ts'
@@ -80,12 +82,12 @@ describe('runHarness (mock)', () => {
     expect(s.events.at(-1)?.stage).toBe('done')
   })
 
-  test('slop caps the score at 5', async () => {
+  test('slop is reported and counts against the ranking', async () => {
     const run = new Run('brief', defaultOptions)
     await runHarness(run, { ...defaultOptions, finalists: 1, concepts: 2 })
     const v1 = run.state.renders.find((r) => r.version === 1)!
     expect(v1.critique!.slop.length).toBeGreaterThan(0)
-    expect(v1.critique!.score).toBeLessThanOrEqual(5)
+    expect(effectiveScore(v1.critique!)).toBe(v1.critique!.score - v1.critique!.slop.length)
   })
 })
 
@@ -119,10 +121,11 @@ describe('normaliseCritique', () => {
     expect(c.score).toBe(9)
     expect(c.verdict).toBe('ship')
   })
-  test('real slop caps at 5 and downgrades ship to revise', () => {
+  test('real slop blocks shipping but keeps the score, so revisions stay comparable', () => {
     const c = normaliseCritique({ ...base, slop: [{ flag: 'Mangled hands', evidence: 'six fingers' }] })
-    expect(c.score).toBe(5)
+    expect(c.score).toBe(9)
     expect(c.verdict).toBe('revise')
+    expect(effectiveScore(c)).toBe(8)
   })
 })
 
@@ -158,6 +161,160 @@ describe('resilience (review fixes)', () => {
       const run = new Run('brief', defaultOptions)
       await expect(runHarness(run, { ...defaultOptions, concepts: 3, finalists: 1 })).rejects.toThrow()
     }))
+})
+
+describe('improve loop (fixes from the first live run)', () => {
+  const withEnv = async (vars: Record<string, string>, fn: () => Promise<void>) => {
+    Object.assign(process.env, vars)
+    try {
+      await fn()
+    } finally {
+      for (const k of Object.keys(vars)) delete process.env[k]
+    }
+  }
+  const one = { ...defaultOptions, concepts: 2, finalists: 1, maxIters: 3 }
+  const drafts = (run: Run) => run.state.renders.filter((r) => /-v\d+$/.test(r.id))
+
+  test('drafts are not judged on text or anatomy; finals are', () => {
+    const c = { score: 7, strengths: [], fixes: [], verdict: 'revise' as const, slop: [
+      { flag: 'Garbled or misspelled text in the image', evidence: 'sign reads COFEE' },
+      { flag: 'Mangled anatomy: hands', evidence: 'six fingers' },
+      { flag: 'Stock-photo composition', evidence: 'centred mug' },
+    ] }
+    expect(normaliseCritique(c, 'draft').slop.map((s) => s.flag)).toEqual(['Stock-photo composition'])
+    expect(normaliseCritique(c, 'final').slop).toHaveLength(3)
+  })
+
+  test('the draft filter keeps real flags that merely mention text or hands, and filters render-fault fixes', () => {
+    const c = normaliseCritique(
+      { score: 8, verdict: 'ship', strengths: [], slop: [
+        { flag: 'Made-up brand names, logos or packaging text that the brief did not give', evidence: 'BREWCO on mug' },
+        { flag: 'Stock-photo composition: hands holding a mug, centred', evidence: 'centred' },
+      ], fixes: ['Correct the garbled lettering', 'Fix the extra finger', 'Move the hands out of the focal area'] },
+      'draft',
+    )
+    expect(c.slop).toHaveLength(2)
+    expect(c.score).toBe(8)
+    expect(c.verdict).toBe('revise')
+    expect(c.fixes).toEqual(['Move the hands out of the focal area'])
+  })
+
+  test('the loop critiques drafts at draft stage and the hero at final stage', () =>
+    withEnv({ MOCK_TEXT_FLAG: '1' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, one)
+      expect(drafts(run).every((r) => !r.critique!.slop.some((s) => /garbled/i.test(s.flag)))).toBe(true)
+      const hero = run.state.final?.image?.critique
+      expect(hero?.slop.some((s) => /garbled/i.test(s.flag))).toBe(true)
+      expect(hero!.verdict).not.toBe('ship')
+    }))
+
+  test('a flag listed twice counts once', () => {
+    const c = normaliseCritique({ score: 4, strengths: [], fixes: [], verdict: 'revise', slop: [
+      { flag: 'Concept and image disagree: the picture does not show the idea', evidence: 'a' },
+      { flag: 'Concept and image disagree', evidence: 'b' },
+    ] })
+    expect(c.slop).toHaveLength(1)
+  })
+
+  test('a worse revision is discarded and the best version is revised again', () =>
+    withEnv({ MOCK_SCORES: '4,3,6,6' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, { ...one, patience: 1 })
+      const [v1, v2, v3, v4] = drafts(run)
+      expect(drafts(run)).toHaveLength(4)
+      // v2 scored worse, so v3 was revised from v1 again (the deterministic mock reviser gives the same prompt)
+      expect(v3!.prompt).toBe(v2!.prompt)
+      expect(v4!.prompt.startsWith(v3!.prompt)).toBe(true)
+      expect(v1!.critique!.score).toBe(4)
+      expect(run.state.final?.image?.prompt).toBe(v3!.prompt)
+      expect(run.state.events.some((e) => e.message.includes('revising v1 again'))).toBe(true)
+      // the failed v2 attempt reached the reviser for v3, and was cleared once v3 became the new best
+      expect(v3!.changeSummary).toContain('avoiding 1 failed attempt')
+      expect(v4!.changeSummary).not.toContain('failed attempt')
+    }))
+
+  test('a marginal gain becomes the new base without being reported as a failure', () =>
+    withEnv({ MOCK_SCORES: '5,5.3,5.4' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, { ...one, maxIters: 2, patience: 2 })
+      const [, v2, v3] = drafts(run)
+      expect(v3!.prompt.startsWith(v2!.prompt)).toBe(true)
+      expect(v3!.changeSummary).not.toContain('failed attempt')
+      expect(run.state.events.some((e) => e.message.includes('c2-v2 is the new best, but only by 0.3'))).toBe(true)
+      expect(run.state.events.some((e) => /did not beat v2/.test(e.message))).toBe(false)
+    }))
+
+  test('a high-scoring "kill" on a revision is still discarded, never kept or shipped', () =>
+    withEnv({ MOCK_SCORES: '5,9,6', MOCK_VERDICTS: 'revise,kill,revise' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, { ...one, maxIters: 2 })
+      const [, v2, v3] = drafts(run)
+      expect(v2!.discarded).toBe(true)
+      expect(v3).toBeDefined()
+      expect(v3!.prompt).toBe(v2!.prompt)
+      expect(run.state.final?.image?.prompt).toBe(v3!.prompt)
+    }))
+
+  test('a clean render outranks a slightly higher-scored one with slop, and the loop keeps it', () =>
+    withEnv({ MOCK_SCORES: '7,7.5', MOCK_SLOP: '0,1' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, { ...one, maxIters: 1 })
+      const [v1, v2] = drafts(run)
+      expect(v2!.critique!.score).toBeGreaterThan(v1!.critique!.score)
+      expect(effectiveScore(v2!.critique!)).toBeLessThan(effectiveScore(v1!.critique!))
+      expect(run.state.final?.image?.prompt).toBe(v1!.prompt)
+    }))
+
+  test('a high score with slop does not ship early; the clean one does', () =>
+    withEnv({ MOCK_SCORES: '9,9,9', MOCK_SLOP: '1,0,0' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, one)
+      const [v1, v2] = drafts(run)
+      expect(v1!.critique!.verdict).toBe('revise')
+      expect(v2!.critique!.verdict).toBe('ship')
+      expect(drafts(run)).toHaveLength(2)
+    }))
+
+  test('patience 0 stops at the first version that does not improve', () =>
+    withEnv({ MOCK_SCORES: '4,3' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, { ...one, patience: 0 })
+      expect(drafts(run)).toHaveLength(2)
+    }))
+
+  test('a "kill" on a revision discards that revision instead of the concept', () =>
+    withEnv({ MOCK_SCORES: '5,2,6', MOCK_VERDICTS: 'revise,kill,revise' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, { ...one, maxIters: 2 })
+      expect(run.state.status).toBe('done')
+      expect(run.state.events.some((e) => e.message.includes('killed by the critic'))).toBe(false)
+      expect(run.state.final?.image?.prompt).toBe(drafts(run)[2]!.prompt)
+    }))
+
+  test('a "kill" on the first draft still kills the concept', () =>
+    withEnv({ MOCK_VERDICTS: 'kill' }, async () => {
+      const run = new Run('brief', one)
+      await runHarness(run, one)
+      expect(drafts(run)).toHaveLength(1)
+      expect(run.state.events.some((e) => e.message.includes('killed by the critic'))).toBe(true)
+    }))
+
+  test('with video off every concept is a still image', async () => {
+    expect((await diverge('brief', 6, false)).every((c) => c.medium === 'image')).toBe(true)
+    expect((await diverge('brief', 6, true)).some((c) => c.medium === 'video')).toBe(true)
+  })
+
+  test('prompts carry the stage and the failed attempts', () => {
+    const c = fakeConcept(1)
+    const crit = { score: 4, slop: [], strengths: ['warm light'], fixes: ['crop tighter'], verdict: 'revise' as const }
+    expect(criticPrompt('b', c, 1, 'p', 'draft')).toContain('STAGE: DRAFT')
+    expect(criticPrompt('b', c, 1, 'p', 'final')).toContain('STAGE: FINAL')
+    const r = revisePrompt(c, 'p', crit, [{ changeSummary: 'added a neon sign', score: 3 }])
+    expect(r).toContain('ALREADY TRIED')
+    expect(r).toContain('added a neon sign (scored 3/10)')
+    expect(revisePrompt(c, 'p', crit)).not.toContain('ALREADY TRIED')
+  })
 })
 
 function fakeConcept(i: number): Concept {

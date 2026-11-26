@@ -169,8 +169,8 @@ function render(run) {
     const first = run.renders.find((r) => r.conceptId === run.final.conceptId && r.version === 1)
     const c = byId[run.final.conceptId]
     html += `<section><h2>Winner</h2><div class="hero">
-      ${first ? `<figure>${media(first)}<figcaption>v1 · ${first.critique?.score ?? '–'}/10</figcaption></figure>` : ''}
-      <figure>${media(run.final.video ?? run.final.image)}<figcaption>final · ${run.final.image?.critique?.score ?? '–'}/10 · ${esc(run.final.image?.endpoint)}</figcaption></figure>
+      ${first ? `<figure>${media(first)}<figcaption>v1 draft · ${first.critique?.score ?? '–'}/10 <span class="muted">(draft scoring: text and hands not judged)</span></figcaption></figure>` : ''}
+      <figure>${media(run.final.video ?? run.final.image)}<figcaption>final · ${run.final.image?.critique?.score ?? '–'}/10 <span class="muted">(full rubric)</span> · ${esc(run.final.image?.endpoint)}</figcaption></figure>
       <div><div class="reason"><b>${esc(c?.title)}</b><br>${esc(c?.hook)}</div><p class="muted">${esc(run.final.reason)}</p></div>
     </div></section>`
   }
@@ -180,7 +180,9 @@ function render(run) {
     html += '<section><h2>Develop: draft → critique → revise</h2>'
     for (const c of finalists) {
       const rs = run.renders.filter((r) => r.conceptId === c.id && r.kind === 'image' && !r.id.endsWith('-final'))
-      const best = rs.reduce((b, r) => (r.critique && (!b || r.critique.score > b.critique.score) ? r : b), null)
+      // Same ranking as the harness (critic.ts effectiveScore): score minus a point per slop flag.
+      const eff = (r) => r.critique.score - r.critique.slop.length
+      const best = rs.reduce((b, r) => (r.critique && !r.discarded && (!b || eff(r) > eff(b)) ? r : b), null)
       html += `<div class="lane"><div class="lane-head"><b>${esc(c.title)}</b><span>${esc(c.axis)} · ${esc(c.hook)}</span></div><div class="strip">`
       html += rs.map((r) => `<div class="card ${r === best ? 'best' : ''}">${media(r)}<div class="body">
         <div class="row"><span class="score">${r.critique ? r.critique.score : '…'}</span><span class="muted">v${r.version} · ${r.critique?.verdict ?? 'judging'}</span></div>

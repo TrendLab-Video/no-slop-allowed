@@ -4,11 +4,16 @@ An agent loop that turns a creative brief into finished content, and shows its w
 
 Built in Bun and TypeScript on [fal](https://fal.ai), for **No Slop Allowed** (36 Labs x fal, London, 28 Nov 2026).
 
-<img src="docs/run1-hero.png" alt="Hero image from the first live run: a French press and mug on a side table, late at night, TV glowing behind" width="320" align="right">
+<img src="docs/run3-hero.png" alt="Hero image from the third live run: a hand pouring a moka pot into a cracked mug at a kitchen counter at night, London terraces through the window" width="320" align="right">
 
-**First live run** (coffee brief, defaults): 8 concepts, 12 pairwise matches (each judged twice), 3 finalists developed in parallel, one hero render. **3.5 minutes, about $0.30, 50 model calls, no errors.** The image on the right is the winner.
+**A live run** on the coffee brief with default settings:
+- 8 concepts and 12 pairwise matches, each judged twice.
+- 3 finalists developed in parallel, up to 4 drafts each.
+- One hero render.
 
-That run also showed the improve loop wasn't improving: draft scores went 4→5→4, 4→3 and 3→4→2. See [What the first live run taught it](#what-the-first-live-run-taught-it).
+That's **about 3 minutes, about $0.34 and 60 model calls, with no errors.** The image on the right is the winner of run 3: *"11pm and Fine With It. The cup that doesn't care what time it is."*
+
+It took three live runs to get the improve loop actually improving. Each run's trace exposed a different design flaw. See [Three live runs](#three-live-runs-and-what-each-one-taught-it).
 
 <br clear="right">
 
@@ -48,7 +53,15 @@ Every decision emits a trace event. The UI polls the run and shows rejected conc
 
 **Critique what was rendered, not what was asked for.** A vision model looks at the actual image and scores it against [rubric.md](rubric.md), a plain-language list of what makes content stop a scroll and what counts as slop. The rubric is re-read on every call, so taste can be tuned while the server runs.
 
-**Enforce the rubric's hard rules in code.** The rubric says any slop flag caps the score at 5. Models don't apply that reliably, so `normaliseCritique` does: it caps the score, downgrades "ship" to "revise", and drops empty or "none" entries that models echo back from the JSON template.
+**Keep quality and slop as separate signals, and enforce the rules in code.** The critic gives a score for attention and brief fit, and separately lists slop flags. `normaliseCritique` then applies the rules itself rather than trusting the model:
+- **Slop blocks shipping.** A flagged "ship" becomes "revise".
+- **Each flag costs a point in the ranking.**
+- **Duplicate and echoed-empty flags are dropped.**
+- **Draft rules differ.** On drafts it ignores faults the final model fixes (garbled text, anatomy), in the flags and in the fixes.
+
+The showdown judge gets the same draft rules.
+
+**Revise from the best version, not the latest.** A revision that scores worse is discarded rather than built upon. The reviser is told what was tried and failed, so its next attempt goes a different way. A "kill" verdict only kills a concept on its first draft; on a later draft it means the revision broke the idea, so that draft is discarded.
 
 **Treat model output as untrusted input.** Every LLM response is pulled out of whatever prose surrounds it and validated with a zod schema. On a validation failure it retries once, sending the error back to the model.
 
@@ -65,16 +78,49 @@ Every decision emits a trace event. The UI polls the run and shows rejected conc
 
 **Run offline by default.** With no key, a deterministic mock LLM and SVG placeholders run the whole loop and UI for free. `MOCK_FAIL=<regex>` makes chosen calls fail, to rehearse failure paths. Tests always run in mock mode, enforced by a preload, so they can never spend money.
 
-## What the first live run taught it
+## Three live runs, and what each one taught it
 
-The first live run's trace showed why the improve loop didn't improve:
+All three runs used the same brief and default settings.
 
-1. **The reviser added things.** To fix "concept and image disagree" it added title cards, numbered labels and four-panel montages. The draft model can't draw text or panels, so each version picked up new problems.
-2. **The score cap fired on every draft.** Cheap drafts nearly always trip some slop flag, so no draft could pass 5 and none could reach the 8.5 needed to ship.
-3. **Some concepts were video ideas drawn as stills**, such as quick-cut montages with video switched off.
-4. **The loop stopped after one worse version**, so it never got a second try.
+| Run | Draft scores per finalist | Time | Cost | Calls |
+|---|---|---|---|---|
+| 1 | 4→5→4 · 4→3 · 3→4→2 (killed) | 213s | $0.30 | 50 |
+| 2 | 5→5→5 · 5→5→5 · 5→5→5 | 159s | $0.34 | 58 |
+| 3 | 4→3→**6**→5 · 6→6→4 · 5→2→5 (score minus slop) | 184s | $0.34 | 60 |
 
-<!-- RESULTS-V2 -->
+**Run 1: the loop made things worse.**
+- **The reviser added things.** To fix "concept and image disagree" it added title cards, numbered labels and four-panel montages. The cheap draft model can't draw text or panels, so each version picked up new faults.
+- **Drafts were judged on faults only the final model can fix,** such as garbled text and hands.
+- **Some concepts were video ideas drawn as stills,** like quick-cut montages with video switched off.
+- **The loop stopped after one worse version,** and a bad revision could kill a good concept.
+
+**The fixes after run 1:**
+- The reviser changes at most two things, prefers removing, and never adds text or panels.
+- Drafts get their own critic stage.
+- Every concept must work as a single frame.
+- One more attempt after a non-improving version, revised from the best version so far.
+- A "kill" verdict only counts on the first draft.
+
+**Run 2: the machinery worked, but every score was exactly 5.**
+- Revisions came from the best version, nothing was killed, and the reviser removed props instead of adding them.
+- But all 10 critiques scored exactly 5. The rubric said any slop flag caps the score at 5, and the critic always finds one, usually "stock-photo composition". So the cap turned the score into a constant, and the loop couldn't tell better from worse.
+- **The fix:** keep the score as the critic gave it, make slop block shipping, and rank by score minus a point per flag.
+
+**Run 3: scores spread out (4 to 7 raw, 2 to 6 after slop), and the loop improved a concept.** "The Snob's Confession" went from 4 to 6:
+1. v2 got worse, so it was discarded.
+2. v3 was revised from v1, with the reviser told what had failed in v2.
+3. The garbled tasting note became one clean "decaf." card.
+
+<p>
+<img src="docs/run3-c2-v1.jpg" alt="v1: espresso glass on dark wood with beans, a spoon and a tasting note card covered in garbled handwriting" width="220">
+<img src="docs/run3-c2-v3.jpg" alt="v3: the same glass with a single clean card reading 'decaf.' resting on it" width="220">
+</p>
+
+*v1 (6/10, 2 slop flags) → v3 (7/10, 1 slop flag). Both are cheap 1-second drafts. Only the winner gets the expensive render.*
+
+The other two finalists didn't improve on their first draft, and the loop correctly kept v1 for both. The next lever is taste, not plumbing. "Stock-photo composition" was flagged on 9 of 10 drafts and on the hero, so the rubric's definition of it, and the director's first prompts, are where the next gains are.
+
+The tests cover each behaviour above in mock mode. The critic's scores can be scripted per version (`MOCK_SCORES`, `MOCK_VERDICTS`, `MOCK_SLOP`), so the stopping rules, ranking and ship gate are tested directly.
 
 ## Run it
 
@@ -135,7 +181,7 @@ LLM calls go through fal's OpenRouter router, so one `FAL_KEY` covers image, vid
 
 ## Cost and speed
 
-Measured on the first live run with defaults (8 concepts, 3 finalists, up to 3 revisions each): **213 seconds, about $0.30, 50 calls**. Most of the time goes on LLM calls at concurrency 2. Video adds about $0.20 for 5 seconds. The spend counter uses fal's reported LLM cost plus per-model estimates, so treat it as a guide.
+Measured over three live runs with defaults (8 concepts, 3 finalists, up to 3 revisions each): **159 to 213 seconds, $0.30 to $0.34, 50 to 60 calls**. Most of the time goes on LLM calls at concurrency 2. Video adds about $0.20 for 5 seconds. The spend counter uses fal's reported LLM cost plus per-model estimates, so treat it as a guide.
 
 ## Ideas not built yet
 

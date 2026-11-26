@@ -11,7 +11,7 @@ this is where the taste lives. Keep it concrete and checkable.
 - **Legibility at thumbnail size.** Does it still read on a phone at a glance?
 - **Brief fit.** Would the person who wrote the brief recognise their message without being told?
 
-## Slop flags (any one of these caps the score at 5)
+## Slop flags (any one blocks shipping; list each one you see)
 
 - Generic "AI look": glossy plastic skin, over-smooth gradients, teal-and-orange by default.
 - Stock-photo composition: centred subject, shallow depth of field, nothing happening.
@@ -20,11 +20,15 @@ this is where the taste lives. Keep it concrete and checkable.
 - Garbled or misspelled text in the image.
 - Visual noise: too many competing elements, no focal point.
 - Concept and image disagree: the picture does not show the idea.
+- Made-up brand names, logos or packaging text that the brief did not give.
 
 ## Scoring guide
 
+Score the attention criteria above. Do not lower the score because of slop flags: list them instead.
+The harness counts them separately, so the score can still show whether a revision got better.
+
 - **9-10:** you would post this as is and expect it to outperform.
-- **7-8:** strong, one or two fixable problems.
-- **5-6:** competent but forgettable, or one slop flag.
-- **3-4:** several slop flags or misses the brief.
+- **7-8:** strong hook and clear brief fit; a viewer would likely stop.
+- **5-6:** competent but forgettable.
+- **3-4:** weak hook or misses the brief.
 - **0-2:** broken.

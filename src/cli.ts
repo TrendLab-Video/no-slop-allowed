@@ -7,8 +7,8 @@ import { Run } from './trace.ts'
 // bun run harness briefs/example.md       run on a brief file
 // bun run harness briefs/example.md --video --concepts 6 --finalists 2 --iters 2
 
-const USAGE = 'Usage: bun run harness "<brief>" | <brief-file> [--video] [--concepts N] [--finalists K] [--iters N]'
-const NUMERIC = { concepts: 'concepts', finalists: 'finalists', iters: 'maxIters' } as const
+const USAGE = 'Usage: bun run harness "<brief>" | <brief-file> [--video] [--concepts N] [--finalists K] [--iters N] [--patience N]'
+const NUMERIC = { concepts: 'concepts', finalists: 'finalists', iters: 'maxIters', patience: 'patience' } as const
 
 const opts: Record<string, unknown> = { video: false }
 const positional: string[] = []

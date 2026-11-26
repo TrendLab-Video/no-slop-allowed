@@ -32,6 +32,8 @@ export type HarnessOptions = {
   shipScore: number
   /** Stop iterating when a revision improves the score by less than this. */
   plateau: number
+  /** How many non-improving versions in a row to allow before stopping. Each retry revises from the best version so far. */
+  patience: number
   /** Animate the winning image at the end (slow and costs more). */
   video: boolean
 }
@@ -42,6 +44,7 @@ export const defaultOptions: HarnessOptions = {
   maxIters: 3,
   shipScore: 8.5,
   plateau: 0.5,
+  patience: 1,
   video: false,
 }
 
@@ -53,9 +56,11 @@ export function sanitiseOptions(o: Partial<Record<keyof HarnessOptions, unknown>
   const concepts = int(o.concepts, 2, 16)
   const finalists = int(o.finalists, 1, 6)
   const maxIters = int(o.maxIters, 0, 6)
+  const patience = int(o.patience, 0, 3)
   if (concepts !== undefined) out.concepts = concepts
   if (finalists !== undefined) out.finalists = finalists
   if (maxIters !== undefined) out.maxIters = maxIters
+  if (patience !== undefined) out.patience = patience
   if (typeof o.video === 'boolean') out.video = o.video
   return out
 }
