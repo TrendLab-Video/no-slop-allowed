@@ -129,7 +129,7 @@ The tests cover each behaviour above in mock mode. The critic's scores can be sc
 ## Tuning taste, measured blind (runs 4 to 7)
 
 "Stock-photo composition" was flagged on 23 of 30 critiques in runs 1 to 3. The critic's evidence showed three causes:
-- **The director asked for the stock look.** All 8 run-3 prompts asked for a blurred background ("shallow depth of field", "soft focus", "bokeh"). Others asked for "golden hour" and "cozy".
+- **The director asked for the stock look.** All 8 run-3 prompts asked for a blurred background ("shallow depth of field", "soft focus", "bokeh"), and several added "golden hour" or "cozy".
 - **The scenes were moods, not events.** The evidence kept saying "nothing happening" and "arranged rather than lived-in".
 - **The reviser moved things instead of changing them.** It kept shifting the subject off-centre, and the flag came back.
 
