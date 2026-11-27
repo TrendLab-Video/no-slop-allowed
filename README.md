@@ -13,7 +13,7 @@ Built in Bun and TypeScript on [fal](https://fal.ai), for **No Slop Allowed** (3
 
 That's **about 3 minutes, about $0.34 and 60 model calls, with no errors.** The image on the right is the winner of run 3: *"11pm and Fine With It. The cup that doesn't care what time it is."*
 
-Seven live runs so far: three to get the improve loop actually improving, then four tuning its taste, measured with a blind A/B judge. See [Three live runs](#three-live-runs-and-what-each-one-taught-it) and [Tuning taste](#tuning-taste-measured-blind-runs-4-to-7).
+Seven live runs so far: three to get the improve loop actually improving, then four tuning its taste, measured with a blind A/B judge, then a same-session A/B of the critic itself. See [Three live runs](#three-live-runs-and-what-each-one-taught-it), [Tuning taste](#tuning-taste-measured-blind-runs-4-to-7) and [Judging the result](#judging-the-result-not-the-prompt).
 
 <br clear="right">
 
@@ -51,7 +51,7 @@ Every decision emits a trace event. The UI polls the run and shows rejected conc
 
 **Check the judge for position bias.** Each match runs twice with the order swapped. If the two verdicts disagree, the match is marked order-biased in the UI and decided by confidence. Running both orders in parallel with `Promise.allSettled` means one failed call doesn't lose the match.
 
-**Critique what was rendered, not what was asked for.** A vision model looks at the actual image and scores it against [rubric.md](rubric.md), a plain-language list of what makes content stop a scroll and what counts as slop. The rubric is re-read on every call, so taste can be tuned while the server runs.
+**Critique what was rendered, not what was asked for.** A vision model looks at the actual image, without being shown the prompt, and scores it against [rubric.md](rubric.md), a plain-language list of what makes content stop a scroll and what counts as slop. The rubric is re-read on every call, so taste can be tuned while the server runs.
 
 **Keep quality and slop as separate signals, and enforce the rules in code.** The critic gives a score for attention and brief fit, and separately lists slop flags. `normaliseCritique` then applies the rules itself rather than trusting the model:
 - **Slop blocks shipping.** A flagged "ship" becomes "revise".
@@ -168,7 +168,32 @@ Runs 2 and 3 improved 0 and 1 finalists.
 
 So the tuning made the loop more reliable and the concepts more original, but didn't measurably improve the finished image.
 
-The stock-photo flag didn't go away either: the critic now uses it for "the person looks posed". The critic is shown the prompt, and often flags "concept and image disagree" for literal deviations from it. The film hero lost points because the chair faces sideways rather than inland. Judging the result rather than checking it against the prompt is the next lever.
+The stock-photo flag didn't go away either: the critic now uses it for "the person looks posed". The critic is shown the prompt, and often flags "concept and image disagree" for literal deviations from it. The film hero lost points because the chair faces sideways rather than inland. That led to the next change: [judging the result, not the prompt](#judging-the-result-not-the-prompt).
+
+## Judging the result, not the prompt
+
+The critic used to be shown the image prompt, and it checked the image against it word for word. In runs 6 and 7, 13 of its 40 slop flags cited the prompt ("the prompt calls for directional grooves, not concentric circles"). Most of those flags were "concept and image disagree". The film brief's most original image lost points because the chair faced sideways rather than inland.
+
+**The change:**
+- The critic no longer sees the prompt.
+- It's told to judge whether the image delivers the concept's idea to someone scrolling past. Different details are fine if the idea lands.
+- The rubric's "concept and image disagree" flag now means "a viewer would not get the idea".
+
+**Measuring it without rendering anything.** I re-critiqued the saved images from runs 6 and 7 (23 renders) twice in the same session: once with the old critic, reconstructed exactly, and once with the new one. Running both on the same images in one sitting controls for drift in model behaviour between days.
+
+| | Old critic (prompt shown) | New critic (judges the result) |
+|---|---|---|
+| "Concept and image disagree" flags | 18 of 23 renders | 9 of 23 |
+| Slop evidence that cites the prompt | 13 of 40 | 3 of 24 |
+| Mean score, before and after slop | 5.30 / 3.57 | 5.52 / 4.48 |
+
+**It still catches real failures.** Two known-bad heroes were included as checks, and the new critic flags both:
+- The clock reading 8:44 in a concept that depends on 11:42.
+- The made-up "NIGHT OWL BREW" mug.
+
+Its objection to the film hero changed from a literal mismatch to a viewer-level point: "a scrolling viewer would likely just see an empty lifeguard chair at an angle". That's a fair critique of the image.
+
+[scripts/recritique.ts](scripts/recritique.ts) re-scores any saved run with the current critic and rubric, so changes to taste can be checked on existing images before paying for new runs.
 
 ## Run it
 
@@ -208,6 +233,7 @@ bun run smoke --parallel 6
 | `bun run harness briefs/example-coffee.md` | Run from the terminal. Flags: `--video`, `--concepts N`, `--finalists K`, `--iters N` |
 | `bun run check` | Typecheck and tests (always mock, never spends) |
 | `bun run smoke --video` / `--all` | Also test the video model / every model |
+| `bun run recritique <runs>` | Re-score saved renders with the current critic and rubric (one vision call each) |
 | `bun run compare --a <runs> --b <runs>` | Blind A/B test of saved runs' final images, both orders (about half a cent per judgement) |
 
 LLM calls go through fal's OpenRouter router, so one `FAL_KEY` covers image, video and text. Set `LLM_MODEL` or `VISION_MODEL` in `.env` to swap models.
@@ -226,7 +252,7 @@ LLM calls go through fal's OpenRouter router, so one `FAL_KEY` covers image, vid
 | `src/trace.ts` | Run state and events, saved to `runs/<id>.json` |
 | `src/server.ts`, `public/index.html` | API and single-page live UI |
 | `src/util/stock.ts` | Strips stock-photography vocabulary from image prompts |
-| `scripts/compare.ts` | Blind pairwise A/B test of saved runs |
+| `scripts/compare.ts`, `scripts/recritique.ts` | Blind pairwise A/B test of saved runs; re-score saved renders |
 | `src/mock.ts` | Offline mock LLM with failure injection and scriptable critic |
 | `test/` | Tournament fairness, rubric enforcement, end-to-end and failure-path tests |
 
@@ -236,7 +262,6 @@ Measured over seven live runs with defaults (8 concepts, 3 finalists, up to 3 re
 
 ## Ideas not built yet
 
-- **Judge the result, not the prompt**: the critic currently sees the prompt and marks literal deviations as "concept and image disagree", even when the image works.
 - **Revise with image edits, not re-rolls**: pass the previous image and fixes to an edit model so v2 keeps what worked.
 - **Attention predictor**: a separate judge that only scores "would I stop scrolling in the first second".
 - **Storyboarded video**: Kling v4 takes start, end and middle keyframes.

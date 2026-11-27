@@ -20,7 +20,7 @@ this is where the taste lives. Keep it concrete and checkable.
 - Mangled anatomy: hands, teeth, eyes, extra limbs.
 - Garbled or misspelled text in the image.
 - Visual noise: too many competing elements, no focal point.
-- Concept and image disagree: the picture does not show the idea.
+- Concept and image disagree: a viewer would not get the idea from the picture. Details that differ from the description don't count.
 - Made-up brand names, logos or packaging text that the brief did not give.
 
 ## Scoring guide

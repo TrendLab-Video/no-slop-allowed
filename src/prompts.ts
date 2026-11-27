@@ -85,8 +85,15 @@ Fixes must be things a single-frame image prompt can achieve. Prefer removing di
 
 const FINAL_NOTE = 'STAGE: FINAL. This is the finished render. Judge everything, including text and anatomy.'
 
-export function criticPrompt(brief: string, c: Concept, version: number, prompt: string, stage: CritiqueStage) {
-  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nCONCEPT:\n${describe(c)}\n\n${stage === 'draft' ? DRAFT_NOTE : FINAL_NOTE}\n\nVERSION: ${version}\nPROMPT USED:\n${prompt}\n\nCritique the attached image. JSON: {"score":0-10,"slop":[],"strengths":["..."],"fixes":["..."],"verdict":"ship"|"revise"|"kill"}
+// The critic is deliberately NOT shown the image prompt. When it was, it checked the image against the
+// prompt word by word and flagged "concept and image disagree" for any detail that differed, even in
+// images that delivered the idea (the film brief's best image lost points for a chair facing sideways).
+const JUDGE_THE_RESULT = `Judge the image as a finished piece: does it deliver the concept's idea and moment to someone scrolling past?
+Details that differ from the concept's description are fine, even better, if the idea still lands.
+Flag "Concept and image disagree" only when a viewer would not get the idea from the picture.`
+
+export function criticPrompt(brief: string, c: Concept, version: number, stage: CritiqueStage) {
+  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nCONCEPT:\n${describe(c)}\n\n${JUDGE_THE_RESULT}\n\n${stage === 'draft' ? DRAFT_NOTE : FINAL_NOTE}\n\nVERSION: ${version}\n\nCritique the attached image. JSON: {"score":0-10,"slop":[],"strengths":["..."],"fixes":["..."],"verdict":"ship"|"revise"|"kill"}
 Leave "slop" as [] if there is none. Otherwise each entry is {"flag":"<which rubric slop flag>","evidence":"<what in the image shows it>"}.`
 }
 
@@ -116,5 +123,7 @@ export function motionPrompt(c: Concept) {
 }
 
 function describe(c: Concept) {
-  return `Title: ${c.title}\nHook: ${c.hook}\nIdea: ${c.idea}\nMoment: ${c.moment}\nAxis: ${c.axis}\nMedium: ${c.medium}\nWhy it works: ${c.whyItWorks}`
+  // Runs saved before concepts had a "moment" still load (scripts/recritique.ts re-scores old runs).
+  const moment = c.moment ? `\nMoment: ${c.moment}` : ''
+  return `Title: ${c.title}\nHook: ${c.hook}\nIdea: ${c.idea}${moment}\nAxis: ${c.axis}\nMedium: ${c.medium}\nWhy it works: ${c.whyItWorks}`
 }

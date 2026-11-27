@@ -10,7 +10,7 @@ export async function critique(brief: string, concept: Concept, render: Render, 
     {
       task: 'critic.critique',
       system: CRITIC_SYSTEM,
-      prompt: criticPrompt(brief, concept, render.version, render.prompt, stage),
+      prompt: criticPrompt(brief, concept, render.version, stage),
       imageUrls: [render.url],
       temperature: 0.2,
       maxTokens: 900,

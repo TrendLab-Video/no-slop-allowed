@@ -309,8 +309,8 @@ describe('improve loop (fixes from the first live run)', () => {
   test('prompts carry the stage and the failed attempts', () => {
     const c = fakeConcept(1)
     const crit = { score: 4, slop: [], strengths: ['warm light'], fixes: ['crop tighter'], verdict: 'revise' as const }
-    expect(criticPrompt('b', c, 1, 'p', 'draft')).toContain('STAGE: DRAFT')
-    expect(criticPrompt('b', c, 1, 'p', 'final')).toContain('STAGE: FINAL')
+    expect(criticPrompt('b', c, 1, 'draft')).toContain('STAGE: DRAFT')
+    expect(criticPrompt('b', c, 1, 'final')).toContain('STAGE: FINAL')
     const r = revisePrompt(c, 'p', crit, [{ changeSummary: 'added a neon sign', score: 3 }])
     expect(r).toContain('ALREADY TRIED')
     expect(r).toContain('added a neon sign (scored 3/10)')
@@ -340,8 +340,18 @@ describe('stock-photo vocabulary (tuning after run 3)', () => {
     expect(run.state.events.some((e) => e.message.startsWith('Refused the obvious: latte art'))).toBe(true)
     expect(run.state.events.some((e) => e.message.includes('Stripped stock vocabulary'))).toBe(true)
   })
+  test('the critic is not shown the image prompt, so it judges the result', () => {
+    const c = { ...fakeConcept(1), visualPrompt: 'SECRET-PROMPT-TEXT chair facing inland' }
+    for (const stage of ['draft', 'final'] as const) {
+      const p = criticPrompt('b', c, 2, stage)
+      expect(p).not.toContain('SECRET-PROMPT-TEXT')
+      expect(p).not.toContain('PROMPT USED')
+      expect(p).toContain('VERSION: 2')
+    }
+  })
+
   test('the critic and judge see the moment', () => {
-    expect(criticPrompt('b', { ...fakeConcept(1), moment: 'a cup mid-fall' }, 1, 'p', 'draft')).toContain('Moment: a cup mid-fall')
+    expect(criticPrompt('b', { ...fakeConcept(1), moment: 'a cup mid-fall' }, 1, 'draft')).toContain('Moment: a cup mid-fall')
   })
 })
 

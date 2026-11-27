@@ -11,6 +11,8 @@ Hackathon starter: brief → concepts → pairwise tournament → draft/critique
 - Every decision the harness makes should `run.emit(...)` an event, so it appears in the UI trace.
 - Tests always run in mock mode (`test/setup.ts`). Run `bun run check` after changes.
 - Run `bun run smoke` after changing any model spec; it costs cents and catches schema errors before the demo.
+- After changing `rubric.md` or the critic, re-score saved runs with `bun run recritique <runIds>` before paying for new runs. Compare final images of runs with `bun run compare`; absolute scores drift, pairwise judgements in both orders are the fairer signal.
+- The critic is deliberately not shown the image prompt (see the comment in `src/prompts.ts`). Don't add it back.
 
 ## Layout
 
