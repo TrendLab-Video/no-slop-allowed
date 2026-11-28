@@ -4,9 +4,9 @@ Fill this in before the submission deadline and submit your fork link through th
 
 ## Team
 
-- **Team name**:
-- **Members**:
-- **Hidden brief(s) run**:
+- **Team name**: recliner
+- **Members**: Harry, Papa
+- **Hidden brief(s) run**: filled in at the hidden-brief window (20 minutes before the deadline); see the Outputs table below
 
 ## How it works
 
@@ -68,9 +68,14 @@ Include the final video (repo path or public link) and `traces.json` path for ea
 
 | Brief | Final video | Trace |
 |---|---|---|
-| Hidden brief 1 | | |
-| Hidden brief 2 | | |
+| Hidden brief 1 | (filled at deadline) | (filled at deadline) |
+| Hidden brief 2 | (filled at deadline) | (filled at deadline) |
+| Starter-brief sample run (evidence) | `skill/recliner/examples/sample-run/compositions/2/final.mp4` (selected attempt, score 84/100) | `skill/recliner/examples/sample-run/traces.json` |
 
 ## Notes for judges
 
-Anything worth flagging about what worked, what broke or what you would build next.
+- **The loop is real and evidenced.** One committed end-to-end sample run (`skill/recliner/examples/sample-run/`) shows brief → 5 distinct goals → scored selection → keyframe-gated clip generation → per-clip vision validation with steering retries → composition → final validation with repairs → ranked export. `traces.json` logs every stage with timings; two composed attempts were scored (84 vs 68) and the better one selected.
+- **Deterministic validation is wired into the pipeline, not bolted on.** `recliner validate-output` (the `validation/` package) runs after every composition: ffprobe/ffmpeg gates for playability, duration, resolution, black/frozen segments, audio silence/clipping, plus a repair plan. In our smoke run it caught a silent audio bed (−91 dB peak) and sub-minimum resolution and produced concrete repair actions — the critique changed the output, not just the report. Technical validation can never block export; it degrades gracefully.
+- **Reliability rules for hidden briefs:** the time budget gates retries only — first generation, first composition and export always run. Hidden briefs run in parallel, each inside a 12-minute budget, with a fixed degradation order (skip retries → fewer references → ffmpeg compositor → skip final validation). Pre-production stages have their own caps (references 20%, goals 15%, scoring 5%).
+- **What broke during the build:** Blender 4.5 changed the VSE `new_effect` API (fixed, ffmpeg fallback always available); the ElevenLabs music model fell back to stable-audio on every compose in the smoke run — pinned per effort level since. Model choice for clips is benchmarked in `skill/recliner/lib/fal.mjs` (wall time + cost per model, measured today).
+- **What we'd build next:** live fal request ids in every trace step, a wired vision critic inside `validate-output` (reviewer prompts already in `validation/reviewers/`), and per-brief modality hints rotating automatically instead of manually.
