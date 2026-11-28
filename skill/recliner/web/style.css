@@ -454,3 +454,4 @@ main > * { min-width: 0; }
 .head.slim .eyebrow { margin-bottom: 10px; }
 .head.slim h1 { font-size: 40px; }
 .head.slim p { font-size: 15px; margin-top: 8px; }
+.tile .tl { right: 8px; }

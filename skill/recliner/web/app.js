@@ -223,8 +223,7 @@ function sceneTile(scene, i, clipScene, ar, total) {
     const v = shown.validation;
     const acc = clipScene.acceptedAttempt === shown.attempt;
     cls = acc ? 'acc' : v && !v.passed ? 'rej' : '';
-    badges = `<div class="tl"><span class="tag genb">Generated</span>${v ? `<span class="tag ${acc ? 'ok' : v.passed ? 'ok' : 'bad'}">${esc(v.score)} · ${acc ? 'accepted' : v.passed ? 'passed' : 'rejected'}</span>` : '<span class="tag">validating</span>'}</div>
-      ${retrying ? '<div class="tr"><span class="tag retry">↻ retrying</span></div>' : atts.length > 1 ? `<div class="tr"><span class="tag">try ${esc(shown.attempt)}</span></div>` : ''}`;
+    badges = `<div class="tl"><span class="tag genb">Generated</span>${v ? `<span class="tag ${acc ? 'ok' : v.passed ? 'ok' : 'bad'}">${esc(v.score)} · ${acc ? 'accepted' : v.passed ? 'passed' : 'rejected'}</span>` : '<span class="tag">validating</span>'}${retrying ? '<span class="tag retry">↻ retrying</span>' : atts.length > 1 ? `<span class="tag">try ${esc(shown.attempt)}</span>` : ''}</div>`;
     inner = `<video src="${esc(fileUrl(shown.file))}" autoplay muted loop playsinline preload="auto"></video>`;
   } else {
     const failed = latest?.status === 'failed';
