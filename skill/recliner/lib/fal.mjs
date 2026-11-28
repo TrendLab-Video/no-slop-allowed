@@ -149,6 +149,9 @@ export function videoArgs(model, { prompt, aspectRatio = '16:9', seconds = 5, re
   if (model.includes('veo3')) {
     return { prompt, aspect_ratio: aspectRatio === '1:1' ? '16:9' : aspectRatio, duration: `${pick([4, 6, 8], seconds)}s`, generate_audio: false, resolution: resolution === '1080p' ? '1080p' : '720p', negative_prompt: neg };
   }
+  if (model.includes('ltx-video') || model.includes('ltxv')) {
+    return { prompt, aspect_ratio: aspectRatio, resolution: resolution === '480p' ? '480p' : '720p', num_frames: Math.min(121, Math.round(seconds * 24) + 1), frame_rate: 24, negative_prompt: neg };
+  }
   if (model.includes('ltx')) {
     return { prompt, aspect_ratio: aspectRatio === '9:16' ? '9:16' : '16:9', duration: pick([6, 8, 10], seconds), generate_audio: false };
   }

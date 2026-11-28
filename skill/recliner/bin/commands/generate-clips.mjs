@@ -1,4 +1,5 @@
-import { readJson, writeJson, appendTrace, runPath } from '../../lib/store.mjs';
+import { readJson, runPath } from '../../lib/store.mjs';
+import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 import { run as falRun, download, toolCall, videoArgs, falKey, VIDEO_MODELS } from '../../lib/fal.mjs';
 import { probeDuration } from '../../lib/compositors/ffmpeg.mjs';
 import { generateAssets } from '../../lib/audio.mjs';
@@ -37,42 +38,53 @@ export default async function ([runId], flags) {
   if (!targets.length) throw new Error(`Scene ${flags.scene} not in plan.json`);
   const steering = typeof flags.steering === 'string' ? flags.steering : null;
 
-  // clips.json is read-modify-written synchronously, so parallel tasks in this process never clobber each other.
+  // Several generate-clips processes may run at once (parallel per-scene retries), and accept-clips merges
+  // validation into the same file, so every write re-reads clips.json under a lock and only patches its own attempt.
   const clips = () => readJson(runId, 'clips.json', { scenes: [] });
-  const update = (sceneId, attemptNo, patch) => {
-    const doc = clips();
+  const order = (id) => scenes.findIndex((q) => q.id === id);
+  const update = (sceneId, attemptNo, patch) => updateJson(runId, 'clips.json', { scenes: [] }, (doc) => {
     let s = doc.scenes.find((x) => x.sceneId === sceneId);
     if (!s) { s = { sceneId, acceptedAttempt: null, attempts: [] }; doc.scenes.push(s); }
     let a = s.attempts.find((x) => x.attempt === attemptNo);
     if (!a) { a = { attempt: attemptNo }; s.attempts.push(a); }
     Object.assign(a, patch);
-    doc.scenes.sort((x, y) => scenes.findIndex((q) => q.id === x.sceneId) - scenes.findIndex((q) => q.id === y.sceneId));
-    writeJson(runId, 'clips.json', doc);
+    doc.scenes.sort((x, y) => order(x.sceneId) - order(y.sceneId));
+  });
+  // Reserves the next attempt number for a scene atomically (read and claim under one lock).
+  const reserve = (sceneId, patch) => {
+    let attemptNo;
+    updateJson(runId, 'clips.json', { scenes: [] }, (doc) => {
+      let s = doc.scenes.find((x) => x.sceneId === sceneId);
+      if (!s) { s = { sceneId, acceptedAttempt: null, attempts: [] }; doc.scenes.push(s); }
+      attemptNo = s.attempts.length ? Math.max(...s.attempts.map((a) => a.attempt)) + 1 : 1;
+      s.attempts.push({ attempt: attemptNo, file: `clips/${sceneId}/${attemptNo}.mp4`, ...patch });
+      doc.scenes.sort((x, y) => order(x.sceneId) - order(y.sceneId));
+    });
+    return attemptNo;
   };
-  const nextAttempt = (sceneId) => {
-    const s = clips().scenes.find((x) => x.sceneId === sceneId);
-    return s?.attempts?.length ? Math.max(...s.attempts.map((a) => a.attempt)) + 1 : 1;
-  };
-
   // Reserve attempt numbers up front so parallel scenes never collide.
   const jobs = targets.map((scene) => {
-    const attempt = nextAttempt(scene.id);
     const prompt = scenePrompt(plan, scene, steering);
     const seconds = scene.durationSeconds || config.clipSeconds || 5;
-    const args = videoArgs(model, { prompt, aspectRatio, seconds, resolution: config.resolution || (config.effort <= 1 ? '480p' : '720p') });
-    const file = `clips/${scene.id}/${attempt}.mp4`;
-    update(scene.id, attempt, { file, model, prompt, steering, requestId: null, status: 'generating', error: null, durationSeconds: null, validation: null });
-    return { scene, attempt, prompt, args, file };
+    const resolution = config.resolution || (config.effort <= 1 ? '480p' : '720p');
+    const attempt = reserve(scene.id, { model, prompt, steering, requestId: null, status: 'generating', error: null, durationSeconds: null, validation: null });
+    return { scene, attempt, prompt, seconds, resolution, file: `clips/${scene.id}/${attempt}.mp4` };
   });
 
   // Start the music bed (and voiceover) alongside the clips so compose finds them cached.
   const audioJob = flags.scene || config.audio === false ? null : generateAssets(runId, plan, config).catch((e) => ({ notes: [e.message] }));
 
   const results = await mapLimit(jobs, parallelism, async (job) => {
-    const rec = await falRun(model, job.args, {
+    const call = (m) => falRun(m, videoArgs(m, { prompt: job.prompt, aspectRatio, seconds: job.seconds, resolution: job.resolution }), {
       timeoutMs: (config.clipTimeoutMinutes || 8) * 60000,
-      onSubmit: (r) => update(job.scene.id, job.attempt, { requestId: r.requestId }),
+      onSubmit: (r) => update(job.scene.id, job.attempt, { requestId: r.requestId, model: m }),
     });
+    const calls = [await call(model)];
+    // An unknown or retired endpoint (404) falls back to the known-good default for this effort level.
+    const fallback = VIDEO_MODELS[config.effort || 3];
+    if (calls[0].status === 'failed' && / -> 404:/.test(calls[0].error || '') && fallback !== model) calls.push(await call(fallback));
+    const rec = calls[calls.length - 1];
+    const usedModel = rec.endpoint;
     let durationSeconds = null;
     if (rec.status === 'ok' && rec.url) {
       try {
@@ -81,18 +93,18 @@ export default async function ([runId], flags) {
       } catch (err) { rec.status = 'failed'; rec.error = `download: ${err.message}`; }
     } else if (rec.status === 'ok') { rec.status = 'failed'; rec.error = 'fal result had no video url'; }
     const ok = rec.status === 'ok';
-    update(job.scene.id, job.attempt, { status: ok ? 'generated' : 'failed', error: rec.error, requestId: rec.requestId, durationSeconds });
-    appendTrace(runId, {
+    update(job.scene.id, job.attempt, { status: ok ? 'generated' : 'failed', error: rec.error, requestId: rec.requestId, model: usedModel, durationSeconds });
+    appendTraceLocked(runId, {
       name: `generate-clip:${job.scene.id}#${job.attempt}`,
       stage: 'clips',
-      model,
-      inputs: { sceneId: job.scene.id, attempt: job.attempt, steering, aspectRatio },
+      model: usedModel,
+      inputs: { sceneId: job.scene.id, attempt: job.attempt, steering, aspectRatio, seconds: job.seconds, resolution: job.resolution },
       prompt: job.prompt,
-      tool_calls: [toolCall(rec)],
+      tool_calls: calls.map(toolCall),
       outputs: { file: ok ? job.file : null, status: ok ? 'generated' : 'failed', error: rec.error, durationSeconds },
-      duration_ms: rec.duration_ms,
+      duration_ms: calls.reduce((a, c) => a + c.duration_ms, 0),
     });
-    return { sceneId: job.scene.id, attempt: job.attempt, status: ok ? 'generated' : 'failed', file: ok ? job.file : null, error: rec.error, seconds: Math.round(rec.duration_ms / 1000) };
+    return { sceneId: job.scene.id, attempt: job.attempt, model: usedModel, status: ok ? 'generated' : 'failed', file: ok ? job.file : null, error: rec.error, seconds: Math.round(rec.duration_ms / 1000) };
   });
 
   const audio = audioJob ? await audioJob : null;

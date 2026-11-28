@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-import { readJson, writeJson, appendTrace, runPath } from '../../lib/store.mjs';
+import { readJson, runPath } from '../../lib/store.mjs';
+import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 import * as ffmpeg from '../../lib/compositors/ffmpeg.mjs';
 import * as blender from '../../lib/compositors/blender.mjs';
 import { generateAssets, mixBed } from '../../lib/audio.mjs';
@@ -8,14 +9,20 @@ export const describe = 'compose <runId> [--compositor blender|ffmpeg]: accepted
 
 const TRANSITION = 0.4;
 
-// Accepted attempt, else highest validation score, else the latest generated attempt.
-export function pickAttempt(sceneClips) {
+// Accepted attempt, else highest validation score (merged by accept-clips, or read from the validators'
+// clips/<sceneId>/<attempt>.validation.json if not merged yet), else the latest generated attempt.
+export function pickAttempt(sceneClips, runId) {
   if (!sceneClips) return null;
   const ok = sceneClips.attempts.filter((a) => a.status === 'generated' && a.file);
   const accepted = ok.find((a) => a.attempt === sceneClips.acceptedAttempt);
   if (accepted) return accepted;
-  const scored = ok.filter((a) => typeof a.validation?.score === 'number').sort((a, b) => b.validation.score - a.validation.score);
-  return scored[0] || ok[ok.length - 1] || null;
+  const score = (a) => {
+    if (typeof a.validation?.score === 'number') return a.validation.score;
+    const v = runId && readJson(runId, `clips/${sceneClips.sceneId}/${a.attempt}.validation.json`);
+    return typeof v?.score === 'number' ? v.score : null;
+  };
+  const scored = ok.map((a) => [a, score(a)]).filter(([, sc]) => sc !== null).sort((x, y) => y[1] - x[1]);
+  return scored[0]?.[0] || ok[ok.length - 1] || null;
 }
 
 export default async function ([runId], flags) {
@@ -32,7 +39,7 @@ export default async function ([runId], flags) {
   const segments = [];
   const used = [];
   for (const [i, scene] of scenes.entries()) {
-    const a = pickAttempt(clips.scenes.find((s) => s.sceneId === scene.id));
+    const a = pickAttempt(clips.scenes.find((s) => s.sceneId === scene.id), runId);
     if (!a || !fs.existsSync(runPath(runId, a.file))) { notes.push(`scene ${scene.id}: no usable clip, skipped`); continue; }
     const want = (scene.durationSeconds || config.clipSeconds || 5) + (i < scenes.length - 1 ? TRANSITION : 0);
     const have = a.durationSeconds || (await ffmpeg.probeDuration(runPath(runId, a.file)));
@@ -83,10 +90,9 @@ export default async function ([runId], flags) {
     id: `comp-${n}`, attempt: n, file: `${dir}/final.mp4`, thumbnail: `${dir}/thumb.jpg`, compositor,
     durationSeconds: out.durationSeconds, width, height, clips: used, audio: bed ? `${dir}/bed.wav` : null, notes, validation: null,
   };
-  const fresh = readJson(runId, 'result.json', { results: [], selectedId: null });
-  fresh.results.push(entry);
-  writeJson(runId, 'result.json', fresh);
-  appendTrace(runId, {
+  // Append only our entry under the lock, so validation that rank merged into other entries is kept.
+  updateJson(runId, 'result.json', { results: [], selectedId: null }, (doc) => { doc.results.push(entry); });
+  appendTraceLocked(runId, {
     name: `compose:${entry.id}`, stage: 'composition', model: null,
     inputs: { clips: used, aspectRatio: aspect, width, height, fps, transition: TRANSITION, onScreenText: segments.map((s) => s.text) },
     tool_calls: (out.commands || []).map((c) => ({ tool: compositor, arguments: { command: c.length > 4000 ? c.slice(0, 4000) + '…' : c }, result: { file: entry.file } })),

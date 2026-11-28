@@ -3,7 +3,8 @@
 // compose only waits for the mix. Every failure is soft: callers get bed=null and a note.
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import { runPath, appendTrace } from './store.mjs';
+import { runPath } from './store.mjs';
+import { appendTraceLocked } from './lock.mjs';
 import { run as falRun, download, toolCall, MUSIC_MODEL, MUSIC_FALLBACK_MODEL, TTS_MODEL } from './fal.mjs';
 import { ff, probeDuration } from './compositors/ffmpeg.mjs';
 
@@ -75,7 +76,7 @@ export async function generateAssets(runId, plan, config = {}) {
 
 function trace(runId, kind, rec, prompt) {
   try {
-    appendTrace(runId, {
+    appendTraceLocked(runId, {
       name: `audio:${kind}`, stage: 'composition', model: rec.endpoint, prompt,
       inputs: rec.arguments, tool_calls: [toolCall(rec)], outputs: { status: rec.status, url: rec.url, error: rec.error }, duration_ms: rec.duration_ms,
     });
