@@ -10,7 +10,7 @@
 <body>
 <main>
   <div id="flow"></div>
-  <div class="head"><div><span class="eyebrow">Every intermediate output</span><h1>Steps</h1><p>What each stage produced, in order: references, goals and their scores, every clip attempt with its validation, and the compositions.</p></div></div>
+  <div class="head slim"><div><span class="eyebrow">Every intermediate output</span><h1>Steps</h1><p>What each stage produced, in order: references, goals and their scores, every clip attempt with its validation, and the compositions.</p></div></div>
   <nav class="toc"><a href="#brief">Brief</a><a href="#references">References</a><a href="#goals">Goals</a><a href="#clips">Clips</a><a href="#compositions">Compositions</a><a href="#trace">Trace</a></nav>
   <div id="view"></div>
 </main>
@@ -49,14 +49,16 @@ function render(d) {
   </div>` : empty('Waiting for the brief.')));
 
   html.push(section('references', 'References', refs ? `${refs.references.length} references` : 'pending', refs ? `
-    <div class="grid g3">${refs.references.map((r) => `<div class="item">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span class="tag">${esc(r.platform)}</span><span class="tag">${esc(r.id)}</span></div>
+    <div class="grid g2">${refs.references.map((r) => `<div class="item ref-item"><div class="ref-row">
+      ${r.screenshots?.length ? `<div class="shots">${r.screenshots.slice(0, 2).map((s) => `<a href="${fileUrl(s)}" target="_blank"><img src="${fileUrl(s)}" alt="" loading="lazy"></a>`).join('')}</div>` : `<div class="noshot"><span>${esc(r.platform || '')}</span><b>${fmtNum(r.metrics?.views)}</b><span>views</span></div>`}
+      <div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><span class="tag refb">Reference</span><span class="tag">${esc(r.platform)}</span><span class="tag">${esc(r.id)}</span></div>
       <h3><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a></h3>
       <div class="metrics"><span><b>${fmtNum(r.metrics?.views)}</b> views</span><span><b>${fmtNum(r.metrics?.likes)}</b> likes</span><span><b>${fmtNum(r.metrics?.comments)}</b> comments</span><span><b>${fmtNum(r.metrics?.shares)}</b> shares</span></div>
       <p>${esc(r.why)}</p>
       ${r.structure ? `<dl class="kv small" style="margin-top:8px">${[['Length', r.structure.durationSeconds ? `${r.structure.durationSeconds}s` : ''], ['Hook', r.structure.hook], ['Pacing', r.structure.pacing], ['Music', r.structure.music], ['Scenes', (r.structure.scenes || []).join(' → ')]].filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}
-      ${r.screenshots?.length ? `<div class="shots">${r.screenshots.map((s) => `<a href="${fileUrl(s)}" target="_blank"><img src="${fileUrl(s)}" alt="" loading="lazy"></a>`).join('')}</div>` : ''}
-    </div>`).join('')}</div>
+      </div>
+    </div></div>`).join('')}</div>
     ${refs.takeaways?.length || refs.diversityNote ? `<div class="card" style="margin-top:12px"><span class="eyebrow">Takeaways</span><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">${(refs.takeaways || []).map((t) => `<li>${esc(t)}</li>`).join('')}</ul>${refs.diversityNote ? `<p class="small muted" style="margin:8px 0 0">${esc(refs.diversityNote)}</p>` : ''}</div>` : ''}` : empty('No references yet.')));
 
   const sortedGoals = goals ? [...goals.goals].sort((a, z) => (scoreOf(z.id)?.confidence ?? -1) - (scoreOf(a.id)?.confidence ?? -1)) : [];
@@ -77,12 +79,13 @@ function render(d) {
   html.push(section('clips', 'Clips', clips ? `${clips.scenes.length} scenes · ${clips.scenes.reduce((n, s) => n + s.attempts.length, 0)} attempts` : 'pending', clips ? clips.scenes.map((sc, i) => `
     <div class="scene-block"><div class="sh2"><h3>Scene ${i + 1} · ${esc(sc.sceneId)}</h3><span class="small muted">${esc(planScenes[sc.sceneId]?.description || '')}</span>
       <span class="eyebrow" style="margin-left:auto">${sc.acceptedAttempt != null ? `accepted attempt ${esc(sc.acceptedAttempt)}` : 'no attempt accepted yet'}</span></div>
-      <div class="attempts">${sc.attempts.map((a) => {
+      <div class="attempts rows">${sc.attempts.map((a) => {
         const acc = sc.acceptedAttempt === a.attempt; const v = a.validation;
         const tag = acc ? '<span class="tag ok">accepted</span>' : v ? '<span class="tag bad">rejected</span>' : a.status === 'failed' ? '<span class="tag bad">failed</span>' : `<span class="tag ${a.status === 'generating' ? 'run' : ''}">${esc(a.status)}</span>`;
-        return `<div class="attempt ${acc ? 'acc' : ''}">
+        return `<div class="attempt row ${ar === '16:9' ? 'wide-media' : ''} ${acc ? 'acc' : ''}">
           ${a.status === 'generated' && a.file ? video(fileUrl(a.file), { ar, badge: tag, badge2: `<span class="tag">#${esc(a.attempt)}</span>` }) : `<div class="media ar-${ar.replace(':', '-')}" style="display:grid;place-items:center;color:var(--faint);font:12px var(--mono)">${esc(a.status)}${a.error ? `<br>${esc(a.error)}` : ''}<span class="badge">${tag}</span></div>`}
           <div class="body">
+            <div style="display:flex;gap:6px;margin-bottom:8px"><span class="tag genb">Generated</span><span class="tag">attempt ${esc(a.attempt)}</span></div>
             ${v ? `<div class="score"><span>${esc(v.score)}</span>${scoreBar(v.score, 100, v.passed)}<span>${v.passed ? 'pass' : 'fail'}</span></div><p>${esc(v.reason)}</p>${v.steering ? `<div class="steer">↻ ${esc(v.steering)}</div>` : ''}` : '<p class="muted">Not validated yet.</p>'}
             ${a.steering ? `<div class="steer alt-steer">steered: ${esc(a.steering)}</div>` : ''}
             <details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">prompt · ${esc(a.model || '')}</summary><p class="small mono">${esc(a.prompt)}</p></details>
@@ -90,9 +93,9 @@ function render(d) {
       }).join('')}</div></div>`).join('') : empty('No clips yet.')));
 
   html.push(section('compositions', 'Compositions', result ? `${result.results.length} composed · selected ${esc(result.selectedId || '–')}` : 'pending', result ? `
-    <div class="attempts">${[...result.results].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1)).map((r) => {
+    <div class="attempts rows">${[...result.results].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1)).map((r) => {
       const sel = result.selectedId === r.id; const v = r.validation;
-      return `<div class="attempt ${sel ? 'acc' : ''}">${video(fileUrl(r.file), { ar, poster: r.thumbnail ? fileUrl(r.thumbnail) : '', badge: sel ? '<span class="tag ok">selected</span>' : '', badge2: `<span class="tag">${esc(r.compositor)}</span>` })}
+      return `<div class="attempt row ${ar === '16:9' ? 'wide-media' : ''} ${sel ? 'acc' : ''}">${video(fileUrl(r.file), { ar, poster: r.thumbnail ? fileUrl(r.thumbnail) : '', badge: sel ? '<span class="tag ok">selected</span>' : '', badge2: `<span class="tag">${esc(r.compositor)}</span>` })}
         <div class="body">${v ? `<div class="score"><span>${esc(v.score)}</span>${scoreBar(v.score, 100, v.passed)}<span>${v.passed ? 'pass' : 'fail'}</span></div><p>${esc(v.reason)}</p>` : '<p class="muted">Not validated yet.</p>'}
         <p class="small muted">${esc(r.id)} · attempt ${esc(r.attempt)} · ${esc(r.durationSeconds)}s</p></div></div>`;
     }).join('')}</div>` : empty('No compositions yet.')));

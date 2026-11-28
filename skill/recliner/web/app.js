@@ -189,7 +189,7 @@ export function patch(container, items) {
   for (const el of existing.values()) el.remove();
 }
 
-const KW_STOP = new Set('about after again against their there these those which while would could should being through product brand video known along every other where into from with that this your make made more most also than them they will just over what when only even very much such into across bringing together'.split(' '));
+const KW_STOP = new Set('about after again against their there these those which while would could should being through product brand video known along every other where into from with that this your make made more most also than them they will just over what when only even very much such into across bringing together without straight people within using every based'.split(' '));
 function keywords(b) {
   const text = `${b.objective || ''} ${b.raw || ''} ${b.notes || ''}`.toLowerCase();
   const counts = {};

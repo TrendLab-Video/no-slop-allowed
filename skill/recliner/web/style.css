@@ -445,3 +445,12 @@ main > * { min-width: 0; }
 .stage-info .pulse { background: #fff; }
 .briefviz { grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr); }
 .briefviz .tiles { justify-content: center; }
+.ref-item { border-style: dashed; border-color: #3a3a3a; }
+.ref-item .shots img { filter: grayscale(0.6) brightness(0.85); }
+.noshot { width: 120px; height: 190px; border-radius: 8px; border: 1px dashed #3a3a3a; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; font: 11px var(--mono); color: var(--muted); text-transform: uppercase; background: repeating-linear-gradient(135deg, #141414 0 10px, #181818 10px 20px); }
+.noshot b { font: 500 24px var(--sans); color: var(--ink); }
+.page-result .hero h1 { margin-top: 14px; }
+.head.slim { min-height: 0; padding: 22px 28px; margin-bottom: 16px; }
+.head.slim .eyebrow { margin-bottom: 10px; }
+.head.slim h1 { font-size: 40px; }
+.head.slim p { font-size: 15px; margin-top: 8px; }
