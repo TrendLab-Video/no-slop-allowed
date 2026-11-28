@@ -44,7 +44,7 @@ All JSON. Paths inside files are relative to the run folder.
 Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 minutes (2 scenes, cheapest fast model, 0 retries) for build testing.
 
 **`references.json`**
-`{ references: [{ id, title, url, platform, metrics: { views, likes, comments, shares }, why, structure: { durationSeconds, scenes: [string], pacing, music, hook }, screenshots: [path] }], takeaways: [string], diversityNote }`
+`{ references: [{ id, kind: reference|brand, title, url, platform, metrics: { views, likes, comments, shares }, why, structure: { durationSeconds, scenes: [string], pacing, music, hook }, screenshots: [path] }], takeaways: [string], diversityNote }`
 
 **`goals.json`**
 `{ goals: [{ id, title, description, creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
@@ -79,6 +79,7 @@ The final validator writes `compositions/<attempt>/validation.json` (`{ id, atte
 | `generate-clips <runId> [--keyframes-only] [--scene id --steering "..."]` | fal generation, all scenes in parallel, or one scene as a retry attempt. `--keyframes-only` makes stills from `keyframePrompt`; without it, video animates each scene's `acceptedKeyframe` (or text-to-video when `config.keyframes` is false). Updates `clips.json` |
 | `preflight [runId] [--probe]` | Checks `FAL_KEY` is set and accepted by fal (free balance check; `--probe` submits a tiny job). Exits 1 with a one-line reason; with a runId, adds a trace step |
 | `frames <video> <outDir> [--count 6]` | Extracts evenly spaced frames for validation sub-agents |
+| `fetch-ref <runId> <refId> <url> [--kind brand] [--file f]` | Saves one image for a reference to `references/<refId>/` and adds it to `screenshots`; never fails the stage |
 | `accept-clips <runId>` | Sets `acceptedAttempt` per scene from validation scores |
 | `compose <runId>` | Composes accepted clips with the configured compositor (Blender, ffmpeg fallback) and adds audio. Adds an entry to `result.json` |
 | `rank <runId>` | Sets `selectedId` in `result.json` |
