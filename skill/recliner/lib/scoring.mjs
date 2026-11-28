@@ -18,7 +18,7 @@ export function budget(runId) {
   const total = Number(config.timeBudgetMinutes) || 15;
   const elapsed = (Date.now() - start) / 60000;
   const remaining = total - elapsed;
-  const reserve = Math.max(4, total * 0.3);
+  const reserve = total * 0.25; // stop retries when less than 25% of the budget remains
   return {
     budgetMinutes: total,
     elapsedMinutes: +elapsed.toFixed(1),
@@ -195,7 +195,9 @@ export function acceptClips(runId) {
   const summary = [];
   updateJson(runId, 'clips.json', { scenes: [] }, (clips) => mergeClips(runId, clips, summary));
   appendTraceLocked(runId, { name: 'accept-clips', stage: 'clip_validation', outputs: { scenes: summary }, extra: { decision: 'best-scoring attempt per scene' } });
-  return { scenes: summary, allPassed: summary.every((s) => s.passed), allKeyframesPassed: summary.every((s) => s.acceptedKeyframe == null || s.keyframePassed), ...budget(runId) };
+  // allKeyframesPassed is null when no scene has a keyframe (keyframes off or not generated yet).
+  return { scenes: summary, allPassed: summary.every((s) => s.passed),
+    allKeyframesPassed: summary.some((s) => s.keyframePassed !== null) ? summary.every((s) => s.keyframePassed === true) : null, ...budget(runId) };
 }
 
 function mergeClips(runId, clips, summary) {
@@ -218,7 +220,7 @@ function mergeClips(runId, clips, summary) {
     const pick = best(usable, (a) => num(a.validation?.score));
     scene.acceptedAttempt = pick ? pick.attempt : null;
     const kf = stills.find((a) => a.attempt === scene.acceptedKeyframe);
-    summary.push({ sceneId: scene.sceneId, acceptedKeyframe: scene.acceptedKeyframe ?? null, keyframeScore: kf?.keyframe?.validation?.score ?? null, keyframePassed: kf?.keyframe?.validation?.passed ?? false, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
+    summary.push({ sceneId: scene.sceneId, acceptedKeyframe: scene.acceptedKeyframe ?? null, keyframeScore: kf?.keyframe?.validation?.score ?? null, keyframePassed: kf ? (kf.keyframe.validation?.passed ?? false) : null, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
   }
   return clips;
 }

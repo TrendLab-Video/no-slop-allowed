@@ -81,7 +81,7 @@ Hand each sub-agent: the step file path, the `runId`, the run folder path, and t
 ## 1. References (stage `references`)
 
 Sub-agent: `steps/references.md`. Writes `$RUN/references.json` and `$RUN/references/`.
-Parallel: launch both sub-agents at the same time (one message), splitting `config.referencesCount` across 2 sub-agents by angle, passing each its angle name and share: `platform` (the platform's top performers in this domain) and `transfer` (an adjacent category or unexpected format from another brand). Each writes `$RUN/references.<angle>.json`. Then merge into `$RUN/references.json` yourself: concatenate `references` (drop near-duplicates of format and hook), concatenate `takeaways` (keep the best 5), join the `diversityNote`s into one sentence or two. Time cap: 20% of `config.timeBudgetMinutes` (minimum 30 s); pass the cap in seconds to each sub-agent and merge whatever angle files exist by then. Fallback: if web search is unavailable or slow, use what you know plus `examples/references/` as a shape guide, set unknown metrics to `null`, and say so in `why` and the trace.
+Parallel: launch both sub-agents at the same time (one message), splitting `config.referencesCount` across 2 sub-agents by angle, passing each its angle name and share: `platform` (the platform's top performers in this domain) and `transfer` (an adjacent category or unexpected format from another brand). Each writes `$RUN/references.<angle>.json`. Then merge into `$RUN/references.json` yourself: concatenate `references` (drop near-duplicates of format and hook), concatenate `takeaways` (keep the best 5), join the `diversityNote`s into one sentence or two. Keep any `kind: "brand"` entry when merging. Time cap: 20% of `config.timeBudgetMinutes`, **minimum 90 s** whatever the budget (real web research is required); pass the cap in seconds to each sub-agent and merge whatever angle files exist by then. Fallback: if web search is unavailable or slow, use what you know plus `examples/references/` as a shape guide, set unknown metrics to `null`, and say so in `why` and the trace.
 
 ## 2. Goals (stage `goals`)
 
@@ -166,7 +166,7 @@ recliner rank <runId>
 
 ## 8. Output (stage `output`)
 
-`recliner export <runId>` copies the selected video and `traces.json` to `outputs/<brief-slug>/`. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
+First write the output trace step (`recliner trace <runId> -`: the selected result, its score, retries and degradations used), **then** `recliner export <runId>`, which copies the selected video and `traces.json` to `outputs/<brief-slug>/`; a step written after export is missing from the exported trace. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
 
 ## Time budget
 
@@ -174,7 +174,7 @@ recliner rank <runId>
 
 - **The budget gates retries only.** The first `generate-clips`, the first `compose` and `export` always run, even over budget: a run always ends with a video.
 - Pre-production stages have their own caps (references 20%, goals 15%, scoring 5% of the budget); when a cap is hit, take what exists and move on.
-- Before every retry, check `stopRetrying`. When it is true (less than 30% of the budget or less than 4 minutes remains, whichever is larger), **stop retrying**: `accept-clips`, then `compose` if there is no result yet, `rank`, `export`.
+- Before every retry, check `stopRetrying`. When it is true (less than 25% of the budget remains), **stop retrying**: `accept-clips`, then `compose` if there is no result yet, `rank`, `export`.
 - Hidden briefs must finish in well under 20 minutes: use the config `new-run` writes; do not raise effort above it.
 
 ## Failure fallbacks (summary)
