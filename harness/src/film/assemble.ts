@@ -1,21 +1,35 @@
-import { copyFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 
 import { FFMPEG, probe, runCmd, tail } from './probe.ts'
 import type { Probe } from './probe.ts'
+import { stillFilter, stillInput } from './still.ts'
+import { pickTextColour, renderCard } from './titles.ts'
 
 export type Clip = { duration?: number; path: string; trimStart?: number }
 
 export type EndCard = {
+  accent?: string
   bg?: string
   fg?: string
   fontFile?: string
+  imagePath?: string
+  logoPath?: string
   seconds?: number
   subtext?: string
   text: string
 }
+
+export type Overlay = {
+  endS: number
+  fadeS?: number
+  imagePath: string
+  startS: number
+}
+
+export type Voice = { path: string; startAt?: number }
 
 export type AssembleInput = {
   clips: Clip[]
@@ -25,7 +39,8 @@ export type AssembleInput = {
   keepClipAudio?: boolean
   music?: { gainDb?: number; path: string }
   outPath: string
-  voice?: { path: string; startAt?: number }
+  overlays?: Overlay[]
+  voice?: Voice | Voice[]
   width?: number
 }
 
@@ -38,124 +53,73 @@ export type AssembleResult = {
 }
 
 const FFMPEG_TIMEOUT_MS = 180_000
-const VOICE_DUCK_DB = 8
-const SAFE_PATH = /^[A-Za-z0-9_./-]+$/
-const SAFE_COLOUR = /^[#A-Za-z0-9@.]+$/
+const CARD_BG = '#0E0E10'
+const CARD_PUSH = 0.03
+const FADE_DEFAULT_S = 0.15
+const MUSIC_END_FADE_S = 0.06
+const DUCK = 'threshold=0.0316:ratio=20:attack=5:release=350:makeup=1'
+const LOUDNORM = 'I=-14:TP=-1.5:LRA=11'
 const STEREO = 'aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo'
-
-const FONT_CANDIDATES = [
-  '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
-  '/System/Library/Fonts/Supplemental/Arial.ttf',
-  '/System/Library/Fonts/Helvetica.ttc',
-  '/Library/Fonts/Arial.ttf',
-  '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-  '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-  '/usr/share/fonts/dejavu/DejaVuSans.ttf',
-  '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-  '/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
-  '/usr/share/fonts/TTF/DejaVuSans.ttf',
-]
-
-let drawtextCheck: Promise<boolean> | undefined
-
-export function hasDrawtext(): Promise<boolean> {
-  drawtextCheck ??= runCmd([FFMPEG, '-hide_banner', '-filters'], 30_000).then(
-    (r) => /\sdrawtext\s/.test(r.stdout),
-  )
-  return drawtextCheck
-}
-
-function findFont(fontFile?: string): string | undefined {
-  if (fontFile) return existsSync(fontFile) ? fontFile : undefined
-  return FONT_CANDIDATES.find((p) => existsSync(p))
-}
-
-function wrap(text: string, maxChars: number): string[] {
-  const lines: string[] = []
-  let line = ''
-  for (const word of text.split(/\s+/).filter(Boolean)) {
-    if (line && line.length + 1 + word.length > maxChars) {
-      lines.push(line)
-      line = word
-    } else {
-      line = line ? `${line} ${word}` : word
-    }
-  }
-  if (line) lines.push(line)
-  return lines
-}
-
-type CardPlan = { filter: string; seconds: number }
-
-async function planEndCard(
-  card: EndCard,
-  size: { fps: number; h: number; w: number },
-  workDir: string,
-  notes: string[],
-): Promise<CardPlan | undefined> {
-  const { fps, h, w } = size
-  if (!(await hasDrawtext())) {
-    notes.push('end card skipped: this ffmpeg build has no drawtext filter')
-    return undefined
-  }
-  const font = findFont(card.fontFile)
-  if (!font) {
-    const missing = card.fontFile ?? ''
-    notes.push(`end card skipped: no usable font ${missing}`.trim())
-    return undefined
-  }
-  if (!SAFE_PATH.test(workDir)) {
-    notes.push('end card skipped: temp folder path has unsafe characters')
-    return undefined
-  }
-  let fontPath = font
-  if (!SAFE_PATH.test(font)) {
-    fontPath = join(workDir, 'font.ttf')
-    copyFileSync(font, fontPath)
-  }
-  const colour = (value: string | undefined, fallback: string) => {
-    if (value === undefined) return fallback
-    if (SAFE_COLOUR.test(value)) return value
-    notes.push(`end card colour "${value}" is invalid, using ${fallback}`)
-    return fallback
-  }
-  const bg = colour(card.bg, 'black')
-  const fg = colour(card.fg, 'white')
-  const seconds = card.seconds ?? 2
-  const titleSize = Math.round(w / 11)
-  const subSize = Math.round(titleSize / 2)
-  const maxChars = (px: number) => Math.floor((w * 0.84) / (px * 0.55))
-  const titleLines = wrap(card.text, maxChars(titleSize))
-  const subLines = wrap(card.subtext ?? '', maxChars(subSize))
-  const titleStep = Math.round(titleSize * 1.2)
-  const subStep = Math.round(subSize * 1.3)
-  const gap = subLines.length > 0 && titleLines.length > 0 ? subSize : 0
-  const block = titleLines.length * titleStep + gap + subLines.length * subStep
-  let y = Math.round((h - block) / 2)
-  const rows = [
-    ...titleLines.map((text) => ({ px: titleSize, step: titleStep, text })),
-    ...subLines.map((text) => ({ px: subSize, step: subStep, text })),
-  ]
-  const draws: string[] = []
-  for (const [i, row] of rows.entries()) {
-    if (i === titleLines.length) y += gap
-    const file = join(workDir, `line${i}.txt`)
-    await writeFile(file, row.text)
-    draws.push(
-      `drawtext=fontfile=${fontPath}:textfile=${file}:fontsize=${row.px}` +
-        `:fontcolor=${fg}:x=(w-text_w)/2:y=${y}`,
-    )
-    y += row.step
-  }
-  const base = `color=c=${bg}:s=${w}x${h}:r=${fps}:d=${seconds}`
-  return {
-    filter: [base, ...draws, 'setsar=1', 'format=yuv420p'].join(','),
-    seconds,
-  }
-}
+const NAMED: Record<string, string> = { black: '#000000', white: '#FFFFFF' }
 
 function requireFile(kind: string, path: string) {
   if (!existsSync(path)) throw new Error(`assemble: ${kind} not found: ${path}`)
+}
+
+function asList(voice: AssembleInput['voice']): Voice[] {
+  if (!voice) return []
+  return Array.isArray(voice) ? voice : [voice]
+}
+
+function hexColour(
+  value: string | undefined,
+  fallback: string,
+  notes: string[],
+): string {
+  if (value === undefined) return fallback
+  const named = NAMED[value.toLowerCase()]
+  if (named) return named
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)) return value
+  notes.push(`end card colour "${value}" is invalid, using ${fallback}`)
+  return fallback
+}
+
+type CardPlan = { png: string; seconds: number }
+
+async function planEndCard(
+  card: EndCard,
+  size: { h: number; w: number },
+  workDir: string,
+  notes: string[],
+): Promise<CardPlan> {
+  if (card.imagePath) requireFile('end card image', card.imagePath)
+  if (card.logoPath) requireFile('end card logo', card.logoPath)
+  if (card.fontFile) notes.push('end card fontFile ignored: Inter is bundled')
+  const bg = hexColour(card.bg, CARD_BG, notes)
+  const fg = hexColour(card.fg, pickTextColour(bg), notes)
+  const png = join(workDir, 'card.png')
+  await renderCard(
+    {
+      accent: card.accent,
+      bg,
+      fg,
+      height: size.h,
+      imagePath: card.imagePath,
+      logoPath: card.logoPath,
+      sub: card.subtext,
+      title: card.text,
+      width: size.w,
+    },
+    png,
+  )
+  return { png, seconds: card.seconds ?? 2 }
+}
+
+type Indices = {
+  card: number
+  music: number
+  overlays: number[]
+  voices: number[]
 }
 
 type AudioPlan = { graph: string[]; mixed: boolean }
@@ -166,7 +130,7 @@ function planAudio(
   effective: number[],
   card: CardPlan | undefined,
   total: number,
-  idx: { music: number; voice: number },
+  idx: Indices,
 ): AudioPlan {
   const g: string[] = []
   const mix: string[] = []
@@ -191,35 +155,106 @@ function planAudio(
     g.push(`${labels.join('')}concat=n=${labels.length}:v=0:a=1[clipa]`)
     mix.push('[clipa]')
   }
+
+  const voices = asList(input.voice)
+  voices.forEach((v, i) => {
+    const delayMs = Math.round((v.startAt ?? 0) * 1000)
+    const delay = delayMs > 0 ? `,adelay=${delayMs}:all=1` : ''
+    g.push(
+      `[${idx.voices[i]}:a]${STEREO}${delay},atrim=duration=${t},` +
+        `asetpts=PTS-STARTPTS[vox${i}]`,
+    )
+  })
+  const pad = `apad=whole_dur=${t},atrim=duration=${t}`
+  if (voices.length === 1) {
+    g.push(`[vox0]${pad}[vox]`)
+  } else if (voices.length > 1) {
+    const ins = voices.map((_, i) => `[vox${i}]`).join('')
+    g.push(
+      `${ins}amix=inputs=${voices.length}:duration=longest:normalize=0:` +
+        `dropout_transition=0,${pad}[vox]`,
+    )
+  }
+
   if (input.music) {
-    const duck = input.voice ? VOICE_DUCK_DB : 0
-    const gain = (input.music.gainDb ?? -6) - duck
-    const fade = Math.min(1, total)
+    const gain = input.music.gainDb ?? -6
+    const fade = Math.min(MUSIC_END_FADE_S, total)
     const fadeAt = Math.max(0, total - fade).toFixed(3)
     g.push(
       `[${idx.music}:a]${STEREO},atrim=duration=${t},asetpts=PTS-STARTPTS,` +
         `volume=${gain}dB,afade=t=out:st=${fadeAt}:d=${fade}[mus]`,
     )
-    mix.push('[mus]')
-  }
-  if (input.voice) {
-    const delayMs = Math.round((input.voice.startAt ?? 0) * 1000)
-    const delay = delayMs > 0 ? `,adelay=${delayMs}:all=1` : ''
-    g.push(
-      `[${idx.voice}:a]${STEREO}${delay},atrim=duration=${t},` +
-        'asetpts=PTS-STARTPTS[vox]',
-    )
+    if (voices.length > 0) {
+      g.push('[vox]asplit=2[voxk][voxm]')
+      g.push(`[mus][voxk]sidechaincompress=${DUCK}[musd]`)
+      mix.push('[musd]', '[voxm]')
+    } else {
+      mix.push('[mus]')
+    }
+  } else if (voices.length > 0) {
     mix.push('[vox]')
   }
+
   if (mix.length === 1) {
-    g.push(`${mix[0]}anull[aout]`)
+    g.push(`${mix[0]}anull[amix]`)
   } else if (mix.length > 1) {
     g.push(
       `${mix.join('')}amix=inputs=${mix.length}:duration=longest:` +
-        'normalize=0:dropout_transition=0[aout]',
+        'normalize=0:dropout_transition=0[amix]',
     )
   }
   return { graph: g, mixed: mix.length > 0 }
+}
+
+type Measured = Record<string, string>
+
+function parseLoudnorm(stderr: string): Measured | undefined {
+  const m = /\{[^{}]*"input_i"[^{}]*\}/.exec(stderr)
+  if (!m) return undefined
+  try {
+    const data = JSON.parse(m[0]) as Measured
+    return Number.isFinite(Number(data.input_i)) ? data : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function loudnormStage(measured: Measured | undefined): string {
+  if (!measured) return `loudnorm=${LOUDNORM},aresample=48000`
+  return (
+    `loudnorm=${LOUDNORM}:measured_I=${measured.input_i}` +
+    `:measured_TP=${measured.input_tp}:measured_LRA=${measured.input_lra}` +
+    `:measured_thresh=${measured.input_thresh}` +
+    `:offset=${measured.target_offset}:linear=true,aresample=48000`
+  )
+}
+
+function planOverlays(
+  overlays: Overlay[],
+  idx: number[],
+  size: { h: number; w: number },
+  from: string,
+): { graph: string[]; last: string } {
+  const g: string[] = []
+  let last = from
+  overlays.forEach((o, k) => {
+    const span = o.endS - o.startS
+    const fade = Math.min(o.fadeS ?? FADE_DEFAULT_S, span / 2)
+    const s = o.startS.toFixed(3)
+    const e = o.endS.toFixed(3)
+    const outAt = (o.endS - fade).toFixed(3)
+    g.push(
+      `[${idx[k]}:v]scale=${size.w}:${size.h},format=rgba,` +
+        `fade=t=in:st=${s}:d=${fade}:alpha=1,` +
+        `fade=t=out:st=${outAt}:d=${fade}:alpha=1[ov${k}]`,
+    )
+    g.push(
+      `[${last}][ov${k}]overlay=enable='between(t,${s},${e})':` +
+        `format=auto[vo${k}]`,
+    )
+    last = `vo${k}`
+  })
+  return { graph: g, last }
 }
 
 export async function assemble(
@@ -229,7 +264,15 @@ export async function assemble(
   if (input.clips.length === 0) throw new Error('assemble: no clips given')
   for (const c of input.clips) requireFile('clip', c.path)
   if (input.music) requireFile('music', input.music.path)
-  if (input.voice) requireFile('voice', input.voice.path)
+  const voices = asList(input.voice)
+  for (const v of voices) requireFile('voice', v.path)
+  const overlays = input.overlays ?? []
+  for (const o of overlays) {
+    requireFile('overlay', o.imagePath)
+    if (!(o.endS > o.startS)) {
+      throw new Error(`assemble: overlay ends before it starts: ${o.imagePath}`)
+    }
+  }
 
   const w = input.width ?? 1080
   const h = input.height ?? 1920
@@ -248,26 +291,33 @@ export async function assemble(
   const workDir = mkdtempSync(join(tmpdir(), 'film-card-'))
   try {
     const card = input.endCard
-      ? await planEndCard(input.endCard, { fps, h, w }, workDir, notes)
+      ? await planEndCard(input.endCard, { h, w }, workDir, notes)
       : undefined
     const total =
       effective.reduce((a, b) => a + b, 0) + (card?.seconds ?? 0)
 
-    const args: string[] = ['-y', '-hide_banner', '-loglevel', 'error']
-    args.push('-nostdin')
+    const inputs: string[] = []
     input.clips.forEach((c, i) => {
-      if (c.trimStart) args.push('-ss', String(c.trimStart))
-      args.push('-t', (effective[i] as number).toFixed(3), '-i', c.path)
+      if (c.trimStart) inputs.push('-ss', String(c.trimStart))
+      inputs.push('-t', (effective[i] as number).toFixed(3), '-i', c.path)
     })
-    const idx = { music: -1, voice: -1 }
+    const idx: Indices = { card: -1, music: -1, overlays: [], voices: [] }
     let next = input.clips.length
     if (input.music) {
-      args.push('-stream_loop', '-1', '-i', input.music.path)
+      inputs.push('-stream_loop', '-1', '-i', input.music.path)
       idx.music = next++
     }
-    if (input.voice) {
-      args.push('-i', input.voice.path)
-      idx.voice = next++
+    for (const v of voices) {
+      inputs.push('-i', v.path)
+      idx.voices.push(next++)
+    }
+    for (const o of overlays) {
+      inputs.push(...stillInput(o.imagePath, { fps, seconds: total }))
+      idx.overlays.push(next++)
+    }
+    if (card) {
+      inputs.push(...stillInput(card.png, { fps, seconds: card.seconds }))
+      idx.card = next++
     }
 
     const g: string[] = []
@@ -281,20 +331,60 @@ export async function assemble(
       vLabels.push(`[v${i}]`)
     })
     if (card) {
-      g.push(`${card.filter}[vend]`)
+      const move = stillFilter({
+        fps,
+        height: h,
+        move: 'push',
+        seconds: card.seconds,
+        width: w,
+        zoom: CARD_PUSH,
+      })
+      g.push(`[${idx.card}:v]${move}[vend]`)
       vLabels.push('[vend]')
     }
-    g.push(`${vLabels.join('')}concat=n=${vLabels.length}:v=1:a=0[vout]`)
-    const audio = planAudio(input, probes, effective, card, total, idx)
-    g.push(...audio.graph)
+    g.push(`${vLabels.join('')}concat=n=${vLabels.length}:v=1:a=0[vcat]`)
+    const ov = planOverlays(overlays, idx.overlays, { h, w }, 'vcat')
+    g.push(...ov.graph)
+    g.push(`[${ov.last}]format=yuv420p[vout]`)
 
-    args.push('-filter_complex', g.join(';'), '-map', '[vout]')
+    const audio = planAudio(input, probes, effective, card, total, idx)
+    const base = ['-y', '-hide_banner', '-nostdin', '-loglevel', 'error']
+    let stage = loudnormStage(undefined)
+    if (audio.mixed) {
+      const probeRun = await runCmd(
+        [
+          FFMPEG,
+          ...['-y', '-hide_banner', '-nostdin', '-loglevel', 'info'],
+          ...inputs,
+          ...[
+            '-filter_complex',
+            [
+              ...audio.graph,
+              `[amix]loudnorm=${LOUDNORM}:print_format=json[ln]`,
+            ].join(';'),
+          ],
+          ...['-map', '[ln]', '-t', total.toFixed(3), '-f', 'null', '-'],
+        ],
+        FFMPEG_TIMEOUT_MS,
+      )
+      stage = loudnormStage(parseLoudnorm(probeRun.stderr))
+      if (!parseLoudnorm(probeRun.stderr)) {
+        notes.push('loudnorm measure failed, used single pass')
+      }
+      g.push(...audio.graph, `[amix]${stage}[aout]`)
+    }
+
+    const args: string[] = [
+      ...base,
+      ...inputs,
+      ...['-filter_complex', g.join(';'), '-map', '[vout]'],
+    ]
     if (audio.mixed) args.push('-map', '[aout]')
     args.push(
       ...['-c:v', 'libx264', '-crf', '18', '-preset', 'veryfast'],
       ...['-pix_fmt', 'yuv420p', '-r', String(fps)],
     )
-    if (audio.mixed) args.push('-c:a', 'aac', '-b:a', '160k')
+    if (audio.mixed) args.push('-c:a', 'aac', '-b:a', '160k', '-ar', '48000')
     args.push('-movflags', '+faststart', '-t', total.toFixed(3))
     args.push(input.outPath)
 

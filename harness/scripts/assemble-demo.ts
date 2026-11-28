@@ -3,6 +3,7 @@ import { join } from 'node:path'
 
 import { assemble } from '../src/film/assemble.ts'
 import { FFMPEG, runCmd, tail } from '../src/film/probe.ts'
+import { renderCard, renderSuper } from '../src/film/titles.ts'
 
 const dir = join(import.meta.dir, '..', 'runs', 'demo')
 const inputs = join(dir, 'inputs')
@@ -35,15 +36,77 @@ const square = await make(
 )
 const music = await make(
   join(inputs, 'music.wav'),
-  ...['-f', 'lavfi', '-i', 'sine=frequency=440:duration=3'],
+  ...['-f', 'lavfi', '-i', 'sine=frequency=220:duration=8'],
 )
+const voice = await make(
+  join(inputs, 'voice.wav'),
+  ...['-f', 'lavfi', '-i', 'sine=frequency=600:duration=1.6'],
+  ...['-af', 'tremolo=f=4:d=0.9'],
+)
+const product = await make(
+  join(inputs, 'product.png'),
+  ...['-f', 'lavfi', '-i', 'color=c=0xE8412C:s=900x600,format=rgba'],
+  ...['-vf', 'drawbox=x=70:y=70:w=760:h=460:color=0xF5E9D0:t=fill'],
+  ...['-frames:v', '1'],
+)
+
+const size = { height: 1920, width: 1080 }
+const superPng = await renderSuper(
+  'Built for the last mile.',
+  { ...size, position: 'lower' },
+  join(inputs, 'super.png'),
+)
+
+const samples = [
+  {
+    file: 'card-dark-image.png',
+    spec: {
+      accent: '#F2B705',
+      bg: '#0F3D2E',
+      fg: '#FFFFFF',
+      imagePath: product,
+      sub: 'The new Pegasus. Out now.',
+      title: 'Run further.',
+    },
+  },
+  {
+    file: 'card-light.png',
+    spec: {
+      bg: '#F3EBDD',
+      fg: '#111111',
+      sub: 'Free returns for 60 days',
+      title: 'Made to move',
+    },
+  },
+  {
+    file: 'card-long.png',
+    spec: {
+      bg: '#1B1B3A',
+      fg: '#FFFFFF',
+      sub: 'nike.com/pegasus',
+      title: 'Every mile starts with one decision to go',
+    },
+  },
+]
+for (const s of samples) {
+  await renderCard({ ...size, ...s.spec }, join(dir, s.file))
+}
 
 const result = await assemble({
   clips: [{ path: landscape }, { path: portrait }, { path: square }],
-  endCard: { subtext: 'Made by the demo', text: 'Demo film' },
-  keepClipAudio: true,
-  music: { gainDb: -12, path: music },
+  endCard: {
+    accent: '#F2B705',
+    bg: '#0F3D2E',
+    imagePath: product,
+    seconds: 2.5,
+    subtext: 'The new Pegasus. Out now.',
+    text: 'Run further.',
+  },
+  keepClipAudio: false,
+  music: { gainDb: -8, path: music },
   outPath: join(dir, 'final.mp4'),
+  overlays: [{ endS: 3.2, imagePath: superPng, startS: 1.4 }],
+  voice: { path: voice, startAt: 1.6 },
 })
 
 const p = result.probe

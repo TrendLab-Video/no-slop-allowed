@@ -4,3 +4,4 @@ node_modules/
 runs/*.json
 .DS_Store
 .test-runs/
+runs/*/

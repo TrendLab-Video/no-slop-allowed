@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { assemble, hasDrawtext } from '../src/film/assemble.ts'
+import { assemble } from '../src/film/assemble.ts'
 import { download } from '../src/film/download.ts'
 import { probe } from '../src/film/probe.ts'
 import {
@@ -35,8 +35,59 @@ function maxVolumeDb(path: string): number {
   return m[1] === '-inf' ? -Infinity : Number(m[1])
 }
 
+function frameRgb(path: string, t: number): number[] {
+  const r = Bun.spawnSync([
+    FFMPEG,
+    ...['-v', 'error', '-ss', String(t), '-i', path, '-frames:v', '1'],
+    ...['-vf', 'crop=8:8:100:200,scale=1:1:flags=area'],
+    ...['-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'],
+  ])
+  if (r.exitCode !== 0) throw new Error(r.stderr.toString())
+  return [...new Uint8Array(r.stdout)]
+}
+
+function bandDb(path: string, hz: number, start: number, len: number) {
+  const r = Bun.spawnSync([
+    FFMPEG,
+    ...['-ss', String(start), '-t', String(len), '-i', path, '-vn'],
+    ...['-af', `bandpass=f=${hz}:width_type=h:w=60,volumedetect`],
+    ...['-f', 'null', '-'],
+  ])
+  const m = /mean_volume: (-?[\d.]+|-inf) dB/.exec(r.stderr.toString())
+  if (!m?.[1]) throw new Error('no volumedetect output')
+  return m[1] === '-inf' ? -200 : Number(m[1])
+}
+
+function integratedLufs(path: string): number {
+  const r = Bun.spawnSync([
+    FFMPEG,
+    ...['-i', path, '-vn', '-af', 'ebur128=framelog=quiet'],
+    ...['-f', 'null', '-'],
+  ])
+  const text = r.stderr.toString()
+  const m = /Integrated loudness:\s+I:\s+(-?[\d.]+) LUFS/.exec(text)
+  if (!m?.[1]) throw new Error(`no ebur128 summary:\n${text.slice(-400)}`)
+  return Number(m[1])
+}
+
 beforeAll(async () => {
   dir = await mkdtemp(join(tmpdir(), 'film-test-'))
+  ffmpeg(
+    ...['-f', 'lavfi', '-i', 'color=c=red:size=360x640:rate=25:duration=3'],
+    ...['-pix_fmt', 'yuv420p', f('red3.mp4')],
+  )
+  ffmpeg(
+    ...['-f', 'lavfi', '-i', 'color=c=blue:size=360x640,format=rgba'],
+    ...['-frames:v', '1', f('blue.png')],
+  )
+  ffmpeg(
+    ...['-f', 'lavfi', '-i', 'sine=frequency=440:duration=8'],
+    f('music-long.wav'),
+  )
+  ffmpeg(
+    ...['-f', 'lavfi', '-i', 'sine=frequency=4000:duration=0.5'],
+    f('voice2.wav'),
+  )
   ffmpeg(
     ...['-f', 'lavfi', '-i', 'testsrc=size=640x360:rate=25:duration=1'],
     ...['-pix_fmt', 'yuv420p', f('land.mp4')],
@@ -171,29 +222,130 @@ describe('assemble', () => {
     expect(maxVolumeDb(kept.outPath)).toBeGreaterThan(-40)
   })
 
-  test('the end card adds its seconds, or is skipped with a note', async () => {
+  test('the end card adds its seconds on any machine', async () => {
     const r = await assemble({
       clips: [clip('land.mp4')],
       endCard: { seconds: 1, subtext: 'Just do it', text: 'Nike' },
       outPath: f('out/card.mp4'),
     })
-    if (await hasDrawtext()) {
-      expect(Math.abs(r.probe.durationS - 2)).toBeLessThan(0.25)
-      expect(r.notes).toEqual([])
-    } else {
-      expect(Math.abs(r.probe.durationS - 1)).toBeLessThan(0.25)
-      expect(r.notes.join(' ')).toContain('drawtext')
-    }
+    expect(Math.abs(r.probe.durationS - 2)).toBeLessThan(0.25)
+    expect(r.notes).toEqual([])
   })
 
-  test('a missing font file skips the card with a note', async () => {
+  test('end card colours that are not hex fall back with a note', async () => {
     const r = await assemble({
       clips: [clip('land.mp4')],
-      endCard: { fontFile: f('no-such.ttf'), text: 'Nike' },
-      outPath: f('out/card-nofont.mp4'),
+      endCard: { bg: 'not-a-colour', seconds: 1, text: 'Nike' },
+      outPath: f('out/card-badcolour.mp4'),
     })
-    expect(Math.abs(r.probe.durationS - 1)).toBeLessThan(0.25)
-    expect(r.notes.length).toBeGreaterThan(0)
+    expect(Math.abs(r.probe.durationS - 2)).toBeLessThan(0.25)
+    expect(r.notes.join(' ')).toContain('not-a-colour')
+  })
+
+  test('an end card with a missing product image throws', async () => {
+    await expect(
+      assemble({
+        clips: [clip('land.mp4')],
+        endCard: { imagePath: f('no-such.png'), text: 'Nike' },
+        outPath: f('out/card-noimg.mp4'),
+      }),
+    ).rejects.toThrow('no-such.png')
+  })
+
+  test('an overlay shows only between its times', async () => {
+    const r = await assemble({
+      clips: [clip('red3.mp4')],
+      outPath: f('out/overlay.mp4'),
+      overlays: [{ endS: 2, imagePath: f('blue.png'), startS: 1 }],
+    })
+    expect(Math.abs(r.probe.durationS - 3)).toBeLessThan(0.25)
+    const [r0, , b0] = frameRgb(r.outPath, 0.5)
+    const [r1, , b1] = frameRgb(r.outPath, 1.5)
+    const [r2, , b2] = frameRgb(r.outPath, 2.6)
+    expect(r0).toBeGreaterThan(180)
+    expect(b0).toBeLessThan(80)
+    expect(b1).toBeGreaterThan(180)
+    expect(r1).toBeLessThan(80)
+    expect(r2).toBeGreaterThan(180)
+    expect(b2).toBeLessThan(80)
+  })
+
+  test('an overlay fades in rather than cutting', async () => {
+    const r = await assemble({
+      clips: [clip('red3.mp4')],
+      outPath: f('out/overlay-fade.mp4'),
+      overlays: [
+        { endS: 2.5, fadeS: 0.5, imagePath: f('blue.png'), startS: 1 },
+      ],
+    })
+    const [red, , blue] = frameRgb(r.outPath, 1.25)
+    expect(red).toBeGreaterThan(60)
+    expect(blue).toBeGreaterThan(60)
+  })
+
+  test('music ducks under a voice that speaks in the middle', async () => {
+    const r = await assemble({
+      clips: [clip('red3.mp4'), clip('red3.mp4')],
+      music: { gainDb: -6, path: f('music-long.wav') },
+      outPath: f('out/duck.mp4'),
+      voice: { path: f('voice.wav'), startAt: 2.5 },
+    })
+    const before = bandDb(r.outPath, 440, 0.5, 1.5)
+    const during = bandDb(r.outPath, 440, 2.7, 0.2)
+    const after = bandDb(r.outPath, 440, 5, 0.8)
+    expect(before - during).toBeGreaterThan(5)
+    expect(Math.abs(before - after)).toBeLessThan(2)
+  })
+
+  test('the film loudness lands within 1.5 LU of -14', async () => {
+    const r = await assemble({
+      clips: [clip('red3.mp4'), clip('red3.mp4')],
+      music: { path: f('music-long.wav') },
+      outPath: f('out/loud.mp4'),
+      voice: { path: f('voice.wav'), startAt: 2.5 },
+    })
+    expect(Math.abs(integratedLufs(r.outPath) + 14)).toBeLessThan(1.5)
+  })
+
+  test('the music ends with a short fade and no long tail', async () => {
+    const r = await assemble({
+      clips: [clip('red3.mp4')],
+      music: { path: f('music-long.wav') },
+      outPath: f('out/music-end.mp4'),
+    })
+    expect(Math.abs(r.probe.durationS - 3)).toBeLessThan(0.25)
+    const body = bandDb(r.outPath, 440, 1.5, 1)
+    const lastFrames = bandDb(r.outPath, 440, 2.5, 0.35)
+    expect(Math.abs(body - lastFrames)).toBeLessThan(2)
+  })
+
+  test('a clip with audio gives a silent film by default', async () => {
+    const r = await assemble({
+      clips: [clip('port.mp4'), clip('port.mp4')],
+      endCard: { seconds: 0.5, text: 'Silent' },
+      outPath: f('out/default-silent.mp4'),
+    })
+    expect(r.probe.hasAudio).toBe(false)
+  })
+
+  test('two voices land at their own start times', async () => {
+    const r = await assemble({
+      clips: [clip('red3.mp4'), clip('red3.mp4')],
+      outPath: f('out/two-voices.mp4'),
+      voice: [
+        { path: f('voice.wav'), startAt: 0.5 },
+        { path: f('voice2.wav'), startAt: 3 },
+      ],
+    })
+    expect(r.probe.hasAudio).toBe(true)
+    const one = (t: number) => bandDb(r.outPath, 880, t, 0.3)
+    const two = (t: number) => bandDb(r.outPath, 4000, t, 0.3)
+    expect(one(0.6)).toBeGreaterThan(-45)
+    expect(one(0.6) - one(3.1)).toBeGreaterThan(25)
+    expect(one(0.6) - one(1.8)).toBeGreaterThan(25)
+    expect(two(3.1)).toBeGreaterThan(-45)
+    expect(two(3.1) - two(0.6)).toBeGreaterThan(25)
+    expect(two(3.1) - two(1.8)).toBeGreaterThan(25)
   })
 
   test('zero clips throws', async () => {
