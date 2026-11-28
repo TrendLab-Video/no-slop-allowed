@@ -8,6 +8,8 @@ Never ask the user anything. Hard cap: 1 minute.
 
 - `$RUN/brief.json`, `$RUN/goals.json` (including its `intent`), `$RUN/references.json` (`takeaways` only)
 
+If `brief.objective` or `brief.platform` is empty, judge against `goals.json` `intent` and assume short-form vertical social.
+
 ## The question
 
 For each goal: **"Does this goal match the intended brief?"** Give `confidence` from 0 to 1 that the answer is yes.
@@ -33,7 +35,7 @@ Use the whole range. Do not give every goal 0.8; the scores must separate the go
 }
 ```
 
-`scorer` is `haiku` (or the model you are on). `selectedGoalId` is the goal with the highest confidence. Then the orchestrator runs `recliner score <runId>`, which validates this file and writes `plan.json`.
+`scorer` is `haiku` (or the model you are on). `selectedGoalId` is the goal with the highest confidence. Then run `recliner score <runId> --scorer haiku` (or leave it to the orchestrator): it validates this file, may add a `jevError` note, and writes `plan.json`.
 
 ## Return
 
