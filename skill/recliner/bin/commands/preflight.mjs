@@ -9,9 +9,11 @@ export default async function ([runId], flags) {
     appendTraceLocked(runId, {
       name: 'preflight', stage: 'brief',
       tool_calls: [{ tool: `fal:${r.method || 'none'}`, arguments: {}, result: { ok: r.ok, status: r.status, balance: r.balance, reason: r.reason } }],
-      outputs: { ok: r.ok, reason: r.reason }, duration_ms: r.duration_ms,
+      outputs: { ok: r.ok, reason: r.reason, balance: r.balance, floor: r.floor, headroom: r.headroom }, duration_ms: r.duration_ms,
     });
   }
-  if (!r.ok) throw new Error(r.reason);
-  return { ok: true, balance: r.balance, method: r.method, duration_ms: r.duration_ms };
+  const money = (n) => (n === null || n === undefined ? 'unknown' : `$${n.toFixed(2)}`);
+  const line = `balance ${money(r.balance)}, floor ${r.floor ? money(r.floor) : 'off'} (RECLINER_MIN_BALANCE), headroom ${money(r.headroom)}`;
+  if (!r.ok) throw new Error(`${r.reason} [${line}]`);
+  return { ok: true, balance: r.balance, floor: r.floor, headroom: r.headroom, summary: line, method: r.method, duration_ms: r.duration_ms };
 }

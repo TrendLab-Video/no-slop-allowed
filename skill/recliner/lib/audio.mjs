@@ -52,7 +52,8 @@ export async function generateAssets(runId, plan, config = {}) {
   const musicJob = cached(runId, `audio/music-${hash(musicPrompt + seconds)}.mp3`, async (tmp) => {
     let rec = await falToFile(MUSIC_MODEL, { prompt: musicPrompt, music_length_ms: seconds * 1000, force_instrumental: true }, tmp);
     trace(runId, 'music', rec, musicPrompt);
-    if (rec.status !== 'ok') {
+    // Auth errors and the spend floor stop audio at once: no fallback model.
+    if (rec.status !== 'ok' && !rec.stop) {
       notes.push(`music: ${MUSIC_MODEL} failed (${rec.error}); trying ${MUSIC_FALLBACK_MODEL}`);
       rec = await falToFile(MUSIC_FALLBACK_MODEL, { prompt: musicPrompt, seconds_total: Math.min(seconds, 190) }, tmp);
       trace(runId, 'music-fallback', rec, musicPrompt);
@@ -71,7 +72,9 @@ export async function generateAssets(runId, plan, config = {}) {
   const [m, v] = await Promise.all([musicJob, voJob]);
   if (!m.file) notes.push(`music generation failed: ${m.rec?.error}`);
   if (voText && !v.file) notes.push(`voiceover generation failed: ${v.rec?.error}`);
-  return { music: m.file, voiceover: v.file, notes };
+  const stopped = [m.rec, v.rec].find((r) => r?.stop)?.error || null;
+  if (stopped) notes.push(`audio stopped: ${stopped}`);
+  return { music: m.file, voiceover: v.file, notes, stopped };
 }
 
 function trace(runId, kind, rec, prompt) {

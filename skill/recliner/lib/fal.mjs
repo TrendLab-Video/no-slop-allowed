@@ -61,6 +61,54 @@ async function withRetry(fn) {
   }
 }
 
+// ---- Spend guard ------------------------------------------------------------------------------
+// Every paid submit checks the account balance first and refuses at or below RECLINER_MIN_BALANCE
+// (USD, default 100, 0 disables). The balance is cached for 20s and shared between parallel calls.
+const BALANCE_URL = 'https://rest.alpha.fal.ai/billing/user_balance';
+let balanceCache = null; // { value, at } or { promise, at }
+
+export function minBalance() {
+  loadEnv();
+  const v = parseFloat(process.env.RECLINER_MIN_BALANCE ?? '100');
+  return Number.isFinite(v) && v > 0 ? v : 0;
+}
+
+// Returns { balance: number|null, status, error }. Never throws.
+export async function getBalance({ maxAgeMs = 20000, force = false } = {}) {
+  const now = Date.now();
+  if (!force && balanceCache && (balanceCache.promise || now - balanceCache.at < maxAgeMs)) return balanceCache.promise || balanceCache.value;
+  const promise = (async () => {
+    try {
+      const res = await fetch(BALANCE_URL, { headers: { Authorization: `Key ${falKey()}` }, signal: AbortSignal.timeout(10000) });
+      const text = (await res.text()).trim();
+      const n = parseFloat(text);
+      return res.ok && Number.isFinite(n) ? { balance: n, status: res.status, error: null } : { balance: null, status: res.status, error: text.slice(0, 200) };
+    } catch (err) { return { balance: null, status: null, error: err.message }; }
+  })();
+  balanceCache = { promise, at: now };
+  const value = await promise;
+  balanceCache = { value, at: Date.now() };
+  return value;
+}
+
+const usd = (n) => `$${Number(n).toFixed(2)}`;
+export const floorMessage = (balance, floor) => `fal balance ${usd(balance)} is at or below the floor ${usd(floor)}`;
+
+// Throws (err.floor = true) at or below the floor. If the balance cannot be read the call is allowed.
+export async function spendGuard() {
+  const floor = minBalance();
+  if (!floor) return { floor: 0, balance: null };
+  const b = await getBalance();
+  if (b.status === 401) { const e = new Error('fal rejected FAL_KEY (401): the key is wrong or revoked'); e.status = 401; throw e; }
+  if (b.balance === null) return { floor, balance: null, warning: `balance unavailable (${b.status || b.error}); call allowed` };
+  if (b.balance <= floor) { const e = new Error(floorMessage(b.balance, floor)); e.floor = true; e.balance = b.balance; throw e; }
+  return { floor, balance: b.balance };
+}
+
+export const isFloorError = (err) => !!err?.floor || /is at or below the floor/.test(err?.message || err || '');
+// Errors after which no further fal call can succeed: stop everything at once.
+export const isStopError = (err) => isAuthError(err) || isFloorError(err);
+
 // 401/403 from fal: bad key, locked account or exhausted balance. Retrying or trying other scenes cannot help.
 export const isAuthError = (err) => err?.status === 401 || err?.status === 403 || / -> 40[13]:/.test(err?.message || err || '');
 
@@ -68,34 +116,33 @@ export const isAuthError = (err) => err?.status === 401 || err?.status === 403 |
 // smallest possible job (1-step 256px SDXL, a fraction of a cent) and cancel it. Never throws.
 export async function checkAccount({ probe = false } = {}) {
   const started = Date.now();
-  const out = { ok: false, reason: null, balance: null, method: null, status: null, duration_ms: null };
-  try { falKey(); } catch (e) { return { ...out, reason: e.message, duration_ms: 0 }; }
-  try {
-    const res = await fetch('https://rest.alpha.fal.ai/billing/user_balance', { headers: { Authorization: `Key ${falKey()}` }, signal: AbortSignal.timeout(10000) });
-    out.status = res.status;
-    out.method = 'billing/user_balance';
-    const text = (await res.text()).trim();
-    if (res.status === 401) return { ...out, reason: 'fal rejected FAL_KEY (401): the key is wrong or revoked', duration_ms: Date.now() - started };
-    if (res.ok && !Number.isNaN(parseFloat(text))) {
-      out.balance = parseFloat(text);
-      if (out.balance <= 0 && !probe) return { ...out, reason: `fal balance is ${out.balance}: top up at fal.ai/dashboard/billing`, duration_ms: Date.now() - started };
-      if (!probe) return { ...out, ok: true, duration_ms: Date.now() - started };
-    }
-  } catch {}
-  // Fallback (or --probe): a real queue submit, which is where fal reports locked accounts.
+  const floor = minBalance();
+  const out = { ok: false, reason: null, balance: null, floor, headroom: null, method: 'billing/user_balance', status: null, duration_ms: null };
+  const done = (extra) => ({ ...out, ...extra, duration_ms: Date.now() - started });
+  try { falKey(); } catch (e) { return done({ reason: e.message, method: null }); }
+  const b = await getBalance({ force: true });
+  out.status = b.status;
+  if (b.status === 401) return done({ reason: 'fal rejected FAL_KEY (401): the key is wrong or revoked' });
+  if (b.balance !== null) {
+    out.balance = b.balance;
+    out.headroom = Math.round((b.balance - floor) * 100) / 100;
+    if (b.balance <= 0) return done({ reason: `fal balance is ${usd(b.balance)}: top up at fal.ai/dashboard/billing` });
+    if (floor && b.balance <= floor) return done({ reason: floorMessage(b.balance, floor) });
+    if (!probe) return done({ ok: true });
+  }
+  // Balance unavailable for this key (or --probe): a real queue submit, which is where fal reports locked accounts.
   out.method = 'queue submit fal-ai/fast-sdxl';
   try {
     const sub = await request(`${QUEUE}/fal-ai/fast-sdxl`, { method: 'POST', body: { prompt: 'preflight', num_inference_steps: 1, image_size: { width: 256, height: 256 } }, timeoutMs: 15000 });
-    out.status = 200;
     if (sub.cancel_url) fetch(sub.cancel_url, { method: 'PUT', headers: { Authorization: `Key ${falKey()}` } }).catch(() => {});
-    return { ...out, ok: true, duration_ms: Date.now() - started };
+    return done({ ok: true, status: 200 });
   } catch (err) {
-    out.status = err.status || null;
-    return { ...out, reason: isAuthError(err) ? err.message.replace(/^fal POST \S+ -> /, 'fal ') : `fal unreachable: ${err.message}`, duration_ms: Date.now() - started };
+    return done({ status: err.status || null, reason: isAuthError(err) ? err.message.replace(/^fal POST \S+ -> /, 'fal ') : `fal unreachable: ${err.message}` });
   }
 }
 
 export async function submit(endpoint, args) {
+  await spendGuard();
   return withRetry(() => request(`${QUEUE}/${endpoint}`, { method: 'POST', body: args }));
 }
 
@@ -141,20 +188,25 @@ export async function download(url, file, { timeoutMs = 120000 } = {}) {
 }
 
 // Submit, poll, fetch result. Never throws: returns the trace record with status ok|failed.
+// `stop` is true for errors after which no other fal call can succeed (401/403, balance floor).
 export async function run(endpoint, args, opts = {}) {
   const started = Date.now();
-  const rec = { endpoint, arguments: args, requestId: null, status: 'submitted', result: null, url: null, duration_ms: null, error: null };
+  const rec = { endpoint, arguments: args, requestId: null, status: 'submitted', result: null, url: null, cost: null, metrics: null, duration_ms: null, error: null, stop: false };
   try {
     const sub = await submit(endpoint, args);
     rec.requestId = sub.request_id;
     opts.onSubmit?.(rec);
-    await poll(sub, opts);
+    const st = await poll(sub, opts);
+    rec.metrics = st?.metrics || null;
     rec.result = await result(sub);
     rec.url = mediaUrl(rec.result);
+    // The queue API does not report cost today; keep it if a response ever carries it.
+    rec.cost = rec.result?.cost ?? rec.result?.billing?.cost ?? st?.cost ?? st?.metrics?.cost ?? null;
     rec.status = 'ok';
   } catch (err) {
     rec.status = 'failed';
     rec.error = err.message;
+    rec.stop = isStopError(err);
   }
   rec.duration_ms = Date.now() - started;
   return rec;
@@ -164,7 +216,7 @@ export async function run(endpoint, args, opts = {}) {
 export const toolCall = (rec) => ({
   tool: `fal:${rec.endpoint}`,
   arguments: rec.arguments,
-  result: { requestId: rec.requestId, status: rec.status, url: rec.url, error: rec.error, duration_ms: rec.duration_ms },
+  result: { requestId: rec.requestId, status: rec.status, url: rec.url, cost: rec.cost, metrics: rec.metrics, error: rec.error, duration_ms: rec.duration_ms },
 });
 
 // Map our generic request onto each video model's argument names and allowed values.

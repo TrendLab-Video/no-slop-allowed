@@ -74,26 +74,39 @@ function wrap(text, maxChars) {
   return lines;
 }
 
+// Heavy display font shared by both compositors (rsvg by family name, Blender by file).
+export const FONT_FILES = ['/System/Library/Fonts/Supplemental/Arial Black.ttf', '/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'];
+const FONT_FAMILY = "'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+
 // Text layout inside platform safe areas: vertical video keeps clear of the bottom ~22% (captions, UI)
-// and the top ~12%; text sits in the lower-middle band. Returns the layout used by both compositors.
+// and the top ~12%; text sits in the lower-middle band, at most 3 lines within 84% of the width.
 export function textLayout(text, width, height) {
   const vertical = height > width;
-  const fontSize = Math.round(Math.min(width, height) * (vertical ? 0.075 : 0.065));
-  const maxChars = Math.max(10, Math.floor((width * 0.82) / (fontSize * 0.56)));
+  const fontSize = Math.round(vertical ? width * 0.088 : height * 0.078);
+  const maxChars = Math.max(8, Math.floor((width * 0.84) / (fontSize * 0.6)));
   const lines = wrap(text, maxChars).slice(0, 3);
-  const lineH = Math.round(fontSize * 1.18);
-  const centerY = Math.round(height * (vertical ? 0.64 : 0.78));
-  return { lines, fontSize, lineH, centerY, firstBaseline: centerY - ((lines.length - 1) * lineH) / 2 + fontSize * 0.35 };
+  const lineH = Math.round(fontSize * 1.15);
+  const centerY = Math.round(height * (vertical ? 0.63 : 0.76));
+  return { lines, fontSize, lineH, centerY, firstBaseline: centerY - ((lines.length - 1) * lineH) / 2 + fontSize * 0.36 };
 }
 
 // Full-frame transparent PNG with the on-screen text, rendered with rsvg-convert (ffmpeg here has no drawtext).
+// A heavy font with a doubled soft shadow keeps white text legible on any footage (Blender adds a plate).
 export async function textCard(text, width, height, file) {
   if (!text || !which('rsvg-convert')) return null;
   const L = textLayout(text, width, height);
+  const fs_ = L.fontSize;
   const tspans = L.lines.map((l, i) => `<tspan x="${width / 2}" y="${Math.round(L.firstBaseline + i * L.lineH)}">${esc(l)}</tspan>`).join('');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-  <defs><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="${Math.round(L.fontSize * 0.05)}" stdDeviation="${Math.round(L.fontSize * 0.12)}" flood-color="#000" flood-opacity="0.75"/></filter></defs>
-  <text font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="${L.fontSize}" fill="#ffffff" text-anchor="middle" letter-spacing="${(L.fontSize * -0.01).toFixed(1)}" filter="url(#s)">${tspans}</text>
+  <defs>
+    <filter id="shadow" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="${Math.round(fs_ * 0.09)}" result="sb"/>
+      <feOffset in="sb" dy="${Math.round(fs_ * 0.04)}" result="shadow"/>
+      <feComponentTransfer in="shadow" result="shadowA"><feFuncA type="linear" slope="0.9"/></feComponentTransfer>
+      <feMerge><feMergeNode in="shadowA"/><feMergeNode in="shadowA"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <text font-family="${FONT_FAMILY}" font-weight="900" font-size="${fs_}" fill="#ffffff" text-anchor="middle" filter="url(#shadow)">${tspans}</text>
 </svg>`;
   const svgFile = file.replace(/\.png$/, '.svg');
   fs.writeFileSync(svgFile, svg);

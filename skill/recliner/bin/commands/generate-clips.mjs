@@ -1,6 +1,6 @@
 import { readJson, runPath } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
-import { run as falRun, download, toolCall, videoArgs, checkAccount, isAuthError, VIDEO_MODELS } from '../../lib/fal.mjs';
+import { run as falRun, download, toolCall, videoArgs, checkAccount, getBalance, minBalance, VIDEO_MODELS } from '../../lib/fal.mjs';
 import { probeDuration } from '../../lib/compositors/ffmpeg.mjs';
 import { generateAssets } from '../../lib/audio.mjs';
 
@@ -30,8 +30,13 @@ export default async function ([runId], flags) {
   if (!plan) throw new Error(`No plan.json in run ${runId}`);
   const config = readJson(runId, 'config.json', {});
   // Fail fast on a missing key, bad key or empty balance before reserving any attempts.
+  const started = Date.now();
   const account = await checkAccount();
-  if (!account.ok) throw new Error(account.reason);
+  if (!account.ok) {
+    appendTraceLocked(runId, { name: 'generate-clips:refused', stage: 'clips', inputs: { scene: flags.scene || null }, outputs: { ok: false, reason: account.reason, balance: account.balance, floor: account.floor } });
+    throw new Error(account.reason);
+  }
+  const balanceBefore = account.balance;
 
   const model = config.videoModel || VIDEO_MODELS[config.effort || 3];
   const aspectRatio = config.aspectRatio || plan.aspectRatio || readJson(runId, 'brief.json', {})?.aspectRatio || '16:9';
@@ -77,22 +82,23 @@ export default async function ([runId], flags) {
   // Start the music bed (and voiceover) alongside the clips so compose finds them cached.
   const audioJob = flags.scene || config.audio === false ? null : generateAssets(runId, plan, config).catch((e) => ({ notes: [e.message] }));
 
-  // A 401/403 (bad key, locked or exhausted account) stops every job that has not started yet.
-  let authError = null;
+  // A 401/403 (bad key, locked or exhausted account) or the spend floor stops every job that has not started yet.
+  let stopError = null;
   const results = await mapLimit(jobs, parallelism, async (job) => {
-    if (authError) {
-      update(job.scene.id, job.attempt, { status: 'failed', error: `skipped: ${authError}` });
-      return { sceneId: job.scene.id, attempt: job.attempt, model, status: 'failed', file: null, error: `skipped: ${authError}` };
+    if (stopError) {
+      update(job.scene.id, job.attempt, { status: 'failed', error: stopError });
+      appendTraceLocked(runId, { name: `generate-clip:${job.scene.id}#${job.attempt}`, stage: 'clips', model, inputs: { sceneId: job.scene.id, attempt: job.attempt }, prompt: job.prompt, outputs: { status: 'failed', error: stopError, skipped: true } });
+      return { sceneId: job.scene.id, attempt: job.attempt, model, status: 'failed', file: null, error: stopError };
     }
     const call = (m) => falRun(m, videoArgs(m, { prompt: job.prompt, aspectRatio, seconds: job.seconds, resolution: job.resolution }), {
       timeoutMs: (config.clipTimeoutMinutes || 8) * 60000,
       onSubmit: (r) => update(job.scene.id, job.attempt, { requestId: r.requestId, model: m }),
     });
     const calls = [await call(model)];
-    if (calls[0].status === 'failed' && isAuthError(calls[0].error)) authError = authError || calls[0].error;
+    if (calls[0].stop) stopError = stopError || calls[0].error;
     // An unknown or retired endpoint (404) falls back to the known-good default for this effort level.
     const fallback = VIDEO_MODELS[config.effort || 3];
-    if (calls[0].status === 'failed' && / -> 404:/.test(calls[0].error || '') && fallback !== model) calls.push(await call(fallback));
+    if (!calls[0].stop && calls[0].status === 'failed' && / -> 404:/.test(calls[0].error || '') && fallback !== model) calls.push(await call(fallback));
     const rec = calls[calls.length - 1];
     const usedModel = rec.endpoint;
     let durationSeconds = null;
@@ -111,7 +117,7 @@ export default async function ([runId], flags) {
       inputs: { sceneId: job.scene.id, attempt: job.attempt, steering, aspectRatio, seconds: job.seconds, resolution: job.resolution },
       prompt: job.prompt,
       tool_calls: calls.map(toolCall),
-      outputs: { file: ok ? job.file : null, status: ok ? 'generated' : 'failed', error: rec.error, durationSeconds },
+      outputs: { file: ok ? job.file : null, status: ok ? 'generated' : 'failed', error: rec.error, durationSeconds, cost: rec.cost },
       duration_ms: calls.reduce((a, c) => a + c.duration_ms, 0),
     });
     return { sceneId: job.scene.id, attempt: job.attempt, model: usedModel, status: ok ? 'generated' : 'failed', file: ok ? job.file : null, error: rec.error, seconds: Math.round(rec.duration_ms / 1000) };
@@ -119,8 +125,19 @@ export default async function ([runId], flags) {
 
   const audio = audioJob ? await audioJob : null;
   const failed = results.filter((r) => r.status === 'failed');
-  if (authError) throw new Error(`fal refused the request, stopped: ${authError}`);
+  // Balance delta is the only cost signal fal gives this key (the queue API reports none per call).
+  const after = await getBalance({ force: true });
+  const balanceAfter = after.balance;
+  const generated = results.length - failed.length;
+  const spent = balanceBefore !== null && balanceAfter !== null ? Math.round((balanceBefore - balanceAfter) * 10000) / 10000 : null;
+  const summary = {
+    model, scenes: results.length, generated, failed: failed.length, stopped: stopError,
+    balanceBefore, balanceAfter, floor: minBalance(), spent, costPerClip: spent !== null && generated ? Math.round((spent / generated) * 10000) / 10000 : null,
+    note: 'spent includes the music bed when it ran in this call, and any concurrent fal use on the account',
+  };
+  appendTraceLocked(runId, { name: 'generate-clips:summary', stage: 'clips', model, inputs: { scene: flags.scene || null, steering, parallelism }, outputs: summary, duration_ms: Date.now() - started });
+  if (stopError) throw new Error(`fal generation stopped: ${stopError}`);
   if (failed.length === results.length) throw new Error(`All ${failed.length} clip(s) failed: ${failed.map((f) => f.error).join(' | ')}`);
-  return { runId, model, results, audio: audio && { music: !!audio.music, voiceover: !!audio.voiceover, notes: audio.notes } };
+  return { runId, model, results, balanceBefore, balanceAfter, spent, audio: audio && { music: !!audio.music, voiceover: !!audio.voiceover, notes: audio.notes } };
 }
 
