@@ -68,4 +68,5 @@ Schedule, judging criteria, prizes, team setup and fal credits are on the hackat
 
 ## Team design notes
 
-- [Recliner: skill-based creative harness proposal](docs/skill-based-harness.md)
+- [Recliner: Blender-native creative harness vision](docs/skill-based-harness.md)
+- [Harness artifact contracts](docs/harness-contracts.md)

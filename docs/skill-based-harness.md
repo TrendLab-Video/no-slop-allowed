@@ -1,233 +1,487 @@
-# Recliner: skill-based creative harness
+# Recliner: Blender-native creative harness
 
-Status: proposal for review  
-Date: 28 November 2026
+Status: aligned working vision  
+Date: 28 November 2026  
+Time horizon: built for the same-day hackathon deadline
 
 ## Thesis
 
-Recliner should treat creative judgment as a library of reusable skills, not as a single monolithic prompt.
+Recliner is a **Blender-native creative harness** that turns a brief plus external references into a finished video built from controllable 3D scenes.
 
-A planner inspects each brief, chooses the relevant creative and production skills, produces explicit intermediate artifacts, critiques the result, repairs the weakest parts and records the whole process in `traces.json`.
+Our core competencies are:
+
+- **avatars** as stylised guides, performers or embodied narrators
+- **maps** as spatial explanatory canvases, not only literal geographic maps
+- **3D visualisations** as the primary medium for explaining transformation, structure and value
 
 The intended judging story is:
 
-> Recliner is a bounded creative operating system: typed reusable skills, dynamic skill selection, artifact-based production, explicit anti-slop critique and autonomous repair, all fully traceable.
+> Recliner turns briefs and references into controllable 3D visual stories using Blender, with validation agents inspecting both the pixels and the underlying scene structure before autonomous repair.
+
+This is deliberately narrower than a generic generative-video pipeline. The constraint is the advantage: Blender gives us control, inspectability and procedural reuse that pure generative-video pipelines lack.
 
 ## Design principles
 
 1. **Deterministic spine, bounded autonomy**  
-   Use a fixed state machine for reliability, with agentic decisions inside defined phases. Avoid free-form multi-agent debate.
+   A fixed state machine owns the pipeline. Agents make decisions inside defined phases rather than roaming freely.
 
-2. **Artifacts over conversation**  
-   Every important decision should produce a file or structured object that can be inspected, replayed and traced.
+2. **Blender is the production substrate**  
+   Use Blender Python/headless rendering as the canonical way scenes are built and rendered. Generative media can support textures, references, voice or selected assets, but should not replace scene control.
 
-3. **Critique must change the output**  
-   A decorative critic is not enough. Even one real repair loop is stronger than several unused evaluation steps.
+3. **Artifacts over conversation**  
+   Every major decision becomes a structured artifact that other skills, agents and validators can consume.
 
-4. **Diversity by design**  
-   The harness should remember prior modality and style choices so repeated runs do not collapse into the same visual formula.
+4. **References become creative grammar**  
+   External references are converted into reusable constraints: pacing, composition, camera language, motion principles, palette logic and narrative shape.
 
-5. **Hidden-brief reliability beats ambition**  
-   The final hidden-brief runs are timeboxed. Prefer a polished 15–30 second piece with 3–5 shots over a fragile minute-long concept.
+5. **Validation is a control plane, not QA at the end**  
+   Validation agents inspect intermediate artifacts, Blender scene state, rendered frames and final video. Their findings drive bounded repair.
 
-## Proposed architecture
+6. **Critique must change the output**  
+   A decorative critic is worthless. Findings must map to concrete repair actions.
+
+7. **Reliable machinery, variable creative grammar**  
+   Reliability comes from stable scene-generation infrastructure. Flexibility comes from changing the creative constraints, spatial metaphors and reference-derived parameters.
+
+8. **Hidden-brief reliability beats ambition**  
+   Prefer a polished 15–30 second piece with 3–5 strong shots over an ambitious minute-long concept that cannot finish inside the hidden-brief window.
+
+## Core competency interpretation
+
+### Avatars
+
+Avatars should be stylised or semi-abstract, not photorealistic. Avoid uncanny facial animation and fragile lip-sync. Use them for:
+
+- guiding the viewer through a spatial scene
+- embodying a user/customer/problem
+- providing performance and emotional continuity
+- interacting with objects, maps or visualisations
+
+Preferred first version: simple expressive body animation, strong camera choreography, voiceover-led delivery.
+
+### Maps
+
+Treat maps broadly as spatial explanatory canvases:
+
+- geographic maps
+- product anatomy maps
+- customer journey maps
+- network/system maps
+- process maps
+- feature landscapes
+- data terrains
+- before/after transformation spaces
+
+This makes the competency adaptable even when hidden briefs are not geographic.
+
+### 3D visualisations
+
+Use 3D scenes to make abstract value concrete:
+
+- chaotic workflow → ordered system
+- scattered data → structured landscape
+- product mechanism → exploded or navigable machine
+- user journey → camera path through space
+- performance/growth → dynamic terrain, paths or structures
+
+## Architecture
 
 ```text
-brief.md
+brief.md + external references
   ↓
-1. brief-interpreter
+1. brief-normaliser
   ↓
-2. creative-director / planner
+2. reference-interpreter
   ↓
-3. concept-divergence → 2–4 distinct creative routes
+3. creative-director
   ↓
-4. concept-selector
+4. spatial-metaphor-selector
   ↓
-5. modality-router
+5. scene-planner
   ↓
-6. production skills
-   ├─ fal image/video/audio generation
-   ├─ motion graphics / kinetic type
-   ├─ product or UI visualisation
-   └─ editing / compositing / rendering
+6. Blender production skills
+   ├─ avatar-performance-designer
+   ├─ map-scene-designer
+   ├─ 3d-visualisation-designer
+   ├─ camera-language-designer
+   ├─ material-lighting-director
+   ├─ blender-scene-builder
+   └─ blender-render-orchestrator
   ↓
-7. critique skills
-   ├─ audience-hook critic
-   ├─ brief-fit critic
-   ├─ craft/technical QA
-   └─ slop-lint
+7. validation control plane
+   ├─ deterministic technical checks
+   ├─ Blender scene-structure validation
+   ├─ brief-fit reviewer
+   ├─ narrative/audience reviewer
+   ├─ visual-craft reviewer
+   ├─ reference-alignment/novelty reviewer
+   └─ anti-slop reviewer
   ↓
-8. repair / revision
+8. repair-planner → bounded repair loop
   ↓
 final.mp4 + traces.json
 ```
+
+## Reference-driven creativity
+
+References should not be treated as inspiration screenshots. They should become structured creative constraints.
+
+Example `reference_pack.json` shape:
+
+```json
+{
+  "references": [
+    {
+      "source": "url-or-local-path",
+      "pacing": "fast opening, slower explanatory middle, punchy resolution",
+      "camera_language": ["low orbit", "macro inserts", "wide reveal"],
+      "composition": ["centred hero object", "strong negative space", "foreground occlusion"],
+      "motion_principles": ["snap-in movements", "held beats", "whip transitions"],
+      "colour_logic": ["muted environment", "high-saturation product accent"],
+      "typography": ["large kinetic captions", "minimal lower-third labels"],
+      "narrative_shape": ["problem", "spatial transformation", "resolution"],
+      "avoid_copying": ["exact sequence", "recognisable layout", "distinctive brand assets"]
+    }
+  ]
+}
+```
+
+The reliability/flexibility trade-off is resolved as follows:
+
+- **Invariant:** extraction schema, Blender machinery, validation standards, render pipeline
+- **Variable:** subject, spatial metaphor, scene contents, camera parameters, palette, rhythm and narrative emphasis
+
+A validation reviewer should check both:
+
+1. **reference alignment** — did we use the extracted grammar?
+2. **reference novelty** — did we avoid producing a near-copy?
 
 ## Skill inventory
 
 | Skill | Purpose | Main output |
 |---|---|---|
-| `brief-interpreter` | Convert the loose brief into audience, objective, tone, constraints and mandatory message | `brief_spec.json` |
-| `creative-director` | Choose the overall creative strategy and production route | `creative_direction.json` |
-| `concept-divergence` | Generate genuinely distinct concepts rather than minor variations | `concepts.json` |
-| `concept-selector` | Score concepts against hook, brief fit, craft potential, originality and reliability | `selected_concept.json` |
-| `modality-router` | Pick the visual modality most appropriate to the brief | modality decision in trace |
-| `scriptwriter` | Turn the selected concept into a concise voiceover/caption structure | `script.json` |
-| `storyboard-designer` | Convert script into shots, timing, visual beats and text overlays | `storyboard.json` |
-| `fal-image-generate` | Generate stills, style frames or product-supporting imagery | image assets |
-| `fal-video-generate` | Generate selected video shots where generative footage is useful | video assets |
-| `voiceover-generate` | Generate narration where appropriate | audio assets |
-| `music-or-sound-design` | Add music, transitions and sound emphasis | audio assets |
-| `motion-graphics-renderer` | Produce deterministic typography, layout and motion design | rendered sequences |
-| `ffmpeg-assembler` | Concatenate, mix, caption, normalise and export | `final.mp4` |
-| `audience-hook-critic` | Judge whether the opening and payoff are attention-worthy | critique object |
-| `brief-fit-critic` | Check that the piece actually promotes the subject and objective | critique object |
-| `technical-qa` | Check duration, resolution, black frames, loudness, caption overflow and missing assets | QA report |
-| `slop-lint` | Detect generic AI clichés, weak hooks, meaningless copy, repetitive visuals and template energy | `slop_report.json` |
-| `repair` | Convert critique into concrete changes and re-render affected parts | `repair_plan.json` |
-| `style-memory` | Track previous modalities, palettes, hooks and structures to preserve diversity | `style_memory.json` |
+| `brief-normaliser` | Convert the input brief into objective, audience, constraints, mandatory messages and implied tone | `brief_spec.json` |
+| `reference-interpreter` | Extract creative grammar from external references | `reference_pack.json` |
+| `creative-director` | Select the creative strategy and route | `creative_direction.json` |
+| `spatial-metaphor-selector` | Choose the map/avatar/3D visualisation approach | `spatial_metaphor.json` |
+| `scene-planner` | Turn the creative direction into shots, timing, objects, camera and beats | `scene_plan.json` |
+| `avatar-performance-designer` | Design avatar role, movement, expression and interaction | avatar scene instructions |
+| `map-scene-designer` | Design literal or metaphorical spatial map scenes | map scene instructions |
+| `3d-visualisation-designer` | Design explanatory 3D systems and transformations | visualisation instructions |
+| `camera-language-designer` | Define shot types, camera paths, reveals and transitions | camera instructions |
+| `material-lighting-director` | Define palette, materials, lighting and atmosphere | look instructions |
+| `blender-scene-builder` | Build the Blender scene programmatically | `.blend` plus scene metadata |
+| `blender-render-orchestrator` | Render draft/final frames and sequences | image/video assets |
+| `validation-controller` | Coordinate deterministic and agentic review | `validation_report.json` |
+| `repair-planner` | Convert findings into concrete scene/render edits | `repair_plan.json` |
+| `trace-writer` | Emit complete structured provenance | `traces.json` |
 
-Important: these should not be prompt-only abstractions. Each skill should ideally have a typed input, typed output, implementation or tool adapter, validation behaviour and a fallback.
+Skills should have typed inputs, typed outputs, validation behaviour and fallbacks. They are operational modules, not prompt-only labels.
 
-## Modality routing examples
+## Artifact contracts
 
-The starter briefs suggest intentionally different visual routes:
+The shared artifacts are the integration boundary between brief/reference work, Blender production and validation.
 
-- **Teenage Engineering EP-133** → tactile macro product film, object materiality, punch-in rhythm, close interaction details
-- **Nike** → kinetic sports montage, bold typography, athlete energy, fast cutting
-- **Minor Figures** → playful editorial product film, bright packaging, café culture, offbeat copy
-- **Granola** → UI-driven product demonstration, workflow transformation, meeting chaos to structured clarity
-
-Hidden briefs should not be forced into these exact routes, but the router should demonstrate this kind of contextual reasoning.
-
-## Concept scoring rubric
-
-Initial proposal:
-
-```text
-35% audience hook
-20% fit to brief
-20% visual craft potential
-15% originality
-10% production reliability
-```
-
-Reliability is included deliberately: a brilliant concept that cannot be rendered inside the hidden-brief window is not a strong harness output.
-
-## Artifact contract
-
-A strong run should leave behind inspectable artifacts, for example:
+Minimum contract set:
 
 ```text
 brief_spec.json
+reference_pack.json
 creative_direction.json
-concepts.json
-selected_concept.json
-script.json
-storyboard.json
-assets/
-critique.v1.json
-slop_report.json
+spatial_metaphor.json
+scene_plan.json
+scene_metadata.json
+validation_report.json
 repair_plan.json
-critique.v2.json
 style_memory.json
 traces.json
 final.mp4
 ```
 
-This makes the system legible to judges and gives us something better than a black-box demo.
+See [`harness-contracts.md`](harness-contracts.md) for the working contract details.
 
-## Trace requirements
+## Validation control plane
 
-`traces.json` should capture not only what happened, but why decisions were made.
+Validation operates at three levels.
 
-Example decision entry:
+### 1. Deterministic machine checks
+
+Hard gates:
+
+- final file exists and plays
+- correct duration/resolution/frame rate
+- no black or frozen sections
+- audio exists and is not silent/clipping
+- captions/text inside safe areas
+- required subject/message/CTA appears
+- render completed within time budget
+
+### 2. Blender scene-structure validation
+
+Because Blender scenes are structured data, validate:
+
+- object bounds and positions
+- camera path sanity
+- clipping through geometry
+- composition at keyframes
+- lighting setup
+- scene graph completeness
+- text occlusion/collision
+- avatar visibility and pose plausibility
+- labels or visualisation elements overlapping
+
+This is a major differentiator versus pixel-only generative pipelines.
+
+### 3. Agentic perceptual and creative review
+
+Subagents review:
+
+- brief fit
+- narrative clarity and audience hook
+- visual craft
+- originality and anti-slop risk
+- reference alignment/novelty
+- audience comprehension
+
+They should inspect the script, scene plan, keyframes, contact sheets, draft render and final render — not just the finished mp4.
+
+## Validation decision model
+
+Use hard gates plus soft scores.
+
+### Hard gates
+
+A failure means the output cannot ship:
+
+- broken render
+- missing subject
+- wrong duration
+- unreadable critical text
+- no clear objective/message
+- severe technical artifact
+
+### Soft scores
+
+Used to choose repairs:
+
+- hook
+- clarity
+- visual craft
+- originality
+- brief fit
+- reference alignment
+- diversity from prior runs
+- emotional payoff
+
+Finding severity:
+
+```text
+blocker  → must fix
+major    → fix if time permits
+minor    → note only
+```
+
+The validation controller should deduplicate findings, resolve contradictions and emit a ranked repair plan.
+
+Example validation finding:
 
 ```json
 {
-  "skill": "modality-router",
-  "decision": "ui-driven-product-demo",
-  "rationale": "The product value is workflow transformation, so interface evidence is more persuasive than abstract AI footage.",
-  "alternatives_rejected": [
-    "cinematic-office-footage",
-    "kinetic-type-explainer"
-  ]
+  "status": "repair_required",
+  "blockers": [],
+  "major_findings": [
+    {
+      "standard_id": "hook.speed",
+      "finding": "The product is not legible until second 5.2.",
+      "evidence": ["contact_sheet/frame_012.png"],
+      "repair_action": "Move hero object reveal into opening shot",
+      "owner_skill": "scene-planner"
+    }
+  ],
+  "scores": {
+    "hook": 61,
+    "brief_fit": 84,
+    "craft": 76,
+    "originality": 72
+  }
 }
 ```
 
-Also record prompts, model IDs, seeds where available, tool arguments, artifact paths, critique scores, repair decisions and fallback use.
+## Standards
 
-## Anti-slop lint
+Standards should be explicit, versioned and referenceable by ID.
 
-`slop-lint` could become one of the most distinctive parts of the project. It should look for:
+Proposed structure:
 
-- generic AI visual clichés
-- visuals that could belong to any brand
-- meaningless buzzwords or empty motivational copy
-- weak or delayed hook
-- no clear relationship between product and visual concept
-- repetitive shots or pacing
-- illegible typography
-- awkward AI-generated hands, logos or text
-- default “slow zoom over generated image” energy
-- overuse of neon gradients, glossy abstract 3D or stock-like people
-- final output that looks like a template rather than a response to the brief
-
-The output should be actionable:
-
-```json
-{
-  "score": 72,
-  "biggest_problem": "Opening shot does not establish the product or stakes.",
-  "repair_instruction": "Replace the first shot with close-up interaction and move the product reveal 0.8s earlier.",
-  "shot_repairs": []
-}
+```text
+standards/
+  global.yml
+  avatar.yml
+  map.yml
+  3d-visualisation.yml
+  anti-slop.yml
 ```
 
-## Production strategy
+Example global standards:
 
-For the hidden-brief runs:
+```yaml
+hook:
+  product_or_tension_visible_within_seconds: 2
+duration:
+  min_seconds: 15
+  max_seconds: 30
+copy:
+  no_empty_buzzwords: true
+visual:
+  subject_legibility: required
+  text_safe_area: required
+originality:
+  max_reference_similarity: medium
+```
 
-- target **15–30 seconds**
-- use **3–5 shots** where possible
-- generate independent assets in parallel
-- use faster/cheaper models for drafts
-- reserve expensive generation for final hero assets
-- cache aggressively during development, but not in a way that violates hidden-brief rules
-- maintain a deterministic motion-graphics fallback if video generation stalls
-- normalise audio and export consistently
-- keep captions inside safe areas
+Every agent finding should cite a `standard_id` so repair is targeted and auditable.
 
-A hybrid visual strategy is likely strongest: generated media plus deterministic typography, editing, motion design and compositing. Pure generative video can be striking but inconsistent; pure motion graphics can feel template-driven. The combination should give both novelty and polish.
+## HTML interface for agents
 
-## Implementation order
+The HTML interface should be a **mission-control surface over the harness state machine**, not the primary execution mechanism.
 
-1. **Thin end-to-end skeleton**  
-   One command accepts a brief and produces a rough `final.mp4` plus valid `traces.json`.
+It should show:
 
-2. **Skill abstraction**  
-   Wrap the pipeline in typed skills with artifact persistence and trace logging.
+- current brief
+- extracted constraints
+- selected references
+- chosen modality/spatial metaphor
+- Blender job status
+- artifacts produced
+- validation findings
+- repair actions
+- final video
+- trace timeline
 
-3. **Concept divergence and selection**  
-   Prove that the system chooses a direction based on the brief rather than executing a fixed template.
+Implementation rule:
 
-4. **Critique and repair**  
-   Add one genuine automated revision loop.
+- agents and pipeline components should use local HTTP/JSON APIs or CLI commands
+- the HTML interface observes and controls those APIs
+- avoid fragile browser-click automation as the core execution path
 
-5. **Style memory and modality routing**  
-   Demonstrate diversity across repeated runs and different briefs.
+The interface can still be judge-facing and demoable, but it should represent real machine state rather than being a decorative dashboard.
 
-6. **Render polish**  
-   Typography, pacing, sound, colour, captions and transitions.
+## Roles and ownership
 
-7. **Submission resilience**  
-   Rehearse hidden-brief mode end to end, including time budget and failure recovery.
+### Harry — briefs, references, skills and interface
 
-## Open questions for review
+Owns:
 
-1. TypeScript or Python for the orchestration spine?
-2. Remotion, HyperFrames, plain ffmpeg, or a hybrid render stack?
-3. Which fal models are fast/reliable enough for hidden-brief generation?
-4. Which decisions truly need agentic reasoning, and which should be deterministic?
-5. Should critique use one strong VLM judge or several narrower judges?
-6. How much repair can we implement robustly in the available time?
-7. What is the simplest demo that proves creative reasoning rather than pipeline automation?
+- brief normalisation
+- external reference ingestion
+- creative grammar extraction
+- skill configuration
+- HTML/agent interface
+
+### Validation owner — validation control plane
+
+Owns:
+
+- validation standards
+- deterministic technical checks
+- Blender scene-structure validation
+- review subagents
+- validation controller
+- repair-plan generation
+
+### Shared ownership
+
+Must be agreed early and changed carefully:
+
+- artifact schemas
+- `scene_plan.json`
+- Blender Python API boundaries
+- trace format extensions
+- repair-action vocabulary
+
+## Branch workflow
+
+After this alignment baseline, work should happen in branches and merge as needed.
+
+Suggested branches:
+
+```text
+feature/brief-reference-engine
+feature/blender-scene-pipeline
+feature/validation-control-plane
+feature/agent-interface
+feature/render-polish
+```
+
+Merge principles:
+
+1. merge small and often
+2. do not break the end-to-end command on `main`
+3. every branch should preserve or extend `traces.json`
+4. schema changes require updating the contract docs in the same branch
+5. validation standards changes should be explicit and reviewable
+
+## Timebox plan for remaining hackathon window
+
+Relative plan, assuming about 3.5 hours remain:
+
+### First 15 minutes — contract freeze
+
+Agree minimum schemas for:
+
+- `brief_spec.json`
+- `reference_pack.json`
+- `scene_plan.json`
+- `validation_report.json`
+- `repair_plan.json`
+
+### Next 30–45 minutes — thin end-to-end slice
+
+One command should turn a starter brief into a crude Blender-rendered video plus `traces.json`.
+
+This is the integration spine. Do not polish before this exists.
+
+### Hour 1–2 — parallel depth
+
+- Harry: reference extraction and creative grammar
+- Blender owner(s): scene builder and render orchestration
+- Validation owner: deterministic checks plus first reviewer agent
+- Interface owner: mission-control state view
+
+### Hour 2–3 — validation/repair loop
+
+- inspect keyframes/contact sheet/draft render
+- produce findings against standard IDs
+- implement at least one autonomous repair path
+
+### Final 45–60 minutes — robustness and submission
+
+- rehearse starter briefs end to end
+- reduce render cost where necessary
+- prepare fallback paths
+- keep 20 minutes clean for hidden briefs
+- update `SUBMISSION.md`
+- prepare the two-minute finalist presentation
+
+## Non-negotiables
+
+1. No interactive Q&A during hidden-brief runs.
+2. No photorealistic avatar dependency.
+3. No pipeline that requires browser clicking to execute.
+4. No critic that does not produce repair actions.
+5. No final render without a valid `traces.json`.
+6. No uncontrolled schema drift between branches.
+7. No expensive Cycles dependency for the hackathon render path; prefer Eevee/viewport-style speed unless proven otherwise.
+
+## Success definition
+
+The minimum impressive submission is not a perfect film. It is a system that can credibly say:
+
+1. it understood the brief
+2. it extracted creative constraints from references
+3. it chose a suitable spatial/avatar/3D visualisation strategy
+4. it built and rendered that strategy in Blender
+5. it validated both scene structure and audience-facing quality
+6. it repaired something autonomously
+7. it produced distinct outputs across briefs
+8. it can prove all of the above through artifacts and traces
