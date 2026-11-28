@@ -46,7 +46,7 @@ Hand each sub-agent: the step file path, the `runId`, the run folder path, and t
 ## 1. References (stage `references`)
 
 Sub-agent: `steps/references.md`. Writes `$RUN/references.json` and `$RUN/references/`.
-Parallel: split the work across 2–3 sub-agents by angle (for example: the platform's top performers in this domain, a competitor or adjacent category, an unexpected format that would transfer) and merge their entries into one file yourself, keeping `config.referencesCount` total and maximum disparity. Hard cap: 4 minutes. Fallback: if web search is unavailable or slow, use what you know plus `examples/references/` as a shape guide, set unknown metrics to `null`, and say so in `why` and the trace.
+Parallel: split `config.referencesCount` across 2 sub-agents by angle, passing each its angle name and share: `platform` (the platform's top performers in this domain) and `transfer` (an adjacent category or unexpected format from another brand). Each writes `$RUN/references.<angle>.json`. Then merge into `$RUN/references.json` yourself: concatenate `references` (drop near-duplicates of format and hook), concatenate `takeaways` (keep the best 5), join the `diversityNote`s into one sentence or two. Hard cap: 4 minutes; merge whatever angle files exist by then. Fallback: if web search is unavailable or slow, use what you know plus `examples/references/` as a shape guide, set unknown metrics to `null`, and say so in `why` and the trace.
 
 ## 2. Goals (stage `goals`)
 

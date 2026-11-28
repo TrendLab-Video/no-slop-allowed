@@ -15,7 +15,7 @@ Never ask the user anything. Hard cap: 4 minutes. A good file in 3 minutes beats
 
 `config.referencesCount` entries (your share of them if you have an angle) that are:
 
-1. **Proven**: public metrics as proof (views, likes, comments, shares). Prefer figures shown on the post itself or reported by a named source. If a figure is unknown, use `null`. Never invent a number.
+1. **Proven**: public metrics as proof (views, likes, comments, shares). Prefer figures shown on the post itself or reported by a named source. If a figure is unknown, use `null`. If sources disagree, use the lower figure and name both in `why`. Never invent a number.
 2. **Current**: published in the last 18 months where possible. Older classics only if they are still the format everyone copies, and say so in `why`.
 3. **On platform**: native to `brief.platform` and its aspect ratio (TikTok, Reels and Shorts are 9:16; YouTube pre-roll and web hero are 16:9). If the platform is blank, assume Instagram Reels, 9:16.
 4. **Deliberately disparate**: each entry differs from the others on at least two of: format (product macro, kinetic type, UGC/creator, athlete/talent, UI demo, stop motion, mockumentary, POV), pacing, music approach, hook mechanism, brand (include at least one that is not the brand in the brief). No two entries may share format and hook.
@@ -27,7 +27,8 @@ Pick something different from your usual first instinct: before searching, list 
 
 - Search the web for the platform plus the domain plus terms like "most viewed", "top performing", "case study", "campaign results", "Cannes Lions", "ad of the year", the creator or brand name. Brand newsrooms, Ads of the World, The Drum, Campaign, Think with Google, TikTok Creative Center and the post pages themselves are good sources.
 - Open the post page where you can to read metrics and timing.
-- **Screenshots** (when obtainable): save 1–3 stills per reference to `$RUN/references/<id>-<n>.jpg` (the post's thumbnail or `og:image`; or a frame via `recliner frames <video> $RUN/references/<id> --count 3` if you can fetch the video). Skip screenshots rather than spend more than 30 seconds per reference on them. Paths in the JSON are relative to the run folder.
+- **Screenshots** (when obtainable): save 1–3 stills per reference to `$RUN/references/<id>-<n>.jpg` (the post's thumbnail or `og:image`; or a frame via `recliner frames <video> $RUN/references/<id> --count 3` if you can fetch the video). Skip screenshots rather than spend more than 30 seconds per reference on them; `screenshots: []` is fine. Paths in the JSON are relative to the run folder.
+- `structure.scenes` may be reconstructed from coverage when you cannot watch the video; say so in `why`.
 
 > **Recommendation:** use your host's web search and fetch tools. Download `og:image` with `curl -sL -o <file> <url>`. Do not log in anywhere.
 
