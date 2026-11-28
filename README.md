@@ -47,11 +47,11 @@ Each input describes what is being promoted and the objective, without creative 
 
 ## What you submit
 
-1. Fork this repository and add your fork on the Your team page of the [hackathon portal](https://hack.36labs.ai/team) straight away
+1. Fork this repository and add your fork on the [Submit](https://hack.36labs.ai/submit) page of the hackathon portal straight away
 2. Build everything today in your fork. Commit as often as you can and push to GitHub as you go: it helps judges see what you're working on
 3. When the hidden briefs are released at 15:30, 30 minutes before the deadline, generate the number of videos shown for each brief on the Task page. Submit the outputs without manual editing
 4. Fill in [`SUBMISSION.md`](SUBMISSION.md) with one row per video and a short description of how your system works
-5. Upload each video into its slot on the Your team page of the hackathon portal, pick your presentation file there, and check your fork URL is up to date before the deadline
+5. Upload each video into its slot on the [Submit](https://hack.36labs.ai/submit) page of the hackathon portal, pick your presentation file there, and check your fork URL is up to date before the deadline
 
 For each submitted video, include both artifacts:
 1. **Video output**: the final rendered video chosen by your system
@@ -59,7 +59,7 @@ For each submitted video, include both artifacts:
 
 See [`traces.example.json`](traces.example.json) for a minimal shape. Add any extra fields that show how your system works.
 
-Do **not** commit video files to GitHub — upload all rendered videos into their slots on the [Your team](https://hack.36labs.ai/team) page of the hackathon portal (MP4, MOV, or WebM up to 2 GB), and commit only your `traces.json` logs under `outputs/`.
+Do **not** commit video files to GitHub — upload all rendered videos into their slots on the [Submit](https://hack.36labs.ai/submit) page of the hackathon portal (MP4, MOV, or WebM up to 2 GB), and commit only your `traces.json` logs under `outputs/`.
 
 ## Finalist presentations
 
