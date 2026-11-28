@@ -1,6 +1,7 @@
 import { readJson, writeJson, appendTrace, runPath } from '../../lib/store.mjs';
 import { run as falRun, download, toolCall, videoArgs, falKey, VIDEO_MODELS } from '../../lib/fal.mjs';
 import { probeDuration } from '../../lib/compositors/ffmpeg.mjs';
+import { generateAssets } from '../../lib/audio.mjs';
 
 export const describe = 'generate-clips <runId> [--scene id --steering "..."]: fal video per scene in parallel (or one retry attempt); updates clips.json';
 
@@ -64,6 +65,9 @@ export default async function ([runId], flags) {
     return { scene, attempt, prompt, args, file };
   });
 
+  // Start the music bed (and voiceover) alongside the clips so compose finds them cached.
+  const audioJob = flags.scene || config.audio === false ? null : generateAssets(runId, plan, config).catch((e) => ({ notes: [e.message] }));
+
   const results = await mapLimit(jobs, parallelism, async (job) => {
     const rec = await falRun(model, job.args, {
       timeoutMs: (config.clipTimeoutMinutes || 8) * 60000,
@@ -91,8 +95,9 @@ export default async function ([runId], flags) {
     return { sceneId: job.scene.id, attempt: job.attempt, status: ok ? 'generated' : 'failed', file: ok ? job.file : null, error: rec.error, seconds: Math.round(rec.duration_ms / 1000) };
   });
 
+  const audio = audioJob ? await audioJob : null;
   const failed = results.filter((r) => r.status === 'failed');
   if (failed.length === results.length) throw new Error(`All ${failed.length} clip(s) failed: ${failed.map((f) => f.error).join(' | ')}`);
-  return { runId, model, results };
+  return { runId, model, results, audio: audio && { music: !!audio.music, voiceover: !!audio.voiceover, notes: audio.notes } };
 }
 
