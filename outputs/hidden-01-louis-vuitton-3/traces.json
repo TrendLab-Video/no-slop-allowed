@@ -1,0 +1,1289 @@
+{
+  "brief": "briefs/hidden-01-louis-vuitton.md",
+  "output_video": "outputs/hidden-01-louis-vuitton-3/final.mp4",
+  "started_at": "2026-11-28T15:36:58.125Z",
+  "finished_at": "2026-11-28T15:42:09.999Z",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "brief",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "source": "file"
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "brief": {
+          "runId": "20261128-153658-hidden-01-louis-vuitton-3",
+          "source": "file",
+          "file": "briefs/hidden-01-louis-vuitton.md",
+          "promote": "Louis Vuitton",
+          "objective": "A French fashion house founded in Paris in 1854 as a trunk maker. Its collections include luggage, handbags, clothing, shoes and accessories.",
+          "url": "https://www.louisvuitton.com/",
+          "platform": "TikTok",
+          "videoType": "",
+          "domain": "",
+          "aspectRatio": "9:16",
+          "notes": "",
+          "raw": "# Louis Vuitton\n\nURL: https://www.louisvuitton.com/\n\nA French fashion house founded in Paris in 1854 as a trunk maker. Its collections include luggage, handbags, clothing, shoes and accessories.",
+          "submittedAt": "2026-11-28T15:36:58.214Z"
+        },
+        "config": {
+          "effort": 2,
+          "scenes": 3,
+          "clipSeconds": 5,
+          "parallelism": 3,
+          "videoModel": "fal-ai/vidu/q3/text-to-video/turbo",
+          "imageModel": "fal-ai/flux/schnell",
+          "resolution": "720p",
+          "referencesCount": 3,
+          "goalsCount": 5,
+          "clipRetries": 1,
+          "finalRetries": 0,
+          "passScore": 60,
+          "timeBudgetMinutes": 12,
+          "scorer": "haiku",
+          "compositor": "blender",
+          "audio": true,
+          "keyframes": true
+        }
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:36:58.283Z"
+    },
+    {
+      "id": "step-2",
+      "name": "preflight",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "fal:billing/user_balance",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "status": 200,
+            "balance": 128.0203554667,
+            "reason": null
+          }
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "reason": null,
+        "balance": 128.0203554667,
+        "floor": 100,
+        "headroom": 28.02
+      },
+      "duration_ms": 1186,
+      "at": "2026-11-28T15:37:03.225Z"
+    },
+    {
+      "id": "step-3",
+      "name": "search",
+      "stage": "references",
+      "model": "tavily",
+      "requestId": null,
+      "inputs": {
+        "query": "fashion kinetic typography colour block ad shoes bag",
+        "max": 6,
+        "recency": "year",
+        "days": 540,
+        "domains": "youtube.com"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "tavily",
+          "arguments": {
+            "query": "fashion kinetic typography colour block ad shoes bag"
+          },
+          "result": {
+            "results": 6,
+            "images": 0
+          }
+        }
+      ],
+      "outputs": {
+        "urls": [
+          "https://www.youtube.com/watch?v=sX8IkEEzNxk",
+          "https://www.youtube.com/watch?v=2pLgT0-yYww",
+          "https://www.youtube.com/watch?v=g-gzm7PHMoE",
+          "https://www.youtube.com/watch?v=gqiZD5Ha-HE",
+          "https://www.youtube.com/watch?v=U_gDDpa0q2o",
+          "https://www.youtube.com/watch?v=ED84NRVGWNk"
+        ]
+      },
+      "duration_ms": 3680,
+      "at": "2026-11-28T15:37:15.115Z"
+    },
+    {
+      "id": "step-4",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "brand",
+        "url": "https://www.louisvuitton.com/",
+        "kind": "brand"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "fetch",
+          "arguments": {
+            "url": "https://www.louisvuitton.com/"
+          },
+          "result": 200
+        },
+        {
+          "tool": "tavily-extract",
+          "arguments": {
+            "url": "https://www.louisvuitton.com/"
+          },
+          "result": "0 images"
+        },
+        {
+          "tool": "tavily-image-search",
+          "arguments": {
+            "url": "Louis Vuitton LV Trainer sneaker product photo side view"
+          },
+          "result": "4 images"
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "brand",
+        "mode": "search",
+        "files": [
+          "references/brand/1.webp",
+          "references/brand/2.webp"
+        ],
+        "sources": {
+          "references/brand/1.webp": {
+            "url": "https://us.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-lv-trainer-sneaker--BM9U5PMI02_PM1_Interior%20view.jpg",
+            "via": "tavily-image-search",
+            "description": null,
+            "query": "Louis Vuitton LV Trainer sneaker product photo side view"
+          },
+          "references/brand/2.webp": {
+            "url": "https://us.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-lv-trainer-sneaker--B1UQ7GSC02_PM1_Side%20view.jpg",
+            "via": "tavily-image-search",
+            "description": null,
+            "query": "Louis Vuitton LV Trainer sneaker product photo side view"
+          }
+        },
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 3851,
+      "at": "2026-11-28T15:37:15.258Z"
+    },
+    {
+      "id": "step-5",
+      "name": "search",
+      "stage": "references",
+      "model": "tavily",
+      "requestId": null,
+      "inputs": {
+        "query": "Louis Vuitton shoes campaign film",
+        "max": 6,
+        "recency": "year",
+        "days": 540,
+        "domains": "youtube.com"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "tavily",
+          "arguments": {
+            "query": "Louis Vuitton shoes campaign film"
+          },
+          "result": {
+            "results": 6,
+            "images": 5
+          }
+        }
+      ],
+      "outputs": {
+        "urls": [
+          "https://www.youtube.com/watch?v=f4v7uAepfnY",
+          "https://www.youtube.com/watch?v=xBczinh6zxs",
+          "https://www.youtube.com/watch?v=3VSghNTL_pY",
+          "https://www.youtube.com/watch?v=qcE5NeDUvIk",
+          "https://www.youtube.com/watch?v=vK3Jq8AJO5s",
+          "https://www.youtube.com/watch?v=Rl-99GwllL8"
+        ]
+      },
+      "duration_ms": 5179,
+      "at": "2026-11-28T15:37:25.757Z"
+    },
+    {
+      "id": "step-6",
+      "name": "references (orchestrator, degraded)",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "angles": [
+          "platform"
+        ],
+        "count": 2
+      },
+      "prompt": null,
+      "tool_calls": [
+        "recliner search x2",
+        "fetch-ref brand",
+        "fetch-ref ref-1",
+        "fetch-ref ref-2"
+      ],
+      "outputs": {
+        "refs": [
+          "ref-1",
+          "ref-2",
+          "brand"
+        ],
+        "productImages": [
+          "references/brand/1.webp"
+        ]
+      },
+      "duration_ms": 120000,
+      "at": "2026-11-28T15:37:49.086Z",
+      "decision": "Hero product: LV Trainer sneaker, black/white Monogram (top view)",
+      "rationale": "7-minute deadline: degradation order applied from start",
+      "degradations": [
+        "one reference angle, 2 references",
+        "references done by orchestrator, no sub-agent",
+        "no retries unless still <30",
+        "validation done by orchestrator"
+      ],
+      "falSkills": [
+        {
+          "name": "cinematography",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-7",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "ref-2",
+        "url": "https://www.youtube.com/watch?v=3VSghNTL_pY",
+        "kind": "reference"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "yt-dlp",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=3VSghNTL_pY"
+          },
+          "result": "ok"
+        },
+        {
+          "tool": "fetch",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=3VSghNTL_pY"
+          },
+          "result": 200
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "ref-2",
+        "mode": "image",
+        "files": [
+          "references/ref-2/1.jpg"
+        ],
+        "sources": {
+          "references/ref-2/1.jpg": {
+            "url": "https://i.ytimg.com/vi/3VSghNTL_pY/maxresdefault.jpg",
+            "via": "page"
+          }
+        },
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 3488,
+      "at": "2026-11-28T15:37:56.709Z"
+    },
+    {
+      "id": "step-8",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "ref-1",
+        "url": "https://www.youtube.com/watch?v=f4v7uAepfnY",
+        "kind": "reference"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "yt-dlp",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=f4v7uAepfnY"
+          },
+          "result": "exit 1: ERROR: unable to download video data: HTTP Error 403: Forbidden"
+        },
+        {
+          "tool": "fetch",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=f4v7uAepfnY"
+          },
+          "result": 200
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "ref-1",
+        "mode": "image",
+        "files": [
+          "references/ref-1/1.jpg"
+        ],
+        "sources": {
+          "references/ref-1/1.jpg": {
+            "url": "https://i.ytimg.com/vi/f4v7uAepfnY/maxresdefault.jpg",
+            "via": "page"
+          }
+        },
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 3979,
+      "at": "2026-11-28T15:37:57.199Z"
+    },
+    {
+      "id": "step-9",
+      "name": "goals (orchestrator, degraded)",
+      "stage": "goals",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "goalsCount": 5
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "goals": 2
+      },
+      "duration_ms": 90000,
+      "at": "2026-11-28T15:38:23.473Z",
+      "decision": "2 goals written by orchestrator instead of 5 via sub-agent",
+      "rationale": "7-minute deadline; goal-1 follows the assigned modality (bold graphic kinetic-type fashion film), steering away from style memory (product-macro honey/brown/brass, sound-first padlock opening)",
+      "alternatives_rejected": [
+        "trunk heritage story (sibling run 2)",
+        "craft macro (sibling run 1)"
+      ],
+      "falSkills": [
+        {
+          "name": "fal-script-writer",
+          "source": "condensed"
+        },
+        {
+          "name": "fal-shot-craft",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-10",
+      "name": "score-goals",
+      "stage": "scoring",
+      "model": "haiku",
+      "requestId": null,
+      "inputs": {
+        "question": "Does this goal match the intended brief?",
+        "goals": [
+          "goal-1",
+          "goal-2"
+        ],
+        "requestedScorer": "haiku"
+      },
+      "prompt": "steps/scoring.md",
+      "tool_calls": [],
+      "outputs": {
+        "scores": [
+          {
+            "goalId": "goal-1",
+            "confidence": 0.84,
+            "reason": "Real LV Trainer shown large on bold colour sets with composed type; on-brand, on-platform 9:16 and distinct from sibling runs."
+          },
+          {
+            "goalId": "goal-2",
+            "confidence": 0.66,
+            "reason": "Shadow opener hides the product for the first 5s, weaker on a 1-second TikTok hook."
+          }
+        ],
+        "selectedGoalId": "goal-1",
+        "confidence": 0.84,
+        "creativeThesis": "One black-and-white Monogram LV Trainer sneaker cuts across three flat colour sets, red, cobalt, yellow, like a moving graphic poster.",
+        "realWorldGrounding": [
+          "actual product photo: LV Trainer sneaker, black Monogram-embossed leather panels, white leather toe and quarters, white flat laces, white LV initials on black tongue and insole",
+          "real chunky white rubber cupsole of the LV Trainer",
+          "Louis Vuitton founded in Paris in 1854"
+        ],
+        "files": [
+          "scores.json",
+          "plan.json"
+        ]
+      },
+      "duration_ms": 78,
+      "at": "2026-11-28T15:38:28.945Z",
+      "decision": "selected goal-1",
+      "rationale": "Real LV Trainer shown large on bold colour sets with composed type; on-brand, on-platform 9:16 and distinct from sibling runs.",
+      "fallback": null
+    },
+    {
+      "id": "step-11",
+      "name": "keyframe:goal-1-s1#1",
+      "stage": "clips",
+      "model": "fal-ai/nano-banana/edit",
+      "requestId": "01a222ce-dd8d-7400-b873-26c2150939ec",
+      "inputs": {
+        "sceneId": "goal-1-s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "A single Louis Vuitton LV Trainer sneaker, black Monogram-embossed leather panels, white leather toe and quarters, white flat laces, white LV initials on the black tongue, top-down overhead shot, sneaker centred and filling the middle third of the frame, lying on a seamless flat signal-red paper set, hard top light casting a crisp short shadow, saturated fashion still-life, no text. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/nano-banana/edit",
+          "arguments": {
+            "prompt": "A single Louis Vuitton LV Trainer sneaker, black Monogram-embossed leather panels, white leather toe and quarters, white flat laces, white LV initials on the black tongue, top-down overhead shot, sneaker centred and filling the middle third of the frame, lying on a seamless flat signal-red paper set, hard top light casting a crisp short shadow, saturated fashion still-life, no text. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+            "aspect_ratio": "9:16",
+            "num_images": 1,
+            "output_format": "png",
+            "image_urls": [
+              "references/brand/1.webp"
+            ]
+          },
+          "result": {
+            "requestId": "01a222ce-dd8d-7400-b873-26c2150939ec",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bbf/VeNOr_Qg7h9pavOgL9_B6_8cNHRGLm.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 9
+            },
+            "error": null,
+            "duration_ms": 12077
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s1/1.keyframe.png",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 12077,
+      "at": "2026-11-28T15:38:44.718Z"
+    },
+    {
+      "id": "step-12",
+      "name": "keyframe:goal-1-s3#1",
+      "stage": "clips",
+      "model": "fal-ai/nano-banana/edit",
+      "requestId": "01a222ce-de2f-74e2-9c9c-4671f264e100",
+      "inputs": {
+        "sceneId": "goal-1-s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "A pair of Louis Vuitton LV Trainer sneakers, black Monogram-embossed leather panels, white leather toe and quarters, white flat laces, white LV initials on the black tongues, three-quarter front hero shot at waist height, the pair side by side in the centre of frame, on a seamless lemon-yellow paper set, soft key light from the right, crisp shadows, saturated fashion still-life, no text. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/nano-banana/edit",
+          "arguments": {
+            "prompt": "A pair of Louis Vuitton LV Trainer sneakers, black Monogram-embossed leather panels, white leather toe and quarters, white flat laces, white LV initials on the black tongues, three-quarter front hero shot at waist height, the pair side by side in the centre of frame, on a seamless lemon-yellow paper set, soft key light from the right, crisp shadows, saturated fashion still-life, no text. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+            "aspect_ratio": "9:16",
+            "num_images": 1,
+            "output_format": "png",
+            "image_urls": [
+              "references/brand/1.webp"
+            ]
+          },
+          "result": {
+            "requestId": "01a222ce-de2f-74e2-9c9c-4671f264e100",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bbf/bP5E4LyOrldkz7MU4Uc_f_aT5TlUQV.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 9.514999866485596
+            },
+            "error": null,
+            "duration_ms": 12645
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s3/1.keyframe.png",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 12645,
+      "at": "2026-11-28T15:38:45.601Z"
+    },
+    {
+      "id": "step-13",
+      "name": "keyframe:goal-1-s2#1",
+      "stage": "clips",
+      "model": "fal-ai/nano-banana/edit",
+      "requestId": "01a222ce-e074-71e2-abaf-698a6ed7cd6b",
+      "inputs": {
+        "sceneId": "goal-1-s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "A single Louis Vuitton LV Trainer sneaker, black Monogram-embossed leather panels, white leather toe and quarters, chunky white rubber cupsole, white flat laces, low side-profile close-up at sole height, sneaker filling the frame width, standing on a seamless cobalt-blue paper set, hard side light from the left, clean graphic shadow on the blue floor, saturated fashion still-life, no text. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/nano-banana/edit",
+          "arguments": {
+            "prompt": "A single Louis Vuitton LV Trainer sneaker, black Monogram-embossed leather panels, white leather toe and quarters, chunky white rubber cupsole, white flat laces, low side-profile close-up at sole height, sneaker filling the frame width, standing on a seamless cobalt-blue paper set, hard side light from the left, clean graphic shadow on the blue floor, saturated fashion still-life, no text. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+            "aspect_ratio": "9:16",
+            "num_images": 1,
+            "output_format": "png",
+            "image_urls": [
+              "references/brand/1.webp"
+            ]
+          },
+          "result": {
+            "requestId": "01a222ce-e074-71e2-abaf-698a6ed7cd6b",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bbf/YwGwnYfG4rVTZk-c2JnsM_BhR7eGHA.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 8.932000160217285
+            },
+            "error": null,
+            "duration_ms": 13567
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s2/1.keyframe.png",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 13567,
+      "at": "2026-11-28T15:38:46.487Z"
+    },
+    {
+      "id": "step-14",
+      "name": "generate-keyframes:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/nano-banana/edit",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "keyframesOnly": true,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 128.0203554667,
+        "balanceAfter": 128.0203554667,
+        "floor": 100,
+        "spent": 0,
+        "seconds": 19,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 18765,
+      "at": "2026-11-28T15:38:48.048Z"
+    },
+    {
+      "id": "step-15",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "goal-1-s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 82,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 80,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 84,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:39:00.649Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-16",
+      "name": "audio:music",
+      "stage": "composition",
+      "model": "fal-ai/stable-audio-25/text-to-audio",
+      "requestId": null,
+      "inputs": {
+        "prompt": "Minimal French house, 124 bpm, four-on-the-floor kick, plucked analog bass, crisp claps; punchy hit on each cut at 0s, 5s and 10s, full groove 10-15s, stops dead at 15s for the end card; instrumental, no vocals",
+        "seconds_total": 19
+      },
+      "prompt": "Minimal French house, 124 bpm, four-on-the-floor kick, plucked analog bass, crisp claps; punchy hit on each cut at 0s, 5s and 10s, full groove 10-15s, stops dead at 15s for the end card; instrumental, no vocals",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/stable-audio-25/text-to-audio",
+          "arguments": {
+            "prompt": "Minimal French house, 124 bpm, four-on-the-floor kick, plucked analog bass, crisp claps; punchy hit on each cut at 0s, 5s and 10s, full groove 10-15s, stops dead at 15s for the end card; instrumental, no vocals",
+            "seconds_total": 19
+          },
+          "result": {
+            "requestId": "01a222cf-564c-7830-be92-4f4d026e8b78",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc3/hvhhymMDmHTnGVQLL4OCE_HlRJytD6.wav",
+            "cost": null,
+            "metrics": {
+              "inference_time": 3.503999948501587
+            },
+            "error": null,
+            "duration_ms": 15390
+          }
+        }
+      ],
+      "outputs": {
+        "status": "ok",
+        "url": "https://v3b.fal.media/files/b/0ab44bc3/hvhhymMDmHTnGVQLL4OCE_HlRJytD6.wav",
+        "error": null
+      },
+      "duration_ms": 15390,
+      "at": "2026-11-28T15:39:24.237Z"
+    },
+    {
+      "id": "step-17",
+      "name": "generate-clip:goal-1-s2#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222cf-5656-7813-9afd-b925e0ad46ea",
+      "inputs": {
+        "sceneId": "goal-1-s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The black and white Monogram LV Trainer sneaker rotates slowly on the spot on the cobalt-blue set until its toe points at the camera, camera low and static at sole height, a single continuous take, no cuts. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The black and white Monogram LV Trainer sneaker rotates slowly on the spot on the cobalt-blue set until its toe points at the camera, camera low and static at sole height, a single continuous take, no cuts. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44bbf/YwGwnYfG4rVTZk-c2JnsM_BhR7eGHA.png"
+          },
+          "result": {
+            "requestId": "01a222cf-5656-7813-9afd-b925e0ad46ea",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc8/_1eRS_B4W_y56waav94Zy_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 64.43799996376038
+            },
+            "error": null,
+            "duration_ms": 66879
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s2/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s2/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 66879,
+      "at": "2026-11-28T15:40:10.635Z"
+    },
+    {
+      "id": "step-18",
+      "name": "generate-clip:goal-1-s3#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222cf-5655-7703-b2fb-77b6d6e3780f",
+      "inputs": {
+        "sceneId": "goal-1-s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The pair of black and white Monogram LV Trainer sneakers stays planted on the yellow set while the camera orbits slowly twenty degrees around them and settles on the front, a single continuous take, no cuts. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The pair of black and white Monogram LV Trainer sneakers stays planted on the yellow set while the camera orbits slowly twenty degrees around them and settles on the front, a single continuous take, no cuts. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44bbf/bP5E4LyOrldkz7MU4Uc_f_aT5TlUQV.png"
+          },
+          "result": {
+            "requestId": "01a222cf-5655-7703-b2fb-77b6d6e3780f",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc8/1Vv3_C3z6n9kvEiavhpIH_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 64.46399998664856
+            },
+            "error": null,
+            "duration_ms": 66108
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s3/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s3/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 66108,
+      "at": "2026-11-28T15:40:10.865Z"
+    },
+    {
+      "id": "step-19",
+      "name": "generate-clip:goal-1-s1#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222cf-5656-74f1-b374-eed33dc5e300",
+      "inputs": {
+        "sceneId": "goal-1-s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The black and white Monogram LV Trainer sneaker drops into frame and lands flat on the red paper set, bounces once and settles still, camera locked overhead, a single continuous take, no cuts. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The black and white Monogram LV Trainer sneaker drops into frame and lands flat on the red paper set, bounces once and settles still, camera locked overhead, a single continuous take, no cuts. Style: Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life; palette signal red,cobalt blue,lemon yellow; camera locked overhead, low side profile, slow orbit; pacing three 5s beats, hard cuts on the kick. Continuity: Check the sneaker is the black/white Monogram LV Trainer in every scene, large and sharp, on a flat seamless colour set; no text or letters generated in frame; three different colours and three different shot setups. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44bbf/VeNOr_Qg7h9pavOgL9_B6_8cNHRGLm.png"
+          },
+          "result": {
+            "requestId": "01a222cf-5656-74f1-b374-eed33dc5e300",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc8/3dUZc3TnExVSi1aV1UcyT_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 64.2590000629425
+            },
+            "error": null,
+            "duration_ms": 67831
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s1/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s1/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 67831,
+      "at": "2026-11-28T15:40:11.904Z"
+    },
+    {
+      "id": "step-20",
+      "name": "generate-clips:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/nano-banana/edit",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "keyframesOnly": false,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 127.8919554667,
+        "balanceAfter": 127.1725554667,
+        "floor": 100,
+        "spent": 0.7194,
+        "seconds": 73,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 72645,
+      "at": "2026-11-28T15:40:13.429Z"
+    },
+    {
+      "id": "step-21",
+      "name": "clip validation (orchestrator contact sheet)",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "clips": [
+          "goal-1-s1/1",
+          "goal-1-s2/1",
+          "goal-1-s3/1"
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        "ffmpeg contact sheet"
+      ],
+      "outputs": {
+        "scores": {
+          "goal-1-s1": 76,
+          "goal-1-s2": 82,
+          "goal-1-s3": 74
+        },
+        "keyframeScores": {
+          "goal-1-s1": 82,
+          "goal-1-s2": 80,
+          "goal-1-s3": 84
+        }
+      },
+      "duration_ms": 40000,
+      "at": "2026-11-28T15:40:27.957Z",
+      "decision": "All pass (>=60); no retries",
+      "rationale": "Degraded: keyframe and clip validation done by orchestrator from frames, no sub-agent, to meet 7-minute deadline",
+      "falSkills": [
+        {
+          "name": "fal-shot-craft",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-22",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "goal-1-s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 82,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 76,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 80,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 82,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 84,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 74,
+            "passed": true,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:40:28.274Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-23",
+      "name": "compose:comp-1",
+      "stage": "composition",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "clips": [
+          {
+            "sceneId": "goal-1-s1",
+            "attempt": 1,
+            "file": "clips/goal-1-s1/1.mp4"
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "attempt": 1,
+            "file": "clips/goal-1-s2/1.mp4"
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "attempt": 1,
+            "file": "clips/goal-1-s3/1.mp4"
+          }
+        ],
+        "aspectRatio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "transitions": "cut",
+        "endCardDissolve": 0.4,
+        "onScreenText": [
+          "PARIS, SINCE 1854",
+          "LV TRAINER",
+          "MONOGRAM IN MOTION",
+          ""
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "blender",
+          "arguments": {
+            "command": "/opt/homebrew/bin/blender -b --factory-startup -noaudio -P /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/skill/recliner/lib/compositors/blender_compose.py -- /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/work/blender_job.json"
+          },
+          "result": {
+            "file": "compositions/1/final.mp4"
+          }
+        }
+      ],
+      "outputs": {
+        "file": "compositions/1/final.mp4",
+        "thumbnail": "compositions/1/thumb.jpg",
+        "durationSeconds": 17.05,
+        "compositor": "blender",
+        "endCard": {
+          "headline": "LOUIS VUITTON",
+          "subline": "LV Trainer sneaker",
+          "seconds": 2
+        },
+        "audio": {
+          "present": true,
+          "bed": "compositions/1/bed.wav",
+          "lufs": -13.5,
+          "truePeak": -1,
+          "audible": true
+        },
+        "notes": [
+          "clip 4 conformed from 30 to 24 fps"
+        ],
+        "audio_ms": 1319
+      },
+      "duration_ms": 76819,
+      "at": "2026-11-28T15:41:45.327Z"
+    },
+    {
+      "id": "step-24",
+      "name": "validate-output:comp-1",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "file": "compositions/1/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "/Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-01-louis-vuitton.md",
+        "targetDurationSeconds": 17
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1 --video /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/final.mp4 --write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/validation_report.json --repair-write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/repair_plan.json --contact-sheet /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/contact-sheet.png --video-only --source-brief /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-01-louis-vuitton.md --duration-min 15.3 --duration-max 20.7"
+          },
+          "result": {
+            "ok": true,
+            "status": "pass"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "pass",
+        "validationReport": "compositions/1/validation_report.json",
+        "repairPlan": "compositions/1/repair_plan.json",
+        "contactSheet": "compositions/1/contact-sheet.png",
+        "counts": {
+          "blockers": 0,
+          "major": 0,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 5385,
+      "at": "2026-11-28T15:41:54.877Z"
+    },
+    {
+      "id": "step-25",
+      "name": "final validation (orchestrator)",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "attempt": 1
+      },
+      "prompt": null,
+      "tool_calls": [
+        "validate-output",
+        "contact sheet review"
+      ],
+      "outputs": {
+        "score": 76,
+        "technical": "pass, 0 blockers"
+      },
+      "duration_ms": 30000,
+      "at": "2026-11-28T15:42:09.326Z",
+      "decision": "Accept attempt 1, no recompose (finalRetries 0)",
+      "rationale": "Degraded: creative final validation by orchestrator from contact sheet, no sub-agent",
+      "falSkills": [
+        {
+          "name": "video-compositing",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-26",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "comp-1",
+        "score": 76,
+        "passed": true,
+        "ranking": [
+          [
+            "comp-1",
+            76
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:42:09.537Z",
+      "decision": "selected comp-1",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-27",
+      "name": "output",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedResult": "comp-1",
+        "score": 76,
+        "retries": 0
+      },
+      "duration_ms": 1000,
+      "at": "2026-11-28T15:42:09.689Z",
+      "decision": "Export composition 1 (Blender)",
+      "degradations": [
+        "one reference angle, 2 references, orchestrator-run references",
+        "2 goals written by orchestrator instead of 5 via sub-agent",
+        "orchestrator scoring",
+        "keyframe, clip and final validation by orchestrator, no sub-agents",
+        "no retries (all scenes passed)"
+      ]
+    },
+    {
+      "id": "step-28",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "selectedId": "comp-1",
+        "file": "compositions/1/final.mp4",
+        "score": 76
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/1/final.mp4",
+            "to": "outputs/hidden-01-louis-vuitton-3/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/hidden-01-louis-vuitton-3/final.mp4",
+        "traces": "outputs/hidden-01-louis-vuitton-3/traces.json",
+        "creativeRationale": "outputs/hidden-01-louis-vuitton-3/creative_rationale.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:42:09.986Z"
+    },
+    {
+      "id": "step-29",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/hidden-01-louis-vuitton-3/final.mp4",
+        "finished_at": "2026-11-28T15:42:09.999Z",
+        "run_seconds": 312
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:42:10.054Z"
+    }
+  ],
+  "run_id": "20261128-153658-hidden-01-louis-vuitton-3",
+  "selected_result": {
+    "id": "comp-1",
+    "file": "compositions/1/final.mp4",
+    "compositor": "blender",
+    "validation": {
+      "score": 76,
+      "passed": true,
+      "reason": "Bold red/cobalt/yellow colour-block fashion film with the real black/white Monogram LV Trainer sharp and large in every frame, captions and end card set by the compositor. Biggest weakness: caption pills are generic rounded boxes rather than big editorial type, and scene 3 motion is gentle.",
+      "breakdown": {
+        "hook": 74,
+        "briefFit": 82,
+        "craft": 76,
+        "originality": 72,
+        "slop": 78
+      },
+      "slopHits": [
+        {
+          "item": "generic caption styling",
+          "frame": "f1",
+          "note": "rounded translucent pills instead of composed type"
+        }
+      ],
+      "biggestProblem": "Caption styling is less bold than the kinetic-type concept."
+    },
+    "technicalValidation": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 4581,
+      "mode": "video-only"
+    }
+  }
+}

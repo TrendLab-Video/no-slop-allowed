@@ -1,0 +1,144 @@
+{
+  "artifact_type": "validation_report",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T15:41:54Z",
+  "source_brief": "/Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-01-louis-vuitton.md",
+  "target_video": "runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/final.mp4",
+  "status": "pass",
+  "hard_gates": [
+    {
+      "id": "video.exists",
+      "passed": true,
+      "severity": "blocker",
+      "evidence": [
+        "runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/final.mp4"
+      ]
+    },
+    {
+      "id": "video.playable",
+      "passed": true,
+      "severity": "blocker",
+      "actual": {
+        "duration_seconds": 17.05,
+        "has_video_stream": true
+      }
+    },
+    {
+      "id": "duration.in_range",
+      "passed": true,
+      "severity": "blocker",
+      "actual": 17.05,
+      "details": "required range 15.3-20.7s"
+    },
+    {
+      "id": "resolution.minimum",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "width": 1080,
+        "height": 1920,
+        "short_edge": 1080
+      }
+    },
+    {
+      "id": "frame_rate.valid",
+      "passed": true,
+      "severity": "major",
+      "actual": 24.0
+    },
+    {
+      "id": "video.black_segments",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "total_black_seconds": 0,
+        "segments": []
+      }
+    },
+    {
+      "id": "video.frozen_segments",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "total_frozen_seconds": 0,
+        "segments": []
+      }
+    },
+    {
+      "id": "audio.present",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "audio_stream_count": 1
+      }
+    },
+    {
+      "id": "audio.not_silent",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "mean_db": -14.5,
+        "max_db": -1.0
+      }
+    },
+    {
+      "id": "audio.not_clipping",
+      "passed": true,
+      "severity": "minor",
+      "actual": {
+        "mean_db": -14.5,
+        "max_db": -1.0
+      }
+    }
+  ],
+  "scores": {
+    "hook": 0,
+    "clarity": 0,
+    "visual_craft": 0,
+    "originality": 0,
+    "brief_fit": 0,
+    "reference_alignment": 0,
+    "diversity": 0,
+    "emotional_payoff": 0
+  },
+  "findings": [],
+  "summary": "Validation passed with 0 minor finding(s).",
+  "agentic_review_status": "not_run",
+  "cost": {
+    "band_plan": "not_used",
+    "model_input_tokens": 0,
+    "model_output_tokens": 0,
+    "estimated_model_cost_usd": 0,
+    "tavily_credits": 0,
+    "wall_time_ms": 4581
+  },
+  "inputs": {
+    "artifact_root": "runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1",
+    "scene_metadata": "runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/scene_metadata.json",
+    "scene_plan": "runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/scene_plan.json",
+    "contact_sheet": "runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/contact-sheet.png"
+  },
+  "probes": {
+    "video": {
+      "path": "runs/20261128-153658-hidden-01-louis-vuitton-3/compositions/1/final.mp4",
+      "duration_seconds": 17.05,
+      "width": 1080,
+      "height": 1920,
+      "fps": 24.0,
+      "video_codec": "h264",
+      "audio_stream_count": 1,
+      "black_segments": [],
+      "freeze_segments": [],
+      "audio_volume": {
+        "mean_db": -14.5,
+        "max_db": -1.0
+      }
+    },
+    "scene": {
+      "mode": "video_only"
+    }
+  },
+  "warnings": [
+    "scene validation skipped: video-only mode"
+  ]
+}

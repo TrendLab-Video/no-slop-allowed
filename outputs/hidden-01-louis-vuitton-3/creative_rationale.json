@@ -1,0 +1,105 @@
+{
+  "artifact_type": "creative_rationale",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T15:42:09.934Z",
+  "runId": "20261128-153658-hidden-01-louis-vuitton-3",
+  "brief": {
+    "file": "briefs/hidden-01-louis-vuitton.md",
+    "promote": "Louis Vuitton",
+    "objective": "A French fashion house founded in Paris in 1854 as a trunk maker. Its collections include luggage, handbags, clothing, shoes and accessories.",
+    "platform": "TikTok",
+    "aspectRatio": "9:16"
+  },
+  "creativeThesis": "One black-and-white Monogram LV Trainer sneaker cuts across three flat colour sets, red, cobalt, yellow, like a moving graphic poster.",
+  "intent": {
+    "product": "Louis Vuitton LV Trainer sneaker",
+    "objective": "awareness",
+    "audience": "TikTok fashion audience",
+    "message": "Louis Vuitton design as bold graphic fashion"
+  },
+  "realWorldGrounding": [
+    "actual product photo: LV Trainer sneaker, black Monogram-embossed leather panels, white leather toe and quarters, white flat laces, white LV initials on black tongue and insole",
+    "real chunky white rubber cupsole of the LV Trainer",
+    "Louis Vuitton founded in Paris in 1854"
+  ],
+  "selectedGoal": {
+    "id": "goal-1",
+    "title": "Colour Block Trainer",
+    "description": "The LV Trainer sneaker becomes a graphic shape: it drops, spins and steps across seamless saturated colour sets cut on the beat, while big composed type names only what is on screen. It sells the sneaker as a design object with fashion-film attitude, nothing like trunk heritage or craft macro.",
+    "confidence": 0.84,
+    "style": "Seamless paper colour sets (signal red, cobalt blue, lemon yellow), hard top light with crisp graphic shadow, 50mm, clean saturated grade, fashion-editorial still-life",
+    "styleTags": {
+      "modality": "kinetic-type fashion film",
+      "hookType": "visual-graphic",
+      "openingAction": "sneaker drops onto red set",
+      "palette": [
+        "signal red",
+        "cobalt blue",
+        "lemon yellow"
+      ],
+      "pacing": "three 5s beats, hard cuts on the kick",
+      "cameraLanguage": "locked overhead, low side profile, slow orbit",
+      "musicGenre": "minimal French house"
+    }
+  },
+  "decisionEvidence": {
+    "scorer": "haiku",
+    "selectedReason": "Real LV Trainer shown large on bold colour sets with composed type; on-brand, on-platform 9:16 and distinct from sibling runs.",
+    "alternatives": [
+      {
+        "goalId": "goal-2",
+        "confidence": 0.66
+      }
+    ],
+    "referencesUsed": [
+      {
+        "id": "ref-1",
+        "kind": "reference",
+        "title": "The Keith Haring Collection | LOUIS VUITTON",
+        "url": "https://www.youtube.com/watch?v=f4v7uAepfnY",
+        "why": "Brand campaign film from the official LV channel (found via Tavily search); bold graphic line art and saturated colour against product makes accessories read as graphic shapes. Metrics not verified in time budget, so null."
+      },
+      {
+        "id": "ref-2",
+        "kind": "reference",
+        "title": "Men’s Fall-Winter 2026 Show | LOUIS VUITTON",
+        "url": "https://www.youtube.com/watch?v=3VSghNTL_pY",
+        "why": "Official LV show film; search snippet reported a view count beginning 10,133,... (truncated, so left null). Transferable: runway rhythm, shoes and bags isolated as moving shapes, cut on the beat."
+      },
+      {
+        "id": "brand",
+        "kind": "brand",
+        "title": "Louis Vuitton site",
+        "url": "https://www.louisvuitton.com/",
+        "why": "The brand's own page image: what the product, logo and palette actually look like."
+      }
+    ],
+    "compositor": "blender"
+  },
+  "validationEvidence": {
+    "creative": {
+      "score": 76,
+      "passed": true,
+      "reason": "Bold red/cobalt/yellow colour-block fashion film with the real black/white Monogram LV Trainer sharp and large in every frame, captions and end card set by the compositor. Biggest weakness: caption pills are generic rounded boxes rather than big editorial type, and scene 3 motion is gentle.",
+      "biggestProblem": "Caption styling is less bold than the kinetic-type concept.",
+      "slopHits": [
+        {
+          "item": "generic caption styling",
+          "frame": "f1",
+          "note": "rounded translucent pills instead of composed type"
+        }
+      ]
+    },
+    "technical": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 4581,
+      "mode": "video-only"
+    }
+  }
+}

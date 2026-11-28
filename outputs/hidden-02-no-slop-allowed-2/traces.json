@@ -1,0 +1,947 @@
+{
+  "brief": "briefs/hidden-02-no-slop-allowed.md",
+  "output_video": "outputs/hidden-02-no-slop-allowed-2/final.mp4",
+  "started_at": "2026-11-28T15:37:02.302Z",
+  "finished_at": "2026-11-28T15:42:05.300Z",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "brief",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "source": "file"
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "brief": {
+          "runId": "20261128-153702-hidden-02-no-slop-allowed-2",
+          "source": "file",
+          "file": "briefs/hidden-02-no-slop-allowed.md",
+          "promote": "No Slop Allowed",
+          "objective": "A one-day creative AI hackathon from 36 Labs and fal at Ramen Space in Dalston, London. Teams build systems that turn briefs into finished videos and compete for $4,000 in prizes.",
+          "url": "https://luma.com/x0qhqiyl",
+          "platform": "TikTok",
+          "videoType": "",
+          "domain": "",
+          "aspectRatio": "9:16",
+          "notes": "",
+          "raw": "# No Slop Allowed\n\nURL: https://luma.com/x0qhqiyl\n\nA one-day creative AI hackathon from 36 Labs and fal at Ramen Space in Dalston, London. Teams build systems that turn briefs into finished videos and compete for $4,000 in prizes.",
+          "submittedAt": "2026-11-28T15:37:02.377Z"
+        },
+        "config": {
+          "effort": 2,
+          "scenes": 3,
+          "clipSeconds": 5,
+          "parallelism": 3,
+          "videoModel": "fal-ai/vidu/q3/text-to-video/turbo",
+          "imageModel": "fal-ai/flux/schnell",
+          "resolution": "720p",
+          "referencesCount": 3,
+          "goalsCount": 5,
+          "clipRetries": 1,
+          "finalRetries": 0,
+          "passScore": 60,
+          "timeBudgetMinutes": 12,
+          "scorer": "haiku",
+          "compositor": "blender",
+          "audio": true,
+          "keyframes": true
+        }
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:37:02.544Z"
+    },
+    {
+      "id": "step-2",
+      "name": "preflight",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "fal:billing/user_balance",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "status": 200,
+            "balance": 128.0203554667,
+            "reason": null
+          }
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "reason": null,
+        "balance": 128.0203554667,
+        "floor": 100,
+        "headroom": 28.02
+      },
+      "duration_ms": 1229,
+      "at": "2026-11-28T15:37:11.342Z"
+    },
+    {
+      "id": "step-3",
+      "name": "search",
+      "stage": "references",
+      "model": "tavily",
+      "requestId": null,
+      "inputs": {
+        "query": "day in the life of a maker documentary short desk timelapse",
+        "max": 6,
+        "recency": "year",
+        "days": 365,
+        "domains": "youtube.com"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "tavily",
+          "arguments": {
+            "query": "day in the life of a maker documentary short desk timelapse"
+          },
+          "result": {
+            "results": 6,
+            "images": 5
+          }
+        }
+      ],
+      "outputs": {
+        "urls": [
+          "https://www.youtube.com/watch?v=gTdDIClSCgg",
+          "https://www.youtube.com/watch?v=xOXolSQcEb4",
+          "https://www.youtube.com/watch?v=ZHBFTJnre2Q",
+          "https://www.youtube.com/watch?v=-eDRALmXacw",
+          "https://www.youtube.com/watch?v=mc74cBCs6w4",
+          "https://www.youtube.com/watch?v=vV2VZcCVv8c"
+        ]
+      },
+      "duration_ms": 3627,
+      "at": "2026-11-28T15:37:15.164Z"
+    },
+    {
+      "id": "step-4",
+      "name": "score-goals",
+      "stage": "scoring",
+      "model": "claude-opus-5-5",
+      "requestId": null,
+      "inputs": {
+        "question": "Does this goal match the intended brief?",
+        "goals": [
+          "goal-1",
+          "goal-2",
+          "goal-3"
+        ],
+        "requestedScorer": "haiku"
+      },
+      "prompt": "steps/scoring.md",
+      "tool_calls": [],
+      "outputs": {
+        "scores": [
+          {
+            "goalId": "goal-1",
+            "confidence": 0.84,
+            "reason": "Directly dramatises the brief (one day building a brief-to-video system) with concrete desk/storyboard/render anchors and model-friendly simple actions."
+          },
+          {
+            "goalId": "goal-2",
+            "confidence": 0.62,
+            "reason": "On-message brief-to-video metaphor but card flips are tricky object manipulation and less tied to the event."
+          },
+          {
+            "goalId": "goal-3",
+            "confidence": 0.48,
+            "reason": "Venue POV risks generic interiors, crowds and invented venue details."
+          }
+        ],
+        "selectedGoalId": "goal-1",
+        "confidence": 0.84,
+        "creativeThesis": "One anonymous maker's desk from first light to night: a blank storyboard card pinned at dawn becomes a finished render by dark.",
+        "realWorldGrounding": [
+          "brief fact: one-day hackathon, teams build systems that turn briefs into finished videos",
+          "brief fact: 36 Labs and fal at Ramen Space, Dalston, London",
+          "physical anchors: cork wall of pencil storyboard cards, laptop with a video timeline, real window light changing through the day",
+          "brief fact: $4,000 in prizes"
+        ],
+        "files": [
+          "scores.json",
+          "plan.json"
+        ]
+      },
+      "duration_ms": 170,
+      "at": "2026-11-28T15:38:32.847Z",
+      "decision": "selected goal-1",
+      "rationale": "Directly dramatises the brief (one day building a brief-to-video system) with concrete desk/storyboard/render anchors and model-friendly simple actions.",
+      "fallback": null
+    },
+    {
+      "id": "step-5",
+      "name": "keyframe:goal-1-s3#1",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "requestId": "01a222ce-ea3c-7482-bfed-18068128c696",
+      "inputs": {
+        "sceneId": "goal-1-s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Over-the-shoulder shot from behind: the dark silhouette of an anonymous maker's shoulder and the back of their head, no face, seated at the same wooden desk at night, the open silver laptop glowing bright in the centre of the frame with a finished full-screen video frame of a sunrise over hills, a warm brass desk lamp glowing on the left, the cork wall of pencil storyboard cards above, the window behind showing a dusk-violet night sky, documentary photo, 35mm, soft film grain, no text. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "Over-the-shoulder shot from behind: the dark silhouette of an anonymous maker's shoulder and the back of their head, no face, seated at the same wooden desk at night, the open silver laptop glowing bright in the centre of the frame with a finished full-screen video frame of a sunrise over hills, a warm brass desk lamp glowing on the left, the cork wall of pencil storyboard cards above, the window behind showing a dusk-violet night sky, documentary photo, 35mm, soft film grain, no text. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a222ce-ea3c-7482-bfed-18068128c696",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bbf/FFqPj2jL1uNYUoOhabGz2.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.8660001754760742
+            },
+            "error": null,
+            "duration_ms": 3136
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s3/1.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3136,
+      "at": "2026-11-28T15:38:39.701Z"
+    },
+    {
+      "id": "step-6",
+      "name": "keyframe:goal-1-s1#1",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "requestId": "01a222ce-ea3f-7791-8cf1-749fe919a6f3",
+      "inputs": {
+        "sceneId": "goal-1-s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Medium shot from behind and slightly to the side: an anonymous maker's hands, seen from behind with no face visible, pressing a pushpin into a blank cream index card with a simple pencil sketch of a film frame, on a cork board covered in similar pencil-sketched storyboard cards, above a light wooden desk with an open silver laptop, sage-green wall, soft early-morning sunlight streaming through a window on the left casting long warm beams, linen-white curtains, observational documentary photo, 35mm, soft film grain, no text, no lettering. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "Medium shot from behind and slightly to the side: an anonymous maker's hands, seen from behind with no face visible, pressing a pushpin into a blank cream index card with a simple pencil sketch of a film frame, on a cork board covered in similar pencil-sketched storyboard cards, above a light wooden desk with an open silver laptop, sage-green wall, soft early-morning sunlight streaming through a window on the left casting long warm beams, linen-white curtains, observational documentary photo, 35mm, soft film grain, no text, no lettering. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a222ce-ea3f-7791-8cf1-749fe919a6f3",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bbf/_52f3RnvqV8EaX0WbawCB.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.7939999103546143
+            },
+            "error": null,
+            "duration_ms": 3683
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s1/1.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3683,
+      "at": "2026-11-28T15:38:39.965Z"
+    },
+    {
+      "id": "step-7",
+      "name": "keyframe:goal-1-s2#1",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "requestId": "01a222ce-ea3b-72d3-a423-0f1dccb8abb7",
+      "inputs": {
+        "sceneId": "goal-1-s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Top-down overhead close-up: an open silver laptop centred on a light wooden desk, its screen showing a video editing timeline with a row of colourful film-frame thumbnails and a large preview image of a sunlit landscape, the maker's two hands resting on the keyboard, pencil-sketched cream storyboard cards, a pencil and a ceramic coffee cup spread around it, warm golden afternoon window light from the right with soft shadows, sage and linen tones, documentary photo, 35mm, soft film grain, no readable text. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "Top-down overhead close-up: an open silver laptop centred on a light wooden desk, its screen showing a video editing timeline with a row of colourful film-frame thumbnails and a large preview image of a sunlit landscape, the maker's two hands resting on the keyboard, pencil-sketched cream storyboard cards, a pencil and a ceramic coffee cup spread around it, warm golden afternoon window light from the right with soft shadows, sage and linen tones, documentary photo, 35mm, soft film grain, no readable text. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a222ce-ea3b-72d3-a423-0f1dccb8abb7",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bbf/UWPoerS7O95JE-0LPS9_3.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.812000036239624
+            },
+            "error": null,
+            "duration_ms": 3579
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s2/1.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3579,
+      "at": "2026-11-28T15:38:40.799Z"
+    },
+    {
+      "id": "step-8",
+      "name": "generate-keyframes:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/flux/schnell",
+        "productImages": [],
+        "keyframesOnly": true,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 128.0203554667,
+        "balanceAfter": 128.0203554667,
+        "floor": 100,
+        "spent": 0,
+        "seconds": 9,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 8930,
+      "at": "2026-11-28T15:38:42.279Z"
+    },
+    {
+      "id": "step-9",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "goal-1-s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 80,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 78,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 86,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:38:57.738Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-10",
+      "name": "audio:music",
+      "stage": "composition",
+      "model": "fal-ai/stable-audio-25/text-to-audio",
+      "requestId": null,
+      "inputs": {
+        "prompt": "Warm lo-fi acoustic documentary score, 84 bpm, felt piano, brushed snare, upright bass; sparse felt piano only 0-5s, brushes and bass enter 5-10s, full warm swell at 10s as the render finishes, resolves and stops at 15s for the end card; instrumental, no vocals.",
+        "seconds_total": 17
+      },
+      "prompt": "Warm lo-fi acoustic documentary score, 84 bpm, felt piano, brushed snare, upright bass; sparse felt piano only 0-5s, brushes and bass enter 5-10s, full warm swell at 10s as the render finishes, resolves and stops at 15s for the end card; instrumental, no vocals.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/stable-audio-25/text-to-audio",
+          "arguments": {
+            "prompt": "Warm lo-fi acoustic documentary score, 84 bpm, felt piano, brushed snare, upright bass; sparse felt piano only 0-5s, brushes and bass enter 5-10s, full warm swell at 10s as the render finishes, resolves and stops at 15s for the end card; instrumental, no vocals.",
+            "seconds_total": 17
+          },
+          "result": {
+            "requestId": "01a222cf-4c52-7ed3-ab8b-1248ac950cc4",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc2/X2YEmIiFkRWd8RGzArvFv_rPzG1JRg.wav",
+            "cost": null,
+            "metrics": {
+              "inference_time": 3.7279999256134033
+            },
+            "error": null,
+            "duration_ms": 6530
+          }
+        }
+      ],
+      "outputs": {
+        "status": "ok",
+        "url": "https://v3b.fal.media/files/b/0ab44bc2/X2YEmIiFkRWd8RGzArvFv_rPzG1JRg.wav",
+        "error": null
+      },
+      "duration_ms": 6530,
+      "at": "2026-11-28T15:39:11.023Z"
+    },
+    {
+      "id": "step-11",
+      "name": "generate-clip:goal-1-s1#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222cf-4be0-7bb2-b243-697b042158ce",
+      "inputs": {
+        "sceneId": "goal-1-s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The maker's hands press the pushpin firmly into the pencil-sketched storyboard card on the cork wall, then lift away and the card stays pinned among the others, morning sunlight drifts slowly across the cork, camera holds locked off at shoulder height, a single continuous take, no cuts. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The maker's hands press the pushpin firmly into the pencil-sketched storyboard card on the cork wall, then lift away and the card stays pinned among the others, morning sunlight drifts slowly across the cork, camera holds locked off at shoulder height, a single continuous take, no cuts. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44bbf/_52f3RnvqV8EaX0WbawCB.png"
+          },
+          "result": {
+            "requestId": "01a222cf-4be0-7bb2-b243-697b042158ce",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc6/pdwn3w1P_ycXLq-gRVZxK_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 50.353999853134155
+            },
+            "error": null,
+            "duration_ms": 52308
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s1/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s1/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 52308,
+      "at": "2026-11-28T15:39:54.530Z"
+    },
+    {
+      "id": "step-12",
+      "name": "generate-clip:goal-1-s2#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222cf-4c53-79a1-8588-e3f12203f8f8",
+      "inputs": {
+        "sceneId": "goal-1-s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The maker's hands type on the silver laptop and the preview image on screen fills with colour as the timeline plays, warm afternoon light shifts across the desk, camera pushes in slowly from overhead toward the screen, a single continuous take, no cuts. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The maker's hands type on the silver laptop and the preview image on screen fills with colour as the timeline plays, warm afternoon light shifts across the desk, camera pushes in slowly from overhead toward the screen, a single continuous take, no cuts. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44bbf/UWPoerS7O95JE-0LPS9_3.png"
+          },
+          "result": {
+            "requestId": "01a222cf-4c53-79a1-8588-e3f12203f8f8",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc7/cNSsT-_jqIShLO5t1mR7z_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 57.924999952316284
+            },
+            "error": null,
+            "duration_ms": 60160
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s2/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s2/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 60160,
+      "at": "2026-11-28T15:40:01.549Z"
+    },
+    {
+      "id": "step-13",
+      "name": "generate-clip:goal-1-s3#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222cf-4c52-7f12-a63c-7eae8eaa6365",
+      "inputs": {
+        "sceneId": "goal-1-s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The laptop screen glows brighter as the finished sunrise video plays full screen, the maker slowly leans back in the chair and stretches both arms behind their head, desk lamp steady, camera holds still over the shoulder then drifts gently closer to the glowing screen, a single continuous take, no cuts. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The laptop screen glows brighter as the finished sunrise video plays full screen, the maker slowly leans back in the chair and stretches both arms behind their head, desk lamp steady, camera holds still over the shoulder then drifts gently closer to the glowing screen, a single continuous take, no cuts. Style: Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain; palette linen,sage,dusk violet; camera locked medium, top-down push-in, over-shoulder; pacing three 5s time-of-day beats, hard cuts. Continuity: Hook: a thumb pushes a pin into a storyboard card in the first second. Same desk, same cork wall, same laptop in every scene; time of day advances (soft dawn sun, warm afternoon, lamp-lit night with dusk-violet window). Hands only or figure from behind, no faces. Warm natural palette…. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44bbf/FFqPj2jL1uNYUoOhabGz2.png"
+          },
+          "result": {
+            "requestId": "01a222cf-4c52-7f12-a63c-7eae8eaa6365",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44bc7/a2Z6828HdTnr_DhseBqED_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 64.02199983596802
+            },
+            "error": null,
+            "duration_ms": 66300
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s3/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s3/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 66300,
+      "at": "2026-11-28T15:40:08.233Z"
+    },
+    {
+      "id": "step-14",
+      "name": "generate-clips:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/flux/schnell",
+        "productImages": [],
+        "keyframesOnly": false,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 127.8919554667,
+        "balanceAfter": 127.1725554667,
+        "floor": 100,
+        "spent": 0.7194,
+        "seconds": 72,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 71529,
+      "at": "2026-11-28T15:40:09.603Z"
+    },
+    {
+      "id": "step-15",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "goal-1-s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 80,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 72,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 78,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 76,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 86,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 85,
+            "passed": true,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:40:24.985Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-16",
+      "name": "compose:comp-1",
+      "stage": "composition",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "clips": [
+          {
+            "sceneId": "goal-1-s1",
+            "attempt": 1,
+            "file": "clips/goal-1-s1/1.mp4"
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "attempt": 1,
+            "file": "clips/goal-1-s2/1.mp4"
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "attempt": 1,
+            "file": "clips/goal-1-s3/1.mp4"
+          }
+        ],
+        "aspectRatio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "transitions": "cut",
+        "endCardDissolve": 0.4,
+        "onScreenText": [
+          "One day. One brief.",
+          "Build systems, not slop",
+          "$4,000 in prizes",
+          ""
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "blender",
+          "arguments": {
+            "command": "/opt/homebrew/bin/blender -b --factory-startup -noaudio -P /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/skill/recliner/lib/compositors/blender_compose.py -- /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153702-hidden-02-no-slop-allowed-2/compositions/1/work/blender_job.json"
+          },
+          "result": {
+            "file": "compositions/1/final.mp4"
+          }
+        }
+      ],
+      "outputs": {
+        "file": "compositions/1/final.mp4",
+        "thumbnail": "compositions/1/thumb.jpg",
+        "durationSeconds": 17.05,
+        "compositor": "blender",
+        "endCard": {
+          "headline": "No Slop Allowed",
+          "subline": "36 Labs x fal, Dalston, London",
+          "seconds": 2
+        },
+        "audio": {
+          "present": true,
+          "bed": "compositions/1/bed.wav",
+          "lufs": -15.5,
+          "truePeak": -1.4,
+          "audible": true
+        },
+        "notes": [
+          "clip 4 conformed from 30 to 24 fps"
+        ],
+        "audio_ms": 832
+      },
+      "duration_ms": 74600,
+      "at": "2026-11-28T15:41:39.939Z"
+    },
+    {
+      "id": "step-17",
+      "name": "validate-output:comp-1",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "file": "compositions/1/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "/Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-02-no-slop-allowed.md",
+        "targetDurationSeconds": 15
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153702-hidden-02-no-slop-allowed-2/compositions/1 --video /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153702-hidden-02-no-slop-allowed-2/compositions/1/final.mp4 --write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153702-hidden-02-no-slop-allowed-2/compositions/1/validation_report.json --repair-write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153702-hidden-02-no-slop-allowed-2/compositions/1/repair_plan.json --contact-sheet /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153702-hidden-02-no-slop-allowed-2/compositions/1/contact-sheet.png --video-only --source-brief /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-02-no-slop-allowed.md --duration-min 13.5 --duration-max 18.5"
+          },
+          "result": {
+            "ok": true,
+            "status": "pass"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "pass",
+        "validationReport": "compositions/1/validation_report.json",
+        "repairPlan": "compositions/1/repair_plan.json",
+        "contactSheet": "compositions/1/contact-sheet.png",
+        "counts": {
+          "blockers": 0,
+          "major": 0,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 8070,
+      "at": "2026-11-28T15:41:52.017Z"
+    },
+    {
+      "id": "step-18",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "comp-1",
+        "score": 76,
+        "passed": true,
+        "ranking": [
+          [
+            "comp-1",
+            76
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:42:04.834Z",
+      "decision": "selected comp-1",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-19",
+      "name": "output summary and degradations",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedGoal": "goal-1",
+        "score": 76,
+        "technicalValidation": "pass",
+        "compositor": "blender"
+      },
+      "duration_ms": 0,
+      "at": "2026-11-28T15:42:04.988Z",
+      "decision": "export composition 1",
+      "rationale": "7-minute submission deadline",
+      "degradations": [
+        "references: one angle, 2 references, no sub-agents, metrics null",
+        "goals: 3 goals written by orchestrator instead of 5 via sub-agent",
+        "scoring: orchestrator-scored instead of Haiku sub-agent",
+        "keyframe, clip and final validation done by orchestrator from frames instead of sub-agents",
+        "no retries (all scores >= 60)"
+      ],
+      "falSkills": [
+        {
+          "name": "fal-video-production",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-20",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "selectedId": "comp-1",
+        "file": "compositions/1/final.mp4",
+        "score": 76
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/1/final.mp4",
+            "to": "outputs/hidden-02-no-slop-allowed-2/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/hidden-02-no-slop-allowed-2/final.mp4",
+        "traces": "outputs/hidden-02-no-slop-allowed-2/traces.json",
+        "creativeRationale": "outputs/hidden-02-no-slop-allowed-2/creative_rationale.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:42:05.288Z"
+    },
+    {
+      "id": "step-21",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/hidden-02-no-slop-allowed-2/final.mp4",
+        "finished_at": "2026-11-28T15:42:05.300Z",
+        "run_seconds": 303
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:42:05.355Z"
+    }
+  ],
+  "run_id": "20261128-153702-hidden-02-no-slop-allowed-2",
+  "selected_result": {
+    "id": "comp-1",
+    "file": "compositions/1/final.mp4",
+    "compositor": "blender",
+    "validation": {
+      "score": 76,
+      "passed": true,
+      "reason": "Clear dawn-to-night day-of-building arc on one desk, warm natural palette, no faces, captions legible and factual. Hook is soft (hand reaching to a card rather than a hard pin press).",
+      "breakdown": {
+        "hook": 62,
+        "briefFit": 82,
+        "craft": 76,
+        "originality": 78,
+        "slop": 80
+      },
+      "slopHits": [
+        {
+          "item": "soft hook",
+          "frame": "f1",
+          "note": "pin press reads as gentle touch"
+        }
+      ],
+      "biggestProblem": "Opening action is gentle rather than punchy."
+    },
+    "technicalValidation": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 7341,
+      "mode": "video-only"
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "artifact_type": "creative_rationale",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T15:42:05.238Z",
+  "runId": "20261128-153702-hidden-02-no-slop-allowed-2",
+  "brief": {
+    "file": "briefs/hidden-02-no-slop-allowed.md",
+    "promote": "No Slop Allowed",
+    "objective": "A one-day creative AI hackathon from 36 Labs and fal at Ramen Space in Dalston, London. Teams build systems that turn briefs into finished videos and compete for $4,000 in prizes.",
+    "platform": "TikTok",
+    "aspectRatio": "9:16"
+  },
+  "creativeThesis": "One anonymous maker's desk from first light to night: a blank storyboard card pinned at dawn becomes a finished render by dark.",
+  "intent": {
+    "product": "No Slop Allowed: a one-day creative AI hackathon by 36 Labs and fal at Ramen Space, Dalston, London",
+    "objective": "awareness",
+    "audience": "London creative technologists and AI video builders",
+    "message": "Spend one day building a system that turns briefs into finished videos, with $4,000 in prizes."
+  },
+  "realWorldGrounding": [
+    "brief fact: one-day hackathon, teams build systems that turn briefs into finished videos",
+    "brief fact: 36 Labs and fal at Ramen Space, Dalston, London",
+    "physical anchors: cork wall of pencil storyboard cards, laptop with a video timeline, real window light changing through the day",
+    "brief fact: $4,000 in prizes"
+  ],
+  "selectedGoal": {
+    "id": "goal-1",
+    "title": "A Day of Building",
+    "description": "Documentary-style observation of a single desk across one day of the hackathon: pinning storyboard cards in morning light, working the laptop in the afternoon, a render finishing at night. It sells the event as real, hand-made building rather than slop.",
+    "confidence": 0.84,
+    "style": "Observational documentary, 35mm lens feel, natural window light shifting through the day, linen white, sage green wall, dusk violet night window, warm desk lamp, soft film grain",
+    "styleTags": {
+      "modality": "documentary",
+      "hookType": "physical-action",
+      "openingAction": "thumb pins a storyboard card",
+      "palette": [
+        "linen",
+        "sage",
+        "dusk violet"
+      ],
+      "pacing": "three 5s time-of-day beats, hard cuts",
+      "cameraLanguage": "locked medium, top-down push-in, over-shoulder",
+      "musicGenre": "lo-fi acoustic documentary"
+    }
+  },
+  "decisionEvidence": {
+    "scorer": "claude-opus-5-5",
+    "selectedReason": "Directly dramatises the brief (one day building a brief-to-video system) with concrete desk/storyboard/render anchors and model-friendly simple actions.",
+    "alternatives": [
+      {
+        "goalId": "goal-2",
+        "confidence": 0.62
+      },
+      {
+        "goalId": "goal-3",
+        "confidence": 0.48
+      }
+    ],
+    "referencesUsed": [
+      {
+        "id": "ref-1",
+        "kind": "reference",
+        "title": "How I Create Viral AI Construction Time-Lapse Videos From Scratch",
+        "url": "https://www.youtube.com/watch?v=gTdDIClSCgg",
+        "why": "Time-lapse progression formats (empty to finished across one locked frame) are a widely copied AI-video format; transferable: one fixed space shown at successive times of day, each cut a visible step of progress. Metrics unverified (search result only)."
+      },
+      {
+        "id": "ref-2",
+        "kind": "reference",
+        "title": "SNOW BEAR - A Hand-Drawn Animated Short Film by Aaron Blaise",
+        "url": "https://www.youtube.com/watch?v=xOXolSQcEb4",
+        "why": "Hand-made craft framing: warm, human, tactile process (pencil, paper, desk) signals care and authorship, the opposite of slop. Transferable: hands at a desk, paper drawings, warm lamp light. Metrics unverified."
+      }
+    ],
+    "compositor": "blender"
+  },
+  "validationEvidence": {
+    "creative": {
+      "score": 76,
+      "passed": true,
+      "reason": "Clear dawn-to-night day-of-building arc on one desk, warm natural palette, no faces, captions legible and factual. Hook is soft (hand reaching to a card rather than a hard pin press).",
+      "biggestProblem": "Opening action is gentle rather than punchy.",
+      "slopHits": [
+        {
+          "item": "soft hook",
+          "frame": "f1",
+          "note": "pin press reads as gentle touch"
+        }
+      ]
+    },
+    "technical": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 7341,
+      "mode": "video-only"
+    }
+  }
+}

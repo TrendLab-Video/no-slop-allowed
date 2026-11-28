@@ -1,0 +1,105 @@
+{
+  "artifact_type": "creative_rationale",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T15:42:17.123Z",
+  "runId": "20261128-153658-hidden-01-louis-vuitton-2",
+  "brief": {
+    "file": "briefs/hidden-01-louis-vuitton.md",
+    "promote": "Louis Vuitton",
+    "objective": "A French fashion house founded in Paris in 1854 as a trunk maker. Its collections include luggage, handbags, clothing, shoes and accessories.",
+    "platform": "TikTok",
+    "aspectRatio": "9:16"
+  },
+  "creativeThesis": "One Monogram trunk travels from a steam-filled Paris platform, across a liner's deck, to a sunlit station today.",
+  "intent": {
+    "product": "Louis Vuitton Monogram canvas trunk, with the Keepall as the present-day travel piece",
+    "objective": "awareness",
+    "audience": "Luxury travel and fashion buyers on vertical social",
+    "message": "Louis Vuitton has been made for travel since it began as a Paris trunk maker in 1854."
+  },
+  "realWorldGrounding": [
+    "Brief fact: founded in Paris in 1854 as a trunk maker",
+    "Real products: Monogram canvas trunk with wooden slats and brass corners; Monogram Keepall (brand product photo)",
+    "Brand travel films A Holiday Journey and Le Keepall: The Legend (ref-1, ref-2)"
+  ],
+  "selectedGoal": {
+    "id": "goal-1",
+    "title": "The Trunk's Long Journey",
+    "description": "Heritage travel story in three wide, moving stations: the trunk departs, crosses the sea, and arrives in the present beside a Keepall. The 1854 trunk-maker origin is told through journeys, not claims.",
+    "confidence": 0.86,
+    "style": "Steam grey, slate blue and cream daylight; soft period haze in early scenes to crisp present-day light; 35mm and 24mm lenses, wide frames, gentle film grain",
+    "styleTags": {
+      "modality": "heritage travel story",
+      "hookType": "physical-action",
+      "openingAction": "trunk lowered onto a station luggage cart",
+      "palette": [
+        "steam grey",
+        "slate blue",
+        "cream"
+      ],
+      "pacing": "three 5s wide travelling takes, cross-era hard cuts",
+      "cameraLanguage": "lateral dolly, tracking along deck, slow push-in",
+      "musicGenre": "orchestral travel waltz"
+    }
+  },
+  "decisionEvidence": {
+    "scorer": "haiku",
+    "selectedReason": "Uses the brief's own 1854 Paris trunk-maker fact and real luggage products as a travel story.",
+    "alternatives": [
+      {
+        "goalId": "goal-2",
+        "confidence": 0.62
+      }
+    ],
+    "referencesUsed": [
+      {
+        "id": "ref-1",
+        "kind": "reference",
+        "title": "A Holiday Journey | LOUIS VUITTON",
+        "url": "https://www.youtube.com/watch?v=aE0KxAysZiA",
+        "why": "The brand's own journey-led film: travel as the narrative spine, wide moving shots, product carried through places. Transferable: one continuous journey told in stations. Metrics not verified in time (null)."
+      },
+      {
+        "id": "ref-2",
+        "kind": "reference",
+        "title": "Le Keepall: The Legend | LOUIS VUITTON",
+        "url": "https://www.youtube.com/watch?v=lTGwWC5BzuI",
+        "why": "Heritage-object storytelling: one real product (the Keepall) framed as a travel icon across eras. Transferable: period-to-present arc anchored on a single real piece. Metrics not verified in time (null)."
+      },
+      {
+        "id": "brand",
+        "kind": "brand",
+        "title": "Louis Vuitton site",
+        "url": "https://www.louisvuitton.com/",
+        "why": null
+      }
+    ],
+    "compositor": "blender"
+  },
+  "validationEvidence": {
+    "creative": {
+      "score": 78,
+      "passed": true,
+      "reason": "A clear three-station heritage travel arc (steam platform, liner deck, modern station) with real Monogram pieces centred in every frame. Opening action is gentle rather than a hard physical hook.",
+      "biggestProblem": "Hook in the first second is soft.",
+      "slopHits": [
+        {
+          "item": "soft hook",
+          "frame": "f1",
+          "note": "bag already on cart; lowering motion is subtle"
+        }
+      ]
+    },
+    "technical": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 2807,
+      "mode": "video-only"
+    }
+  }
+}
