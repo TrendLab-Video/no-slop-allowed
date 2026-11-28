@@ -195,7 +195,7 @@ export function acceptClips(runId) {
   const summary = [];
   updateJson(runId, 'clips.json', { scenes: [] }, (clips) => mergeClips(runId, clips, summary));
   appendTraceLocked(runId, { name: 'accept-clips', stage: 'clip_validation', outputs: { scenes: summary }, extra: { decision: 'best-scoring attempt per scene' } });
-  return { scenes: summary, allPassed: summary.every((s) => s.passed), ...budget(runId) };
+  return { scenes: summary, allPassed: summary.every((s) => s.passed), allKeyframesPassed: summary.every((s) => s.acceptedKeyframe == null || s.keyframePassed), ...budget(runId) };
 }
 
 function mergeClips(runId, clips, summary) {
@@ -206,11 +206,19 @@ function mergeClips(runId, clips, summary) {
       if (v && num(v.score) !== null) {
         a.validation = { score: v.score, passed: typeof v.passed === 'boolean' ? v.passed : v.score >= passScore, reason: v.reason || '', steering: v.steering || '' };
       }
+      const kv = a.keyframe && readFile(`clips/${scene.sceneId}/${a.attempt}.keyframe.validation.json`, runId);
+      if (kv && num(kv.score) !== null) {
+        a.keyframe.validation = { score: kv.score, passed: typeof kv.passed === 'boolean' ? kv.passed : kv.score >= passScore, reason: kv.reason || '', steering: kv.steering || '' };
+      }
     }
+    // Best still per scene (keyframe-first flow); generate-clips animates scene.acceptedKeyframe.
+    const stills = (scene.attempts || []).filter((a) => a.keyframe?.file && a.keyframe.status !== 'failed' && fs.existsSync(runPath(runId, a.keyframe.file)));
+    if (stills.length) scene.acceptedKeyframe = best(stills, (a) => num(a.keyframe.validation?.score)).attempt;
     const usable = (scene.attempts || []).filter((a) => a.status === 'generated' || (a.status !== 'failed' && a.status !== 'generating' && a.file && fs.existsSync(runPath(runId, a.file))));
     const pick = best(usable, (a) => num(a.validation?.score));
     scene.acceptedAttempt = pick ? pick.attempt : null;
-    summary.push({ sceneId: scene.sceneId, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
+    const kf = stills.find((a) => a.attempt === scene.acceptedKeyframe);
+    summary.push({ sceneId: scene.sceneId, acceptedKeyframe: scene.acceptedKeyframe ?? null, keyframeScore: kf?.keyframe?.validation?.score ?? null, keyframePassed: kf?.keyframe?.validation?.passed ?? false, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
   }
   return clips;
 }

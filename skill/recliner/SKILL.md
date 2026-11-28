@@ -101,7 +101,21 @@ Time cap: 5% of the budget (minimum 15 s). `score` appends its own trace step.
 
 ## 4. Clips (stage `clips`)
 
-fal is the generation path (instructed, not optional). `recliner generate-clips <runId>` generates every scene of `plan.json` in parallel and writes `clips.json`. If fal-video-generation is available, follow it when choosing a model override or wording `--steering`. **This first generation always runs, whatever the time budget says.** If `FAL_KEY` is missing or fal answers 401/403 (bad key, locked, exhausted balance), the command fails with fal's message: `recliner stage <runId> clips failed "<message>"` and stop, with no per-scene retry. If one scene fails for any other reason, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
+fal is the generation path (instructed, not optional).
+
+**Keyframes first** (when `config.keyframes` is true, the default). No video is paid for until every scene has an accepted still:
+
+```text
+recliner generate-clips <runId> --keyframes-only          # one still per scene, from scene.keyframePrompt
+validate every still in parallel: one fast sub-agent (Haiku) per still with steps/validate-keyframe.md
+  → clips/<sceneId>/<attempt>.keyframe.validation.json
+per scene, while keyframe score < config.passScore and retries < max(1, config.clipRetries) and budget allows:
+    recliner generate-clips <runId> --keyframes-only --scene <sceneId> --steering "<keyframe steering>"
+    validate the new still
+recliner accept-clips <runId>                             # sets scene.acceptedKeyframe (best still)
+```
+
+Then video: `recliner generate-clips <runId>` animates each scene's accepted still with `scene.prompt`, all scenes in parallel, and writes `clips.json`. With `config.keyframes` false, it generates video straight from `scene.prompt`. If fal-video-generation is available, follow it when choosing a model override or wording `--steering`. **This first generation always runs, whatever the time budget says.** If `FAL_KEY` is missing or fal answers 401/403 (bad key, locked, exhausted balance), the command fails with fal's message: `recliner stage <runId> clips failed "<message>"` and stop, with no per-scene retry. If one scene fails for any other reason, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
 
 ## 5. Clip validation (stage `clip_validation`)
 
@@ -111,7 +125,8 @@ Retry loop, per scene (scenes in parallel):
 
 ```text
 retries = 0
-while score < config.passScore and retries < config.clipRetries and budget allows:
+maxRetries = config.clipRetries, or 1 if the last score is below 30 (even at effort 1)
+while score < config.passScore and retries < maxRetries and budget allows:
     recliner stage <runId> clip_validation retrying "<sceneId> attempt <n>"
     recliner generate-clips <runId> --scene <sceneId> --steering "<steering from the last validation>"
     validate the new attempt (one sub-agent, steps/validate-clip.md)
@@ -119,7 +134,9 @@ while score < config.passScore and retries < config.clipRetries and budget allow
 recliner accept-clips <runId>
 ```
 
-`accept-clips` merges every validation file into `clips.json` and sets `acceptedAttempt` to the best-scoring attempt per scene, passed or not. Run it after the loops and again after any later clip retry.
+A score below 30 means the product or subject is missing: that scene gets one retry even when `clipRetries` is 0, as long as `stopRetrying` is false. Use the validator's steering. With keyframes on, regenerate the still first (`--keyframes-only --scene`), validate it, then the video.
+
+`accept-clips` merges every validation file (clips and keyframes) into `clips.json`, sets `acceptedKeyframe` to the best still and `acceptedAttempt` to the best-scoring clip per scene, passed or not. Run it after the loops and again after any later clip retry.
 
 ## 6. Composition (stage `composition`)
 
