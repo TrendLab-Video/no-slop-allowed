@@ -27,20 +27,38 @@ const STILL_SUFFIX = 'No captions, no garbled or fake text, no watermarks.';
 const withSteering = (p, steering) => (steering ? `${clean(steering)}. This is the required change from the previous attempt. ${p}` : p);
 export const PRODUCT_LOCK = 'The product must match the reference images exactly: same shape, colours, controls and markings.';
 
+// Conservative prompt cap shared by the video and image models in use (vidu's 1500-character limit is the tightest).
+export const PROMPT_LIMIT = 1500;
+const cut = (t, n) => (t.length <= n ? t : n <= 1 ? '' : `${t.slice(0, n - 1).replace(/\s+\S*$/, '')}…`);
+
+// The plan's look and continuity, shared by every scene so stills and clips match:
+// "Style: <style>; palette …; camera …; pacing …. Continuity: <creativeGuidance continuity, ~300 chars>."
+export function styleBlock(plan) {
+  const tags = plan.styleTags || {};
+  const style = [clean(plan.style), tags.palette && `palette ${clean(tags.palette)}`, tags.cameraLanguage && `camera ${clean(tags.cameraLanguage)}`, tags.pacing && `pacing ${clean(tags.pacing)}`].filter(Boolean).join('; ');
+  const g = String(plan.creativeGuidance || '');
+  const m = g.match(/continuity\s*:?\s*([\s\S]*)/i);
+  const cont = clean(cut((m ? m[1] : g).replace(/\s+/g, ' ').trim(), 300));
+  return [style && `Style: ${style}.`, cont && `Continuity: ${cont}.`].filter(Boolean).join(' ');
+}
+
+// Assemble [steering] scene prompt [style block] suffix; the block is truncated to fit PROMPT_LIMIT, never the scene prompt.
+function assemble(plan, scenePart, suffix, steering) {
+  const fixed = withSteering(`${scenePart}. ${suffix}`, steering).length + 1;
+  const block = cut(styleBlock(plan), Math.max(0, PROMPT_LIMIT - fixed));
+  return withSteering(block ? `${scenePart}. ${block} ${suffix}` : `${scenePart}. ${suffix}`, steering);
+}
+
 // Text-to-video prompt (config.keyframes false, or the fallback when the still or image-to-video fails).
 export function scenePrompt(plan, scene, steering) {
-  let p = clean(scene.prompt || scene.description);
-  if (plan.style && !p.toLowerCase().includes(String(plan.style).toLowerCase().slice(0, 20))) p += `. Style: ${clean(plan.style)}`;
-  return withSteering(`${p}. ${VIDEO_SUFFIX}`, steering);
+  return assemble(plan, clean(scene.prompt || scene.description), VIDEO_SUFFIX, steering);
 }
 
 // Still keyframe prompt: the scene's first frame, composed and lit like a finished shot.
 export function keyframePrompt(plan, scene, steering, { withProduct = false } = {}) {
-  let p = clean(scene.keyframePrompt || scene.prompt || scene.description);
-  if (plan.style) p += `. Style: ${clean(plan.style)}`;
-  p += `. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. ${STILL_SUFFIX}`;
-  if (withProduct) p += ` ${PRODUCT_LOCK}`;
-  return withSteering(p, steering);
+  const p = clean(scene.keyframePrompt || scene.prompt || scene.description);
+  const suffix = `Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. ${STILL_SUFFIX}${withProduct ? ` ${PRODUCT_LOCK}` : ''}`;
+  return assemble(plan, p, suffix, steering);
 }
 
 // plan.productImages (run-relative paths of real product photos) that exist on disk.
@@ -49,7 +67,7 @@ export const productImages = (runId, plan) => (Array.isArray(plan.productImages)
 // Image-to-video prompt: the motion from the still (scene.prompt per the contract).
 export function motionPrompt(plan, scene, steering) {
   const p = clean(scene.prompt || scene.description);
-  return withSteering(`${p}. Keep the subject, framing and look of the start frame; smooth, natural motion. ${VIDEO_SUFFIX}`, steering);
+  return assemble(plan, p, `Keep the subject, framing and look of the start frame; smooth, natural motion. ${VIDEO_SUFFIX}`, steering);
 }
 
 const hasFile = (runId, rel) => !!rel && fs.existsSync(runPath(runId, rel));
