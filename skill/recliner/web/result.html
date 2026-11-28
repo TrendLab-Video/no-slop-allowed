@@ -13,17 +13,19 @@
   <div id="view"></div>
 </main>
 <script type="module">
-import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, scoreBar, needRun, endCardOf, musicBlock, verdictHead, belowPassBanner, intendedVsSaw } from '/app.js';
+import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, needRun, endCardOf, musicBlock, belowPassBanner, intendedVsSaw } from '/app.js';
 
 header('result');
 let shown = null; // id of the result in the hero; null follows selectedId
 let data = null;
+let latestState = null;
 
 if (!needRun()) {
   const diagram = flow($('#flow'));
   let tick = 0;
   poll(async () => {
     const state = await getJson('state.json');
+    latestState = state;
     if (state) diagram.render(state);
     if (tick++ % 2) return;
     const d = await getRun(['brief.json', 'plan.json', 'result.json', 'scores.json', 'config.json']);
@@ -38,6 +40,9 @@ function render() {
     view.innerHTML = `<div class="head"><div><span class="eyebrow">Result</span><h1>${esc(b.promote || 'Result')}</h1><p>No composed video yet. This page fills in when composition and final validation finish.</p></div></div><div class="empty">Waiting for <code>result.json</code>…</div>`;
     return;
   }
+  const active = latestState?.stages?.some((s) => ['running', 'retrying'].includes(s.status));
+  const outputDone = ['done', 'skipped'].includes(latestState?.stages?.find((s) => s.id === 'output')?.status);
+  $('#flow').hidden = outputDone || (latestState?.status === 'done' && !active);
   const ranked = [...result.results].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1));
   const hero = ranked.find((r) => r.id === (shown || result.selectedId)) || ranked[0];
   const ar = plan?.aspectRatio || b.aspectRatio || '9:16';
@@ -55,28 +60,33 @@ function render() {
     <div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tag genb">Generated</span>${isSel ? '<span class="tag ok">selected</span>' : `<span class="tag">alternate · rank ${rank} of ${ranked.length}</span>`}</div>
       <h1>${esc(b.promote || 'Result')}</h1>
-      ${verdictHead(v, config?.passScore)}
-      <div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score ?? '–')}<small>/100</small></div>
-      <p class="small muted" style="margin:10px 0 0">The validator's full verdict is below, beside the plan it was checked against.</p>
-      <div class="links" style="margin-top:22px"><a class="btn ghost" href="${fileUrl(hero.file)}" download>Download mp4</a><a class="btn ghost" href="${fileUrl('traces.json')}" target="_blank">traces.json</a><a class="btn" href="/steps.html?run=${encodeURIComponent(runId)}">Steps <span class="arrow">→</span></a></div>
-      <dl class="kv" style="margin-top:22px">
-        <dt>Result</dt><dd class="mono small">${esc(hero.id)} · attempt ${esc(hero.attempt)}</dd>
-        <dt>Duration</dt><dd>${esc(hero.durationSeconds ?? '–')}s</dd>
-        <dt>Compositor</dt><dd>${esc(hero.compositor || '–')}</dd>
-        ${endCardOf(plan) ? `<dt>End card</dt><dd>${esc(endCardOf(plan).headline)}${endCardOf(plan).subline ? ` · ${esc(endCardOf(plan).subline)}` : ''}</dd>` : ''}
-        ${hero.audio || plan?.audio?.musicPrompt ? `<dt>Music</dt><dd>${musicBlock(hero, plan)}</dd>` : ''}
-        <dt>Format</dt><dd>${esc(ar)}${b.platform ? ` · ${esc(b.platform)}` : ''}</dd>
-        ${plan ? `<dt>Goal</dt><dd>${esc(plan.title)}${plan.confidence != null ? ` <span class="muted mono small">(${Math.round(plan.confidence * 100)}% fit)</span>` : ''}</dd><dt>Scenes</dt><dd>${esc(plan.scenes?.length ?? '–')}</dd>` : ''}
-        <dt>File</dt><dd class="mono small">${esc(hero.file)}</dd>
-      </dl>
+      <div class="quality-panel ${v.passed === false ? 'warn' : ''}">
+        <span class="eyebrow">Quality review</span>
+        <div class="quality-score">${esc(v.score ?? '–')}<small>/100</small></div>
+        <p>${v.passed === false ? (isSel ? 'This is the strongest available cut, but the review still found issues worth fixing.' : 'This alternate did not pass the automated quality review.') : v.passed ? 'This version passed the automated creative and quality review.' : v.score != null ? 'This version received an automated creative and quality score.' : 'Quality review is still running.'}</p>
+      </div>
+      <div class="links result-actions"><a class="btn big" href="${fileUrl(hero.file)}" download>Download video</a><a class="btn ghost" href="/">New video</a><a class="btn ghost" href="/steps.html?run=${encodeURIComponent(runId)}">Inspect</a></div>
+      <details class="result-meta"><summary>Technical details</summary>
+        <dl class="kv">
+          <dt>Result</dt><dd class="mono small">${esc(hero.id)} · attempt ${esc(hero.attempt)}</dd>
+          <dt>Duration</dt><dd>${esc(hero.durationSeconds ?? '–')}s</dd>
+          <dt>Compositor</dt><dd>${esc(hero.compositor || '–')}</dd>
+          ${endCardOf(plan) ? `<dt>End card</dt><dd>${esc(endCardOf(plan).headline)}${endCardOf(plan).subline ? ` · ${esc(endCardOf(plan).subline)}` : ''}</dd>` : ''}
+          ${hero.audio || plan?.audio?.musicPrompt ? `<dt>Music</dt><dd>${musicBlock(hero, plan)}</dd>` : ''}
+          <dt>Format</dt><dd>${esc(ar)}${b.platform ? ` · ${esc(b.platform)}` : ''}</dd>
+          ${plan ? `<dt>Direction</dt><dd>${esc(plan.title)}${plan.confidence != null ? ` <span class="muted mono small">(${Math.round(plan.confidence * 100)}% fit)</span>` : ''}</dd><dt>Scenes</dt><dd>${esc(plan.scenes?.length ?? '–')}</dd>` : ''}
+          <dt>File</dt><dd class="mono small">${esc(hero.file)}</dd>
+          <dt>Trace</dt><dd><a href="${fileUrl('traces.json')}" target="_blank">traces.json</a></dd>
+        </dl>
+      </details>
     </div>
   </div>
-  <section class="section"><div class="sh"><h2>Intended vs what the validator saw</h2><span class="eyebrow">${esc(hero.id)}</span></div>${intendedVsSaw(plan, v, config?.passScore)}</section>
-  ${ranked.length > 1 ? `<section class="section"><div class="sh"><h2>All results</h2><span class="eyebrow">ranked by final validation · click to view</span></div>
+  <section class="section quality-section"><div class="sh"><h2>${isSel ? 'Why this version was chosen' : 'How this version compares'}</h2><span class="eyebrow">creative intent vs quality review</span></div>${intendedVsSaw(plan, v, config?.passScore)}</section>
+  ${ranked.length > 1 ? `<section class="section"><div class="sh"><h2>All results</h2><span class="eyebrow">ranked by quality · click to compare</span></div>
     <div class="alts">${ranked.map((r, i) => `<button class="alt ${r.id === hero.id ? 'on' : ''}" data-id="${esc(r.id)}">
       <div class="media ${'ar-' + ar.replace(':', '-')}">${r.thumbnail ? `<img src="${fileUrl(r.thumbnail)}" alt="">` : `<video src="${fileUrl(r.file)}#t=0.5" preload="metadata" muted playsinline></video>`}
         ${r.id === result.selectedId ? '<span class="badge"><span class="tag ok">selected</span></span>' : ''}</div>
-      <div class="body"><span>#${i + 1} · ${esc(r.id)}</span><span>${esc(r.validation?.score ?? '–')}</span></div></button>`).join('')}</div></section>` : ''}`;
+      <div class="body"><span>#${i + 1} · ${r.id === result.selectedId ? 'selected cut' : `version ${i + 1}`}</span><span>${esc(r.validation?.score ?? '–')}</span></div>${r.validation?.reason ? `<div class="alt-note">${esc(r.validation.reason.slice(0, 110))}${r.validation.reason.length > 110 ? '…' : ''}</div>` : ''}</button>`).join('')}</div></section>` : ''}`;
 
   view.querySelectorAll('.alt').forEach((el) => (el.onclick = () => {
     shown = el.dataset.id;

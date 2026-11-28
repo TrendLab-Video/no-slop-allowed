@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Steps · Recliner · 36 Labs x fal</title>
+<title>Inspect · Recliner · 36 Labs x fal</title>
 <link rel="stylesheet" href="/style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect width='22' height='22' rx='2' fill='%230a0a0a'/%3E%3Cpath d='M5 15.5 L11 5.5 L17 15.5' stroke='%23adff00' stroke-width='2' fill='none'/%3E%3C/svg%3E">
 </head>
 <body>
 <main>
   <div id="flow"></div>
-  <div class="head slim"><div><span class="eyebrow">Every intermediate output</span><h1>Steps</h1><p>What each stage produced, in order: references, goals and their scores, every clip attempt with its validation, and the compositions.</p></div></div>
+  <div class="head slim inspect-head"><div><span class="eyebrow">Behind the scenes</span><h1>Inspect the run</h1><p>Evidence for judges and engineers: decisions, generated artifacts, retries, prompts, validation, and raw traces. Open only what you need.</p></div></div>
   <nav class="toc"><a href="#brief">Brief</a><a href="#references">References</a><a href="#goals">Goals</a><a href="#clips">Clips</a><a href="#compositions">Compositions</a><a href="#trace">Trace</a></nav>
   <div id="view"></div>
 </main>
 <script type="module">
-import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, fmtNum, fmtMs, scoreBar, needRun, withKeyframeValidations, kfBadge, metrics, refImages, isBrand, refBadge, productImagesOf, musicBlock, verdictHead, belowPassBanner, intendedVsSaw } from '/app.js';
+import { esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, fmtNum, fmtMs, scoreBar, needRun, withKeyframeValidations, kfBadge, metrics, refImages, isBrand, refBadge, productImagesOf, musicBlock, verdictHead, belowPassBanner, intendedVsSaw } from '/app.js';
 
 header('steps');
 if (!needRun()) {
@@ -24,7 +24,12 @@ if (!needRun()) {
   let tick = 0;
   poll(async () => {
     const state = await getJson('state.json');
-    if (state) diagram.render(state);
+    if (state) {
+      diagram.render(state);
+      const active = state.stages?.some((s) => ['running', 'retrying'].includes(s.status));
+      const outputDone = ['done', 'skipped'].includes(state.stages?.find((s) => s.id === 'output')?.status);
+      $('#flow').hidden = outputDone || (state.status === 'done' && !active);
+    }
     if (tick++ % 2) return;
     const d = await getRun(FILES);
     await withKeyframeValidations(d['clips.json']);
@@ -33,7 +38,7 @@ if (!needRun()) {
 }
 
 const empty = (t) => `<div class="empty">${t}</div>`;
-const section = (id, title, right, body) => `<section class="section" id="${id}"><div class="sh"><h2>${title}</h2><span class="eyebrow">${right}</span></div>${body}</section>`;
+const section = (id, title, right, body, open = false) => `<details class="section inspect-section" id="${id}" ${open ? 'open' : ''}><summary class="sh"><h2>${title}</h2><span class="eyebrow">${right}</span><span class="expand-cue"></span></summary><div class="inspect-body">${body}</div></details>`;
 
 function render(d) {
   const b = d['brief.json'], c = d['config.json'], refs = d['references.json'], goals = d['goals.json'], scores = d['scores.json'], clips = d['clips.json'], result = d['result.json'], traces = d['traces.json'];
@@ -94,10 +99,10 @@ function render(d) {
           <div class="body">
             <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${a.status === 'generated' ? '<span class="tag genb">Generated</span>' : ''}<span class="tag">attempt ${esc(a.attempt)}</span>${a.keyframe ? `<span class="tag kfb">keyframe</span>${kfBadge(a.keyframeValidation)}` : ''}</div>
             ${a.keyframe ? `<div class="kfrow">${hasVideo ? `<a href="${fileUrl(a.keyframe)}" target="_blank"><img class="kfthumb" src="${fileUrl(a.keyframe)}" alt=""></a>` : ''}
-              <div>${kfv ? verdictHead(kfv, null, 'Keyframe validator') : ''}
+              <div>${kfv ? verdictHead(kfv, null, 'Keyframe review') : ''}
               ${kfv?.reason ? `<p class="small vquote">${esc(kfv.reason)}</p>` : ''}${kfv?.steering && kfv.passed === false ? `<div class="steer">↻ ${esc(kfv.steering)}</div>` : ''}</div></div>` : ''}
             ${a.status === 'failed' && a.error ? `<p class="errtxt">${esc(a.error)}</p>` : ''}
-            ${v ? `${verdictHead(v, c?.passScore, 'Clip validator')}<p class="vquote">${esc(v.reason)}</p>${v.steering ? `<div class="steer">↻ ${esc(v.steering)}</div>` : ''}` : a.status === 'failed' ? '' : kfRejected ? '<p class="muted small">No clip: the keyframe was rejected and the scene was retried with a new keyframe.</p>' : '<p class="muted">Not validated yet.</p>'}
+            ${v ? `${verdictHead(v, c?.passScore, 'Clip review')}<p class="vquote">${esc(v.reason)}</p>${v.steering ? `<div class="steer">↻ ${esc(v.steering)}</div>` : ''}` : a.status === 'failed' ? '' : kfRejected ? '<p class="muted small">No clip: the keyframe was rejected and the scene was retried with a new keyframe.</p>' : '<p class="muted">Not validated yet.</p>'}
             ${a.steering ? `<div class="steer alt-steer">steered: ${esc(a.steering)}</div>` : ''}
             ${a.keyframeInfo?.prompt ? `<details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">keyframe prompt · ${esc(a.keyframeInfo.model || '')}${a.keyframeInfo.reference ? ' · from previous keyframe' : ''}</summary><p class="small mono">${esc(a.keyframeInfo.prompt)}</p></details>` : ''}
             ${a.prompt ? `<details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">clip prompt · ${esc(a.model || '')}</summary><p class="small mono">${esc(a.prompt)}</p></details>` : ''}
@@ -108,20 +113,42 @@ function render(d) {
     <div class="attempts rows">${[...result.results].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1)).map((r) => {
       const sel = result.selectedId === r.id; const v = r.validation;
       return `<div class="attempt row ${ar === '16:9' ? 'wide-media' : ''} ${sel ? 'acc' : ''}">${video(fileUrl(r.file), { ar, poster: r.thumbnail ? fileUrl(r.thumbnail) : '', badge: sel ? '<span class="tag ok">selected</span>' : '', badge2: `<span class="tag">${esc(r.compositor)}</span>` })}
-        <div class="body">${verdictHead(v, c?.passScore, 'Final validator')}${v?.reason ? `<p class="vquote">${esc(v.reason)}</p>` : ''}
+        <div class="body">${verdictHead(v, c?.passScore, 'Final review')}${v?.reason ? `<p class="vquote">${esc(v.reason)}</p>` : ''}
         ${musicBlock(r, plan)}
         <p class="small muted">${esc(r.id)} · attempt ${esc(r.attempt)} · ${esc(r.durationSeconds)}s</p></div></div>`;
     }).join('')}</div>
     ${belowPassBanner(result, c)}
     ${(() => { const sel = result.results.find((r) => r.id === result.selectedId); return sel ? `<div style="margin-top:16px">${intendedVsSaw(plan, sel.validation, c?.passScore)}</div>` : ''; })()}` : empty('No compositions yet.')));
 
-  html.push(section('trace', 'Trace', traces ? `${traces.steps.length} steps · <a href="${fileUrl('traces.json')}" target="_blank">traces.json</a>` : 'pending', traces?.steps?.length ? `
-    <div class="card" style="padding:0"><table style="width:100%;border-collapse:collapse;font-size:13px">${traces.steps.map((s) => `<tr style="border-top:1px solid var(--line-soft)">
-      <td class="mono small muted" style="padding:8px 12px;white-space:nowrap">${esc(s.at?.slice(11, 19) || '')}</td><td style="padding:8px 12px"><span class="tag">${esc(s.stage || '')}</span></td>
-      <td style="padding:8px 12px">${esc(s.name)}</td><td class="mono small muted" style="padding:8px 12px">${esc(s.model || '')}</td>
-      <td class="mono small muted" style="padding:8px 12px;text-align:right">${fmtMs(s.duration_ms)}</td></tr>`).join('')}</table></div>` : empty('No trace steps yet.')));
+  const traceSteps = [...(traces?.steps || [])].sort((a, z) => Date.parse(a.at || 0) - Date.parse(z.at || 0));
+  const traceKind = (s) => {
+    const status = String(s.outputs?.status || '').toLowerCase();
+    const error = String(s.outputs?.error || '').toLowerCase();
+    const name = String(s.name || '').toLowerCase();
+    if (/fail|error|reject|repair_required/.test(`${status} ${error}`)) return 'issues';
+    if (/fallback|retry|repair|steer/.test(name) || /^compose:comp-\d+/.test(name)) return 'retries';
+    return 'all';
+  };
+  html.push(section('trace', 'Trace', traces ? `${traceSteps.length} events · chronological` : 'pending', traceSteps.length ? `
+    <div class="trace-tools"><div class="seg trace-filter" id="trace-filter">
+      <button type="button" class="on" data-kind="all">All</button><button type="button" data-kind="issues">Issues</button><button type="button" data-kind="retries">Retries & steering</button>
+    </div><a class="btn ghost" href="${fileUrl('traces.json')}" target="_blank">Raw traces.json</a></div>
+    <div class="card trace-card"><table>${traceSteps.map((s) => { const kind = traceKind(s); return `<tr data-kind="${kind}" class="${kind !== 'all' ? 'flagged' : ''}">
+      <td class="mono small muted">${esc(s.at?.slice(11, 19) || '')}</td><td><span class="tag">${esc(s.stage || '')}</span></td>
+      <td>${esc(s.name)}</td><td class="mono small muted">${esc(s.model || '')}</td>
+      <td class="mono small muted right">${fmtMs(s.duration_ms)}</td></tr>`; }).join('')}</table></div>` : empty('No trace steps yet.')));
 
   $('#view').innerHTML = html.join('');
+  document.querySelectorAll('.toc a').forEach((a) => (a.onclick = () => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target?.tagName === 'DETAILS') target.open = true;
+  }));
+  const filter = $('#trace-filter');
+  if (filter) filter.querySelectorAll('button').forEach((btn) => (btn.onclick = () => {
+    filter.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === btn));
+    const kind = btn.dataset.kind;
+    document.querySelectorAll('.trace-card tr[data-kind]').forEach((tr) => { tr.hidden = kind !== 'all' && tr.dataset.kind !== kind; });
+  }));
 }
 </script>
 </body>
