@@ -58,7 +58,8 @@ outputs/            hackathon deliverables, exported from a run
 - Fields: what to promote, objective, platform, video type, domain, links and assets.
 - **Effort slider** (quick → max) sets scene count, parallelism, clip length, model and quality tier, clip retries, final retries and time budget. Each value is shown and can be overridden.
 - Advanced: API keys (fal, Jev) stored in a local `.env`, never in the run folder.
-- After submit the page becomes the live Steps view. No further input is accepted.
+- After submit the page becomes the live run view. No further input is accepted.
+- **Live workflow diagram:** a simple diagram of the pipeline stages sits at the top of the page and shows the current phase for the whole run (done, running, retrying, failed). It updates as `state.json` changes, with no reload.
 
 ## Delivery order
 
@@ -66,7 +67,7 @@ Each milestone ends merged in `staging` and testable.
 
 | Milestone | You can test | Contents |
 |---|---|---|
-| **M0 Scaffold** | Open and submit the Brief page; see `brief.json` and `config.json` | Skill package, schemas, run store, CLI, server, Brief page with effort slider |
+| **M0 Scaffold** | Open and submit the Brief page; see `brief.json` and `config.json` | Skill package, schemas, run store, CLI, server, Brief page with effort slider, live workflow diagram driven by `state.json` |
 | **M1 Vertical slice** | One brief in, one `final.mp4` and `traces.json` out, viewable on the Result and Steps pages | Thinnest version of every stage: light references, 5 goals, Haiku scoring, fal clips, basic validation, ffmpeg composition, headless mode |
 | **M2 Depth** | Better videos; visible retries and rankings | Reference metrics and screenshots, Jev scoring, retry and re-rank loops, Blender compositor, music and sound, alternates on the Result page |
 | **M3 Hardening** | All four starter briefs run inside the time budget | Hidden-brief rehearsal, time budgets and fallbacks, run-to-run diversity, `SUBMISSION.md` |
