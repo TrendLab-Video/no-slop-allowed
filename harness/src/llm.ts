@@ -17,10 +17,19 @@ export type LlmCall = {
   imageUrls?: string[]
   temperature?: number
   maxTokens?: number
+  /** Labels the call in traces.json, e.g. the render id or match. */
+  ref?: string
 }
 
 export async function complete(call: LlmCall, run?: Run): Promise<string> {
-  if (config.mock) return mockLlm(call)
+  const started = Date.now()
+  const record = (tool: string, model: string, output: string, ms: number, usd: number) =>
+    run?.recordCall({ task: call.task, ref: call.ref, tool, model, inputs: { system: call.system, image_urls: call.imageUrls }, prompt: call.prompt, output, ms, usd, at: started })
+  if (config.mock) {
+    const text = await mockLlm(call)
+    record('mock:llm', 'mock', text, Date.now() - started, 0)
+    return text
+  }
 
   const vision = (call.imageUrls?.length ?? 0) > 0
   const endpoint = vision ? LLM.visionEndpoint : LLM.textEndpoint
@@ -33,11 +42,18 @@ export async function complete(call: LlmCall, run?: Run): Promise<string> {
   }
   if (vision) input.image_urls = call.imageUrls
 
-  const res = await callFal(endpoint, input)
+  let res: Awaited<ReturnType<typeof callFal>>
+  try {
+    res = await callFal(endpoint, input)
+  } catch (err) {
+    record(endpoint, String(input.model), `ERROR: ${String(err).slice(0, 500)}`, Date.now() - started, 0)
+    throw err
+  }
   const usd = Number(res.data?.usage?.cost ?? 0)
   run?.addSpend(Number.isFinite(usd) ? usd : 0)
   const text = res.data?.output
   if (typeof text !== 'string') throw new Error(`${call.task}: LLM returned no text output (${JSON.stringify(res.data).slice(0, 300)})`)
+  record(endpoint, String(input.model), text, res.ms, Number.isFinite(usd) ? usd : 0)
   return text
 }
 

@@ -10,6 +10,7 @@ export async function critique(brief: string, concept: Concept, render: Render, 
     {
       task: 'critic.critique',
       system: CRITIC_SYSTEM,
+      ref: render.id,
       prompt: criticPrompt(brief, concept, render.version, stage),
       imageUrls: [render.url],
       temperature: 0.2,
@@ -26,6 +27,16 @@ export async function critique(brief: string, concept: Concept, render: Render, 
 // Matches fault words only: a bare "text" or "hands" would also drop real flags such as
 // "Made-up brand names ... packaging text" or "Stock-photo composition: hands holding a mug".
 const RENDER_ONLY_FLAG = /\b(garbled|misspel\w*|illegible|typo\w*|lettering|anatomy)\b|\b(extra|sixth|six|missing|fused) (fingers?|limbs?|hands?)\b|\b(deformed|distorted|warped) (hands?|fingers?|teeth|limbs?|face)\b/i
+
+/** Critic for a finished video: it sees the first, middle and last frames in order. */
+export async function critiqueVideo(brief: string, concept: Concept, frames: string[], take: number, run?: Run): Promise<Critique> {
+  const c = await completeJson(
+    { task: 'critic.critique', ref: `${concept.id} video take ${take}`, system: CRITIC_SYSTEM, prompt: criticPrompt(brief, concept, take, 'video'), imageUrls: frames, temperature: 0.2, maxTokens: 900 },
+    CritiqueSchema,
+    run,
+  )
+  return normaliseCritique(c, 'video')
+}
 
 /** Enforce the rubric's hard rules in code rather than trusting the model to apply them. */
 export function normaliseCritique(c: Critique, stage: CritiqueStage = 'final'): Critique {

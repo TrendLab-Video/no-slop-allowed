@@ -10,6 +10,11 @@ export type MediaParams = {
   imageUrl?: string
   /** Seconds, for video. */
   seconds?: number
+  /** Multi-shot video: each shot's prompt and length. Sent instead of prompt when present. */
+  shots?: { prompt: string; seconds: number }[]
+  /** Source video, for frame extraction. */
+  videoUrl?: string
+  frame?: 'first' | 'middle' | 'last'
 }
 
 export type MediaSpec = {
@@ -93,6 +98,34 @@ export const SPECS = {
     pick: (d) => d?.video?.url,
     estUsd: (p) => 0.1105 * (p.seconds ?? 5),
   },
+  /**
+   * Kling 3 Pro image-to-video with native audio: $0.168/s with audio on.
+   * Multi-shot in one call: multi_prompt shots (1-15s each, as strings) summing to duration (3-15s, string).
+   * Either prompt or multi_prompt, never both.
+   */
+  klingV3ProI2V: {
+    // Kling rejects (422) any multi_prompt shot over 512 characters; found in a live run. Trim, don't fail.
+    endpoint: 'fal-ai/kling-video/v3/pro/image-to-video',
+    kind: 'video',
+    build: (p) => {
+      const base = { start_image_url: p.imageUrl, generate_audio: true, negative_prompt: 'blur, distort, low quality, text, subtitles, watermark, morphing' }
+      if (p.shots?.length) {
+        const total = p.shots.reduce((a, s) => a + s.seconds, 0)
+        return { ...base, multi_prompt: p.shots.map((s) => ({ prompt: clip(s.prompt, 512), duration: String(s.seconds) })), duration: String(total), shot_type: 'customize' }
+      }
+      return { ...base, prompt: clip(p.prompt, 2500), duration: String(p.seconds ?? 5) }
+    },
+    pick: (d) => d?.video?.url,
+    estUsd: (p) => 0.168 * (p.shots?.reduce((a, s) => a + s.seconds, 0) ?? p.seconds ?? 5),
+  },
+  /** One frame from a video (first, middle or last): $0.0002/s. Lets the image critic review a video. */
+  extractFrame: {
+    endpoint: 'fal-ai/ffmpeg-api/extract-frame',
+    kind: 'image',
+    build: (p) => ({ video_url: p.videoUrl, frame_type: p.frame ?? 'middle' }),
+    pick: (d) => d?.images?.[0]?.url,
+    estUsd: () => 0.002,
+  },
   /** Kokoro TTS: $0.02 per 1k chars. */
   kokoro: {
     endpoint: 'fal-ai/kokoro/american-english',
@@ -111,10 +144,20 @@ export const SPECS = {
   },
 } satisfies Record<string, MediaSpec>
 
+/** Trim to at most `max` characters, at a word boundary where possible. */
+export function clip(text: string, max: number): string {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const space = cut.lastIndexOf(' ')
+  return (space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, '')
+}
+
 /** Which model does which job. Change these lines to change the pipeline. */
-export const ROLES: { draft: MediaSpec; final: MediaSpec; edit: MediaSpec; video: MediaSpec } = {
+export const ROLES: { draft: MediaSpec; final: MediaSpec; edit: MediaSpec; video: MediaSpec; frame: MediaSpec } = {
   draft: SPECS.fluxSchnell,
   final: SPECS.nanoBanana,
   edit: SPECS.nanoBananaEdit,
-  video: SPECS.h3TurboI2V,
+  // Kling 3 Pro: multi-shot and native sound in one call. SPECS.h3TurboI2V is the cheap silent alternative.
+  video: SPECS.klingV3ProI2V,
+  frame: SPECS.extractFrame,
 }

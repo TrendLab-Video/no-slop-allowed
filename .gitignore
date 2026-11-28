@@ -11,3 +11,6 @@ dist/
 build/
 *.log
 *.tmp
+
+# Mock (no FAL_KEY) runs of the harness write here, never into real deliverables
+outputs/_mock/

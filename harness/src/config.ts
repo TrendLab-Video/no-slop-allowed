@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+
 // Runtime config from env. Bun loads .env automatically.
 
 const env = process.env
@@ -19,6 +21,8 @@ export const config = {
   concurrency: positiveInt('CONCURRENCY', 2),
   port: positiveInt('PORT', 3000),
   runsDir: env.RUNS_DIR ?? 'runs',
+  // Inside the hackathon repo (harness/ next to briefs/ and outputs/) results go to ../outputs, where judges look.
+  outputDir: env.OUTPUT_DIR ?? (existsSync('../briefs') && existsSync('../outputs') ? '../outputs' : 'outputs'),
 }
 
 export type HarnessOptions = {
@@ -34,8 +38,12 @@ export type HarnessOptions = {
   plateau: number
   /** How many non-improving versions in a row to allow before stopping. Each retry revises from the best version so far. */
   patience: number
-  /** Animate the winning image at the end (slow and costs more). */
+  /** Turn the winning image into a video with sound. The hackathon deliverable is a video, so this is on by default. */
   video: boolean
+  /** Length of the final video in seconds (3 to 15). */
+  videoSeconds: number
+  /** How many video takes at most: a re-take only happens if the critic rejects the first. */
+  videoTakes: number
 }
 
 export const defaultOptions: HarnessOptions = {
@@ -45,7 +53,9 @@ export const defaultOptions: HarnessOptions = {
   shipScore: 8.5,
   plateau: 0.5,
   patience: 1,
-  video: false,
+  video: true,
+  videoSeconds: 8,
+  videoTakes: 2,
 }
 
 /** Clamp user-supplied options (UI or CLI) to sane bounds. Invalid values are dropped. */
@@ -57,10 +67,14 @@ export function sanitiseOptions(o: Partial<Record<keyof HarnessOptions, unknown>
   const finalists = int(o.finalists, 1, 6)
   const maxIters = int(o.maxIters, 0, 6)
   const patience = int(o.patience, 0, 3)
+  const videoSeconds = int(o.videoSeconds, 3, 15)
+  const videoTakes = int(o.videoTakes, 1, 3)
   if (concepts !== undefined) out.concepts = concepts
   if (finalists !== undefined) out.finalists = finalists
   if (maxIters !== undefined) out.maxIters = maxIters
   if (patience !== undefined) out.patience = patience
+  if (videoSeconds !== undefined) out.videoSeconds = videoSeconds
+  if (videoTakes !== undefined) out.videoTakes = videoTakes
   if (typeof o.video === 'boolean') out.video = o.video
   return out
 }

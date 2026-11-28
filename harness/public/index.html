@@ -175,6 +175,20 @@ function render(run) {
     </div></section>`
   }
 
+  const videos = run.renders.filter((r) => r.kind === 'video')
+  if (videos.length) {
+    html += '<section><h2>Video: storyboard → generate → critique</h2><div class="lane"><div class="strip">'
+    html += videos.map((r) => `<div class="card ${r.id === run.final?.video?.id ? 'best' : ''}">${media(r)}<div class="body">
+      <div class="row"><span class="score">${r.critique ? r.critique.score : '…'}</span><span class="muted">take ${r.version} · ${r.critique?.verdict ?? 'judging'}</span></div>
+      ${r.changeSummary ? `<div class="muted">↻ ${esc(r.changeSummary)}</div>` : ''}
+      ${(r.shots ?? []).map((s, i) => `<div class="muted">${i + 1}. ${s.seconds}s: ${esc(s.prompt)}</div>`).join('')}
+      ${(r.critique?.slop ?? []).map((s) => `<span class="chip slop" title="${esc(s.evidence)}">${esc(s.flag)}</span>`).join('')}
+    </div></div>`).join('')
+    html += '</div></div>'
+    if (run.outputs) html += `<p class="muted">Saved: ${esc(run.outputs.video ?? run.outputs.image ?? '')} · ${esc(run.outputs.traces)}</p>`
+    html += '</section>'
+  }
+
   const finalists = run.concepts.filter((c) => c.status === 'finalist' || c.status === 'winner')
   if (finalists.length) {
     html += '<section><h2>Develop: draft → critique → revise</h2>'

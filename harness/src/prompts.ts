@@ -47,7 +47,9 @@ export function heroPrompt(prompt: string) {
 }
 
 export function directorPrompt(brief: string, n: number, video: boolean) {
-  const medium = video ? '' : '\nVideo is switched off for this run: every concept is a still image (medium "image").'
+  const medium = video
+    ? '\nEvery concept becomes a short video with sound, animated from its keyframe (medium "video"). In "moment", say what happens over a few seconds and what we hear.'
+    : '\nVideo is switched off for this run: every concept is a still image (medium "image").'
   return `BRIEF:\n${brief}\n\nGenerate ${n} concepts.${medium}\n\nJSON shape: {"cliches":["..."],"concepts":[{"title":"","hook":"","idea":"","moment":"","axis":"","medium":"image"|"video","visualPrompt":"","whyItWorks":""}]}`
 }
 
@@ -77,13 +79,19 @@ Flag slop with specific visual evidence. Give fixes that a prompt can actually a
 verdict: "ship" if it meets the bar, "revise" if fixable, "kill" if the idea itself does not work.`
 
 /** Drafts come from a fast, cheap model; the winner is re-rendered on a stronger one. */
-export type CritiqueStage = 'draft' | 'final'
+export type CritiqueStage = 'draft' | 'final' | 'video'
 
 const DRAFT_NOTE = `STAGE: DRAFT. This is a fast, cheap draft. The winner will be re-rendered on a stronger model that draws text and hands properly.
 Judge the idea, composition, focal point, lighting and brief fit. Do NOT flag or mark down garbled text, lettering or anatomy glitches at this stage.
 Fixes must be things a single-frame image prompt can achieve. Prefer removing distractions over adding elements. Never suggest adding text, captions, labels, panels or montages.`
 
 const FINAL_NOTE = 'STAGE: FINAL. This is the finished render. Judge everything, including text and anatomy.'
+
+const VIDEO_NOTE = `STAGE: VIDEO. The attached images are frames from the finished video, in order: first, middle, last. You cannot hear it.
+Judge the video as a whole: does the idea land by the last frame; does the subject stay consistent across frames (no morphing, melting or identity drift); is the last frame strong; would someone keep watching.
+Text and anatomy count. Fixes should be about the shot plan: what happens, camera, pacing, the ending.`
+
+const STAGE_NOTE: Record<CritiqueStage, string> = { draft: DRAFT_NOTE, final: FINAL_NOTE, video: VIDEO_NOTE }
 
 // The critic is deliberately NOT shown the image prompt. When it was, it checked the image against the
 // prompt word by word and flagged "concept and image disagree" for any detail that differed, even in
@@ -93,7 +101,7 @@ Details that differ from the concept's description are fine, even better, if the
 Flag "Concept and image disagree" only when a viewer would not get the idea from the picture.`
 
 export function criticPrompt(brief: string, c: Concept, version: number, stage: CritiqueStage) {
-  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nCONCEPT:\n${describe(c)}\n\n${JUDGE_THE_RESULT}\n\n${stage === 'draft' ? DRAFT_NOTE : FINAL_NOTE}\n\nVERSION: ${version}\n\nCritique the attached image. JSON: {"score":0-10,"slop":[],"strengths":["..."],"fixes":["..."],"verdict":"ship"|"revise"|"kill"}
+  return `RUBRIC:\n${rubric()}\n\nBRIEF:\n${brief}\n\nCONCEPT:\n${describe(c)}\n\n${JUDGE_THE_RESULT}\n\n${STAGE_NOTE[stage]}\n\nVERSION: ${version}\n\nCritique the attached image. JSON: {"score":0-10,"slop":[],"strengths":["..."],"fixes":["..."],"verdict":"ship"|"revise"|"kill"}
 Leave "slop" as [] if there is none. Otherwise each entry is {"flag":"<which rubric slop flag>","evidence":"<what in the image shows it>"}.`
 }
 
@@ -118,6 +126,28 @@ export function revisePrompt(c: Concept, prompt: string, critique: Critique, fai
   return `CONCEPT:\n${describe(c)}\n\nCURRENT PROMPT:\n${prompt}\n\nCRITIQUE (score ${critique.score}/10):\nSlop: ${critique.slop.map((s) => `${s.flag} (${s.evidence})`).join('; ') || 'none'}\nKeep: ${critique.strengths.join('; ')}\nFix: ${critique.fixes.join('; ')}${tried}\n\nJSON: {"visualPrompt":"","changeSummary":""}`
 }
 
+export const STORYBOARD_SYSTEM = `You are a film director turning one winning still into a short video with sound.
+An image-to-video model starts EXACTLY on the still and generates picture and sound together from your shot prompts.
+Rules:
+- Shot 1 begins on the still as it is: describe what starts moving in it, not a new scene.
+- 2 or 3 shots. Each prompt is one concrete shot: what moves, how the camera moves, what changes, and what we hear.
+- One continuous moment that builds to a payoff. The last shot lands the idea of the concept and ends on a frame that could be a poster.
+- Sound goes in every shot prompt: specific sounds tied to the action (foley, room tone, weather), and a music style only if it helps. No narration or dialogue unless the concept needs one short line, written in lowercase.
+- No on-screen text, titles, captions, logos or subtitles. Never invent brand names.
+- Avoid what video models get wrong: hands handling small objects, faces turning to camera, crowds, morphing between unrelated places. Prefer motion of light, liquid, fabric, objects, weather and the camera.
+- Never use stock vocabulary: shallow depth of field, bokeh, golden hour, cozy, moody, cinematic.
+- Keep each shot prompt under 450 characters (the video model rejects longer ones).
+- Shot lengths are whole seconds and must sum exactly to SECONDS.`
+
+export function storyboardPrompt(brief: string, c: Concept, seconds: number, still?: Critique, previous?: { shots: { prompt: string; seconds: number }[]; critique?: Critique }) {
+  const notes = still ? `\n\nTHE STILL (critic's notes):\nWorks: ${still.strengths.join('; ') || '-'}\nWeak: ${[...still.slop.map((s) => s.flag), ...still.fixes].join('; ') || '-'}` : ''
+  const prev = previous
+    ? `\n\nPREVIOUS TAKE (rejected, score ${previous.critique?.score ?? '?'}/10):\n${previous.shots.map((s, i) => `Shot ${i + 1} (${s.seconds}s): ${s.prompt}`).join('\n')}\nCritic: ${[...(previous.critique?.slop.map((s) => `${s.flag} (${s.evidence})`) ?? []), ...(previous.critique?.fixes ?? [])].join('; ') || '-'}\nChange what didn't work; keep what did.`
+    : ''
+  return `BRIEF:\n${brief}\n\nCONCEPT:\n${describe(c)}${notes}${prev}\n\nSECONDS: ${seconds}\n\nJSON: {"shots":[{"prompt":"","seconds":0}],"changeSummary":"one sentence, only for a re-take"}`
+}
+
+/** Single-shot fallback if the storyboard call fails. */
 export function motionPrompt(c: Concept) {
   return `${c.idea}. ${c.hook}. Subtle, purposeful camera movement; the key action happens in the first second.`
 }

@@ -3,6 +3,20 @@ import { join } from 'node:path'
 import { config } from './config.ts'
 import type { RunState, Stage } from './types.ts'
 
+/** One model or tool call, for traces.json. */
+export type CallRecord = {
+  task: string
+  ref?: string
+  tool: string
+  model: string
+  inputs: unknown
+  prompt?: string
+  output: unknown
+  ms: number
+  usd: number
+  at: number
+}
+
 // Every decision the harness makes is an event on the run. The UI polls the run,
 // and runs are saved to runs/<id>.json so you can replay a good one in the demo.
 
@@ -10,6 +24,8 @@ const runs = new Map<string, Run>()
 
 export class Run {
   state: RunState
+  /** Every model call in order. Written to traces.json; not polled by the UI. */
+  calls: CallRecord[] = []
   private saveTimer: ReturnType<typeof setTimeout> | undefined
 
   constructor(brief: string, options: Record<string, unknown>, id = makeId()) {
@@ -36,6 +52,10 @@ export class Run {
     this.state.events.push({ t: Date.now() - this.state.startedAt, stage, message, data })
     if (!process.env.QUIET) console.log(`[${this.id}] ${stage.padEnd(9)} ${message}`)
     this.scheduleSave()
+  }
+
+  recordCall(c: CallRecord) {
+    this.calls.push(c)
   }
 
   addSpend(usd: number) {

@@ -18,7 +18,7 @@ export async function diverge(brief: string, n: number, video: boolean, run?: Ru
     const s = stripStock(c.visualPrompt)
     for (const w of s.removed) stripped.add(w)
     // With video off, nothing gets animated, so a "video" concept would be judged as a still it was never designed for.
-    return { ...c, visualPrompt: s.prompt, medium: video ? c.medium : 'image', id: `c${i + 1}`, status: 'pending' }
+    return { ...c, visualPrompt: s.prompt, medium: video ? 'video' : 'image', id: `c${i + 1}`, status: 'pending' }
   })
   if (stripped.size) run?.emit('diverge', `Stripped stock vocabulary from prompts: ${[...stripped].join(', ')}`)
   return concepts

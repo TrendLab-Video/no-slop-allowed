@@ -8,20 +8,44 @@ import type { Run } from './trace.ts'
 export type MediaOut = { url: string; endpoint: string; ms: number; estUsd: number; kind: MediaSpec['kind'] }
 
 /** Video renders take minutes; images and audio should not. */
-const TIMEOUT_MS: Record<MediaSpec['kind'], number> = { image: 90_000, audio: 120_000, video: 360_000 }
+// Kling multi-shot clips with sound can take several minutes.
+const TIMEOUT_MS: Record<MediaSpec['kind'], number> = { image: 90_000, audio: 120_000, video: 600_000 }
+/** How long fal may queue a job before dropping it. Video queues back up at busy times; keep below TIMEOUT_MS. */
+const START_TIMEOUT_S: Record<MediaSpec['kind'], number> = { image: 120, audio: 120, video: 300 }
 
-export async function generateMedia(spec: MediaSpec, params: MediaParams, run?: Run): Promise<MediaOut> {
+/** `ref` labels the call in traces.json, e.g. the render id. */
+export async function generateMedia(spec: MediaSpec, params: MediaParams, run?: Run, ref?: string): Promise<MediaOut> {
   const estUsd = spec.estUsd(params)
+  const input = spec.build(params)
+  const started = Date.now()
 
   if (config.mock) {
     await Bun.sleep(150)
-    return { url: placeholder(`${spec.kind}: ${params.prompt}`), endpoint: `mock:${spec.endpoint}`, ms: 150, estUsd: 0, kind: spec.kind }
+    // MOCK_FAIL also matches media calls as "media:<endpoint>", to rehearse a model being down.
+    const fail = process.env.MOCK_FAIL
+    if (fail && new RegExp(fail).test(`media:${spec.endpoint}`)) {
+      const err = new Error(`mock failure for media:${spec.endpoint}`)
+      run?.recordCall({ task: `media.${spec.kind}`, ref, tool: `mock:${spec.endpoint}`, model: spec.endpoint, inputs: input, output: { error: err.message }, ms: 150, usd: 0, at: started })
+      throw err
+    }
+    const url = placeholder(`${spec.kind}: ${params.prompt}`)
+    run?.recordCall({ task: `media.${spec.kind}`, ref, tool: `mock:${spec.endpoint}`, model: spec.endpoint, inputs: input, output: { url }, ms: 150, usd: 0, at: started })
+    return { url, endpoint: `mock:${spec.endpoint}`, ms: 150, estUsd: 0, kind: spec.kind }
   }
 
-  const res = await callFal(spec.endpoint, spec.build(params), { timeoutMs: TIMEOUT_MS[spec.kind] })
-  const url = spec.pick(res.data)
-  if (!url) throw new Error(`${spec.endpoint} returned no media URL: ${JSON.stringify(res.data).slice(0, 300)}`)
+  let res: Awaited<ReturnType<typeof callFal>>
+  let url: string | undefined
+  try {
+    res = await callFal(spec.endpoint, input, { timeoutMs: TIMEOUT_MS[spec.kind], startTimeoutS: START_TIMEOUT_S[spec.kind] })
+    url = spec.pick(res.data)
+    if (!url) throw new Error(`${spec.endpoint} returned no media URL: ${JSON.stringify(res.data).slice(0, 300)}`)
+  } catch (err) {
+    // Failed calls go in traces.json too: a timed-out video take may still have been billed.
+    run?.recordCall({ task: `media.${spec.kind}`, ref, tool: spec.endpoint, model: spec.endpoint, inputs: input, output: { error: String(err).slice(0, 500) }, ms: Date.now() - started, usd: 0, at: started })
+    throw err
+  }
   run?.addSpend(estUsd)
+  run?.recordCall({ task: `media.${spec.kind}`, ref, tool: spec.endpoint, model: spec.endpoint, inputs: input, output: { url }, ms: res.ms, usd: estUsd, at: started })
   return { url, endpoint: spec.endpoint, ms: res.ms, estUsd, kind: spec.kind }
 }
 

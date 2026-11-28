@@ -56,6 +56,17 @@ export async function mockLlm(call: LlmCall): Promise<string> {
         verdict: scripted('MOCK_VERDICTS') ?? (s >= 8.5 ? 'ship' : 'revise'),
       })
     }
+    case 'video.storyboard': {
+      const total = Number(call.prompt.match(/SECONDS: (\d+)/)?.[1] ?? 8)
+      const retake = call.prompt.includes('PREVIOUS TAKE')
+      return JSON.stringify({
+        shots: [
+          { prompt: 'The still comes alive: steam drifts, the camera pushes in slowly; quiet room tone, a kettle ticking.', seconds: Math.ceil(total / 2) },
+          { prompt: 'The payoff: the subject turns the moment around and the frame settles; a soft thud, then silence.', seconds: Math.floor(total / 2) },
+        ],
+        changeSummary: retake ? 'Held the ending longer and simplified the camera move.' : '',
+      })
+    }
     case 'reviser.revise': {
       const prev = call.prompt.match(/CURRENT PROMPT:\n([\s\S]*?)\n\nCRITIQUE/)?.[1] ?? ''
       // Echo how many failed attempts the loop passed in, so tests can see them arrive.

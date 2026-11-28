@@ -1,12 +1,14 @@
 import { type HarnessOptions, defaultOptions } from '../config.ts'
 import { generateMedia } from '../media.ts'
 import { ROLES } from '../models.ts'
-import { type FailedAttempt, heroPrompt, motionPrompt } from '../prompts.ts'
+import { writeOutputs } from '../outputs.ts'
+import { type FailedAttempt, heroPrompt } from '../prompts.ts'
 import { Run } from '../trace.ts'
 import type { Concept, Critique, Render } from '../types.ts'
 import { critique, effectiveScore, revise } from './critic.ts'
 import { diverge } from './director.ts'
 import { tournament } from './selector.ts'
+import { developVideo } from './video.ts'
 import { stripStock } from '../util/stock.ts'
 
 // The harness:
@@ -23,7 +25,7 @@ export function startRun(brief: string, opts: Partial<HarnessOptions> = {}): Run
   const options = { ...defaultOptions, ...opts }
   const run = new Run(brief, options)
   runHarness(run, options).catch((err) => {
-    run.emit('error', err instanceof Error ? err.message : String(err))
+    // runHarness has already logged the error and written traces.json.
     run.finish('error', String(err))
   })
   return run
@@ -31,7 +33,33 @@ export function startRun(brief: string, opts: Partial<HarnessOptions> = {}): Run
 
 type Developed = { concept: Concept; render: Render; killed: boolean }
 
+/**
+ * Run every stage, then write the deliverables. traces.json is written even when a stage throws
+ * (the hackathon requires one per run); the error is then rethrown so callers mark the run failed.
+ */
 export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
+  try {
+    await runStages(run, o)
+  } catch (err) {
+    run.emit('error', err instanceof Error ? err.message : String(err))
+    run.state.error = String(err)
+    await saveOutputs(run)
+    throw err
+  }
+  await saveOutputs(run)
+  run.finish('done')
+}
+
+async function saveOutputs(run: Run) {
+  try {
+    const out = await writeOutputs(run)
+    run.emit('done', `Saved ${out.video ?? out.image ?? '(no media file)'} and ${out.traces}`)
+  } catch (err) {
+    run.emit('error', `Writing outputs failed: ${String(err).slice(0, 200)}`)
+  }
+}
+
+async function runStages(run: Run, o: HarnessOptions): Promise<void> {
   const { brief } = run.state
   run.emit('brief', brief)
 
@@ -108,21 +136,17 @@ export async function runHarness(run: Run, o: HarnessOptions): Promise<void> {
     run.emit('error', `Hero render failed, keeping the best draft: ${String(err).slice(0, 200)}`)
   }
 
+  // 6. Video with sound, from the hero image. Any failure keeps the image as the result.
   if (o.video) {
-    const still = run.state.final.image!
-    try {
-      const vidMedia = await generateMedia(ROLES.video, { prompt: motionPrompt(winner.concept), imageUrl: still.url, seconds: 5 }, run)
-      const video: Render = { ...vidMedia, id: `${winner.concept.id}-video`, conceptId: winner.concept.id, version: still.version, prompt: motionPrompt(winner.concept) }
-      run.state.renders.push(video)
+    const video = await developVideo(run, winner.concept, run.state.final.image!, o)
+    if (video) {
       run.state.final.video = video
-      run.emit('final', `Video on ${video.endpoint} (${Math.round(video.ms / 1000)}s)`, { renderId: video.id })
-    } catch (err) {
-      run.emit('error', `Video failed (image kept): ${String(err).slice(0, 200)}`)
-    }
+      run.emit('final', `Final video: ${video.id}${video.critique ? ` (${scoreText(video.critique)})` : ''}`, { renderId: video.id })
+    } else run.emit('error', 'No video was produced; the hero image is the result')
   }
 
   run.emit('done', `Done in ${Math.round((Date.now() - run.state.startedAt) / 1000)}s, ~$${run.state.spend.usd.toFixed(3)} across ${run.state.spend.calls} calls`)
-  run.finish('done')
+  // 7. Deliverables (outputs/<slug>/final.mp4 and traces.json) are written by runHarness.
 }
 
 /**

@@ -41,6 +41,16 @@ export const CritiqueSchema = z.object({
 })
 export type Critique = z.infer<typeof CritiqueSchema>
 
+/** One shot of the final video. Shot 1 starts on the hero image. */
+export const ShotSchema = z.object({ prompt: z.string(), seconds: z.number() })
+export type Shot = z.infer<typeof ShotSchema>
+
+export const StoryboardSchema = z.object({
+  shots: z.array(ShotSchema).min(1).max(4),
+  changeSummary: z.string().default(''),
+})
+export type Storyboard = z.infer<typeof StoryboardSchema>
+
 export const ReviseSchema = z.object({
   visualPrompt: z.string(),
   changeSummary: z.string(),
@@ -63,6 +73,10 @@ export type Render = {
   changeSummary?: string
   /** A revision the critic judged unworkable; never used as a base or a winner. */
   discarded?: boolean
+  /** Video only: the shot plan it was generated from. */
+  shots?: Shot[]
+  /** Video only: the frames the critic looked at (first, middle, last). */
+  frames?: string[]
 }
 
 export type Match = {
@@ -75,7 +89,7 @@ export type Match = {
   consistent: boolean
 }
 
-export type Stage = 'brief' | 'diverge' | 'select' | 'draft' | 'critique' | 'revise' | 'showdown' | 'final' | 'done' | 'error'
+export type Stage = 'brief' | 'diverge' | 'select' | 'draft' | 'critique' | 'revise' | 'showdown' | 'final' | 'video' | 'done' | 'error'
 
 export type TraceEvent = { t: number; stage: Stage; message: string; data?: unknown }
 
@@ -90,6 +104,12 @@ export type RunState = {
   matches: Match[]
   renders: Render[]
   final?: { conceptId: string; image?: Render; video?: Render; reason: string }
+  /** Folder name under the output dir: the brief file name from the CLI, else the run id. */
+  slug?: string
+  /** The brief file this run read, if any (for traces.json). */
+  source?: string
+  /** Where writeOutputs put the deliverables. */
+  outputs?: { dir: string; video?: string; image?: string; traces: string }
   spend: { usd: number; calls: number }
   events: TraceEvent[]
   error?: string
