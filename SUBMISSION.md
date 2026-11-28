@@ -18,7 +18,7 @@ Recliner is one agent skill, `/recliner` (`skill/recliner/SKILL.md`). It turns a
 | 1 | References | Parallel sub-agents find current, proven, deliberately different short-form videos for the platform, with metrics, structure, pacing, hook and music notes |
 | 2 | Goals | Intent classification, then about 5 genuinely distinct creative goals. Each has a one-sentence creative thesis, concrete real-world grounding, and a timed script with production-ready, product-specific, anti-slop scene prompts. Goals steer away from recent runs via a shared style memory (`runs/style-memory.json`) |
 | 3 | Scoring | "Does this goal match the intended brief?", with a confidence of 0–1 per goal. Jev (TypeSafe) when `JEV_API_KEY` is set, otherwise a Haiku sub-agent. The top goal becomes `plan.json` |
-| 4 | Clips | fal text-to-video, one clip per scene, all in parallel (Seedance 2.0 fast at low effort, Kling v3 pro at high effort). A music bed and optional voiceover come from fal audio models |
+| 4 | Clips | A still keyframe per scene (from real product photos when found), validated before video is paid for, then fal image-to-video per scene in parallel (Vidu Q3 Turbo at low effort, Kling v3 Pro at the highest). A music bed and optional voiceover come from fal audio models |
 | 5 | Clip validation | One vision sub-agent per clip scores the extracted frames 0–100 against the scene, the creative guidance and the references' quality markers. A failing clip is regenerated with concrete steering; the best attempt per scene is kept |
 | 6 | Composition | The accepted clips, on-screen text, end card and audio become one video (Blender when installed, otherwise ffmpeg) |
 | 7 | Final validation | Scores hook, brief fit, craft, originality and slop (an anti-slop checklist). A failing video gets targeted scene repairs and is recomposed. All results are ranked |
@@ -70,11 +70,10 @@ Include the final video (repo path or public link) and `traces.json` path for ea
 |---|---|---|
 | Hidden brief 1 | (filled at deadline) | (filled at deadline) |
 | Hidden brief 2 | (filled at deadline) | (filled at deadline) |
-| Starter-brief sample run (evidence) | `skill/recliner/examples/sample-run/compositions/2/final.mp4` (selected attempt, score 84/100) | `skill/recliner/examples/sample-run/traces.json` |
 
 ## Notes for judges
 
-- **The loop is real and evidenced.** One committed end-to-end sample run (`skill/recliner/examples/sample-run/`) shows brief → 5 distinct goals → scored selection → keyframe-gated clip generation → per-clip vision validation with steering retries → composition → final validation with repairs → ranked export. `traces.json` logs every stage with timings; two composed attempts were scored (84 vs 68) and the better one selected.
+- **The loop runs end to end.** Each run goes brief → distinct goals → scored selection → keyframe-gated clip generation → per-clip vision validation with steering retries → composition → final validation → ranked export, and `traces.json` logs every stage with timings, prompts, models and scores. The hidden-brief outputs above are the evidence. (`skill/recliner/examples/sample-run/` is placeholder fixture data for the pages, not a real run.)
 - **Taste is treated as grounded intention, not polish alone.** Lessons from the SF Non-Slop hackathon are wired into the harness: every goal must compress into a specific one-sentence thesis and name concrete real-world grounding (product truth, real UI/workflow detail, real data, physical specificity or documented brand facts). Scoring penalises generic atmosphere, final validation treats missing grounding or an incompressible concept as slop, and export writes `creative_rationale.json` so judges can inspect the choice, evidence, rejected alternatives and validation outcome.
 
 - **Deterministic validation is wired into the pipeline, not bolted on.** `recliner validate-output` (the `validation/` package) runs after every composition: ffprobe/ffmpeg gates for playability, duration, resolution, black/frozen segments, audio silence/clipping, plus a repair plan. In our smoke run it caught a silent audio bed (−91 dB peak) and sub-minimum resolution and produced concrete repair actions — the critique changed the output, not just the report. Technical validation can never block export; it degrades gracefully.
