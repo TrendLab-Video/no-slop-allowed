@@ -8,6 +8,7 @@ Never ask the user anything. Time cap: the seconds the orchestrator gave you (de
 
 - `$RUN/brief.json`, `$RUN/config.json` (`goalsCount`, `scenes`, `clipSeconds`), `$RUN/references.json`
 - Style memory: `recliner style-memory --recent 8` (what recent runs chose: modality, hookType, palette, pacing, references). Empty on the first run.
+- **Reference images**: open every file in each reference's `screenshots`, and above all the `kind: "brand"` entry's image. From the brand image, write down what the product actually looks like: colours, materials, shape, the brand mark and where it sits on the product (for example "black swoosh on the lateral side, white midsole"), and the brand palette. Use those exact words in every `keyframePrompt`. Never describe a product look you have not seen or cannot verify; when no image exists, describe its well-known, current design.
 
 ## 0. Steer away from recent runs (diversity is judged)
 
@@ -46,6 +47,8 @@ Each goal:
 - `creativeGuidance`: what a validator should check: hook in the first second, product visible and centred in every scene from frame 1, the colour and light world, the camera language, what to avoid.
 - Script it before prompting (fal-script-writer, condensed): pick a structure (hook → turn → payoff, or problem → product → proof → sign-off); give every scene its beat in `description`; voiceover at most ~2.5 words per second of its scene; put continuity notes (colourway, wardrobe, location, time of day, screen direction) in `creativeGuidance`.
 - Creator formats (ugc, condensed): face or hands in frame in the first second, native phone look (handheld, available light, 9:16), one person speaking one claim in plain words, show the product being used, never a polished-ad look.
+- **At least one product hero beat** per goal: a close-up scene in which the product and the brand's real mark are unmistakable, filling a good part of the frame.
+- **Every scene pays off**: each one ends on a clear action or result (the foot lands, the cup is set down, the screen fills in). A setup with no payoff is a failed scene; the last scene before the end card is the strongest payoff.
 
 
 ## 3. Scene prompts: product in frame, production-ready, anti-slop
@@ -54,29 +57,29 @@ Each scene is made in two steps: a still (`keyframePrompt`, sent to an image mod
 
 **The product rule (a scene that breaks it fails validation):**
 - The **product, or its clearest visual proxy** (the shoe, the device, the cup, the app on a phone screen), is visibly in frame, near the centre, **from the first frame**, in every scene.
-- Describe it concretely: colour, material, shape ("white engineered-mesh running shoe, volt-yellow foam midsole, black curved side stripe"), the same words in every scene.
+- Describe it concretely, as the reference and brand images show it: colour, material, shape, and **the brand's real mark and where it sits** ("white engineered-mesh Nike running shoe, volt-yellow foam midsole, black Nike swoosh on the lateral side"), the same words in every scene. The briefed brand's real mark on the product is wanted.
 - **Name the subject first** in both prompts. "A runner" is not a subject when the product is a shoe: "A white mesh running shoe on a runner's foot…" is.
 - No scene may rely on on-screen text to explain what is being promoted. Mute the captions: the viewer must still see the product.
 
 **`keyframePrompt`** (the still): subject first, then composition (shot size, angle, where the product sits in frame), setting, light by source, style and texture. One frozen moment, no motion words. Example: "A white engineered-mesh running shoe with a volt-yellow foam midsole and black curved stripe, centred in frame on a runner's foot planted on wet black asphalt, low ankle-height close-up, sodium streetlight from the left, blue pre-dawn sky behind, rain droplets on the mesh, 35mm film grain."
 
-**`prompt`** (the motion from that still): subject first, then **one settled action** that resolves inside the clip, and one camera move. Example: "The white-and-volt running shoe pushes off the wet asphalt and the foot lifts out of frame upwards as spray kicks back, camera holds low and static, shoe stays sharp."
+**`prompt`** (the motion from that still): subject first, then **one settled action that ends on a clear payoff**, one camera move, and always the words **"a single continuous take, no cuts"**. Real motion, not a near-static drift. Example: "The white-and-volt Nike running shoe pushes off the wet asphalt, spray kicks back and the next stride lands hard in the puddle, camera holds low and static, shoe stays sharp, a single continuous take, no cuts."
 
 Also:
 - **Framing first** in the still: shot size (extreme close-up … wide), angle (low, eye level, top-down), lens feel (macro, 24mm, 85mm).
 - **Specific gesture over named emotion**: "jaw clenched, exhales hard through the nose", not "determined".
 - **Continuity**: repeat the product description, wardrobe, location and time of day in every scene that shares them.
-- **No on-model text or logos**: models render them badly. Words go in `onScreenText`; describe the product by shape and colour instead of asking for a logo.
+- **Brand marks yes, generated words no**: ask for the brand's real mark on the product (it is part of the product). Never ask the model to render words, slogans or a logo floating in space: words go in `onScreenText`. Never show another brand's mark.
 - **Avoid**: "cinematic", "epic", "stunning", "4k", "hyper-realistic", neon gradients, glossy abstract 3D, a product floating in a void, stock-photo smiling people, crowds of perfect faces, slow zoom over a still, complex hand manipulation in close-up, scenes where the product is cropped, tiny or off-frame.
 - `onScreenText`: at most 6 words, or `""`. Concrete copy that names only what is on screen; no empty slogans.
 - `description`: one plain sentence of what the viewer sees and why it is in the edit.
 
 ## 4. Audio, text and end card
 
-- `audio.musicPrompt` (fal-audio-generation, condensed): genre, tempo in bpm, two or three named instruments, and where it hits (for example "drop at 5s on the cut"). Music sits under any voiceover (ducked), never over it.
-- `audio.voiceover`: the timed lines as one string ("0-5s: …; 5-10s: …"), or `null`. One voice for the whole video; plain spoken words, no ad-speak.
+- `audio.musicPrompt` (fal-audio-generation, condensed), always concrete, in this order: genre, bpm, two or three named instruments, an **energy curve tied to the scene timing** ("sparse kick 0–5s, builds 5–10s, full drop at 10s on the hero beat, cuts to silence for the end card"), and "instrumental, no vocals" unless the format needs vocals. Example: "Dark UK garage, 132 bpm, sub bass, shuffled hats, chopped vocal-free synth stabs; sparse 0–5s, builds 5–10s, drops at 10s on the shoe close-up, stops dead at 15s; instrumental, no vocals." Music sits under any voiceover (ducked), never over it.
+- `audio.voiceover`: **only when the format calls for it** (creator/talking-head, testimonial, a narrated idea); otherwise `null`. When used, the timed lines as one string ("0–5s: …; 5–10s: …"), fitting the duration at about 2.5 words per second (a 15 s video holds about 35 words; leave the hook second and the end card silent). One voice for the whole video, plain spoken words, no ad-speak.
 - Text (fal-motion-graphics, condensed): at most one text element on screen at a time, high contrast, inside the central 80% safe area (clear of the top and bottom 15% on 9:16), on screen for at least 1.5s, entering and leaving with a simple cut or slide, no decorative effects.
-- `endCard` (required): `{ "headline": "brand or product name", "subline": "one short line, at most 6 words", "durationSeconds": 2 }`. A plain card in the composition: the real name in type, no generated logo.
+- `endCard` (required): `{ "headline": "brand or product name", "subline": "one short line, at most 6 words", "durationSeconds": 2 }`. A plain card in the composition: the real name set in type by the compositor (not generated by a model).
 
 ## Output: `$RUN/goals.json`
 
