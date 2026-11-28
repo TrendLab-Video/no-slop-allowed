@@ -2,7 +2,7 @@
 
 Used when Jev is not configured or failed. Run this on a small fast model (Haiku or equivalent). You answer one question per goal and write numbers; you do not rewrite goals.
 
-Never ask the user anything. Hard cap: 1 minute.
+Never ask the user anything. Time cap: the seconds the orchestrator gave you (default 5% of `config.timeBudgetMinutes`). Read the files once and write; no research.
 
 ## Inputs
 

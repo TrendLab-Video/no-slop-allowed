@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { readJson, writeJson, runPath } from './store.mjs';
 import { loadEnv } from './env.mjs';
+import { updateJson, appendTraceLocked } from './lock.mjs';
 
 export const QUESTION = 'Does this goal match the intended brief?';
 export const JEV_URL = process.env.JEV_URL || 'https://api.typesafe.ai/v1/systemone'; // override for tests
@@ -102,6 +103,7 @@ export async function scoreRun(runId, { scorer } = {}) {
   const config = readJson(runId, 'config.json', {});
   const goalsDoc = readJson(runId, 'goals.json');
   const goals = checkGoals(goalsDoc);
+  const t0 = Date.now();
   const want = scorer || config.scorer || 'jev';
   const key = jevKey();
   let scores = readJson(runId, 'scores.json');
@@ -138,6 +140,17 @@ export async function scoreRun(runId, { scorer } = {}) {
 
   const goal = goals.find((g) => g.id === best.goalId);
   writeJson(runId, 'plan.json', { ...goal, goalId: goal.id, confidence: best.confidence, intent: goalsDoc.intent ?? null });
+  appendTraceLocked(runId, {
+    name: 'score-goals',
+    stage: 'scoring',
+    model: scores.scorer === 'jev' ? (scores.model || JEV_MODEL) : scores.scorer,
+    inputs: { question: QUESTION, goals: goals.map((g) => g.id), requestedScorer: want },
+    prompt: scores.scorer === 'jev' ? QUESTION : 'steps/scoring.md',
+    tool_calls: scores.scorer === 'jev' ? goals.map((g) => ({ tool: 'jev', arguments: { url: JEV_URL, goalId: g.id }, result: (scores.raw || []).find((x) => x.goalId === g.id)?.answer ?? null })) : [],
+    outputs: { scores: valid, selectedGoalId: best.goalId, confidence: best.confidence, files: ['scores.json', 'plan.json'] },
+    duration_ms: Date.now() - t0,
+    extra: { decision: `selected ${best.goalId}`, rationale: best.reason || 'highest confidence', fallback: jevError ? `Jev unavailable: ${jevError}` : null },
+  });
   return { scorer: scores.scorer, selectedGoalId: best.goalId, confidence: best.confidence, scores: valid.map((s) => [s.goalId, s.confidence]), jevError, ...budget(runId) };
 }
 
@@ -163,10 +176,15 @@ function best(items, scoreOf) {
 
 // accept-clips <runId>: merge clips/<sceneId>/<attempt>.validation.json, set acceptedAttempt per scene.
 export function acceptClips(runId) {
-  const clips = readJson(runId, 'clips.json');
-  if (!clips?.scenes) throw new Error(`No clips.json in run ${runId}. Run generate-clips first.`);
-  const passScore = num(readJson(runId, 'config.json', {}).passScore) ?? 70;
+  if (!readJson(runId, 'clips.json')?.scenes) throw new Error(`No clips.json in run ${runId}. Run generate-clips first.`);
   const summary = [];
+  updateJson(runId, 'clips.json', { scenes: [] }, (clips) => mergeClips(runId, clips, summary));
+  appendTraceLocked(runId, { name: 'accept-clips', stage: 'clip_validation', outputs: { scenes: summary }, extra: { decision: 'best-scoring attempt per scene' } });
+  return { scenes: summary, allPassed: summary.every((s) => s.passed), ...budget(runId) };
+}
+
+function mergeClips(runId, clips, summary) {
+  const passScore = num(readJson(runId, 'config.json', {}).passScore) ?? 70;
   for (const scene of clips.scenes) {
     for (const a of scene.attempts || []) {
       const v = readFile(`clips/${scene.sceneId}/${a.attempt}.validation.json`, runId);
@@ -179,14 +197,20 @@ export function acceptClips(runId) {
     scene.acceptedAttempt = pick ? pick.attempt : null;
     summary.push({ sceneId: scene.sceneId, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
   }
-  writeJson(runId, 'clips.json', clips);
-  return { scenes: summary, allPassed: summary.every((s) => s.passed), ...budget(runId) };
+  return clips;
 }
 
 // rank <runId>: merge compositions/<attempt>/validation.json, set selectedId.
 export function rankResults(runId) {
-  const result = readJson(runId, 'result.json');
-  if (!result?.results?.length) throw new Error(`No results in result.json for run ${runId}. Run compose first.`);
+  if (!readJson(runId, 'result.json')?.results?.length) throw new Error(`No results in result.json for run ${runId}. Run compose first.`);
+  let pick;
+  const result = updateJson(runId, 'result.json', { results: [] }, (doc) => { pick = mergeResults(runId, doc); return doc; });
+  const out = { selectedId: pick.id, score: pick.validation?.score ?? null, passed: pick.validation?.passed ?? false, ranking: result.results.map((r) => [r.id, r.validation?.score ?? null]) };
+  appendTraceLocked(runId, { name: 'rank', stage: 'final_validation', outputs: out, extra: { decision: `selected ${pick.id}`, rationale: 'highest final validation score' } });
+  return { ...out, ...budget(runId) };
+}
+
+function mergeResults(runId, result) {
   const passScore = num(readJson(runId, 'config.json', {}).passScore) ?? 70;
   for (const r of result.results) {
     const v = readFile(`compositions/${r.attempt}/validation.json`, runId);
@@ -197,6 +221,5 @@ export function rankResults(runId) {
   const usable = result.results.filter((r) => !r.file || fs.existsSync(runPath(runId, r.file)));
   const pick = best(usable.length ? usable : result.results, (r) => num(r.validation?.score));
   result.selectedId = pick.id;
-  writeJson(runId, 'result.json', result);
-  return { selectedId: pick.id, score: pick.validation?.score ?? null, passed: pick.validation?.passed ?? false, ranking: result.results.map((r) => [r.id, r.validation?.score ?? null]), ...budget(runId) };
+  return pick;
 }

@@ -2,7 +2,7 @@
 
 You find real, current, proven short-form videos that the rest of the run learns from. These are the main source of run-to-run variety, so do not reach for the same famous ad every time.
 
-Never ask the user anything. Hard cap: 4 minutes. A good file in 3 minutes beats a perfect one in 10.
+Never ask the user anything. Time cap: the seconds the orchestrator gave you (default 20% of `config.timeBudgetMinutes`). Write your file before the cap even if it is short: two solid entries beat none.
 
 ## Inputs
 

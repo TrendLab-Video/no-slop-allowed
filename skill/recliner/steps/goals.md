@@ -2,7 +2,7 @@
 
 You classify the intent of the brief and write a small set of genuinely distinct creative goals. One of them becomes the video, so every goal must be producible as written.
 
-Never ask the user anything. Hard cap: 3 minutes.
+Never ask the user anything. Time cap: the seconds the orchestrator gave you (default 15% of `config.timeBudgetMinutes`). At low effort, write fewer words, not fewer goals.
 
 ## Inputs
 
