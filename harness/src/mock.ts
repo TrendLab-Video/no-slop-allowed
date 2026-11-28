@@ -74,6 +74,22 @@ export async function mockLlm(call: LlmCall): Promise<string> {
       const changeSummary = tried ? `Moved subject off-centre (avoiding ${tried} failed attempt(s)).` : 'Moved subject off-centre and added a specific detail.'
       return JSON.stringify({ visualPrompt: `${prev}, subject off-centre, one odd specific detail`, changeSummary })
     }
+    case 'brand.pick': {
+      const n = call.imageUrls?.length ?? 0
+      const picks = Array.from({ length: n }, (_, index) => ({
+        index,
+        role: index < 4 ? 'product' : index === 4 ? 'logo' : 'lifestyle',
+        why: 'Mock pick by position.',
+      }))
+      return JSON.stringify({
+        productDescription: 'A mock product with a plain wordmark.',
+        isPhysical: true,
+        picks,
+        palette: ['#111111', '#f5f5f5'],
+        tone: 'plain and direct',
+        mustNotInvent: ['wordmark', 'pack layout', 'product shape'],
+      })
+    }
     default:
       return JSON.stringify({ note: `mock has no responder for ${call.task}` })
   }

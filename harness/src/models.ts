@@ -8,6 +8,10 @@ export type MediaParams = {
   prompt: string
   /** Start frame for image-to-video. */
   imageUrl?: string
+  /** Reference images for multi-image edit models. */
+  imageUrls?: string[]
+  /** e.g. '9:16' or '16:9', for models that take an aspect ratio. */
+  aspectRatio?: string
   /** Seconds, for video. */
   seconds?: number
   /** Multi-shot video: each shot's prompt and length. Sent instead of prompt when present. */
@@ -160,4 +164,73 @@ export const ROLES: { draft: MediaSpec; final: MediaSpec; edit: MediaSpec; video
   // Kling 3 Pro: multi-shot and native sound in one call. SPECS.h3TurboI2V is the cheap silent alternative.
   video: SPECS.klingV3ProI2V,
   frame: SPECS.extractFrame,
+}
+
+// Audio endpoints for src/film/sound.ts. Schemas checked against each model's
+// llms.txt on 2026-11-28.
+export const AUDIO = {
+  /** ElevenLabs music v2.5: $0.60 per output minute, rounded up. */
+  music: { endpoint: 'elevenlabs/music/v2.5', usdPerMinute: 0.6 },
+  /** Mirelo SFX 2.0 video-to-audio: $0.010 per second to 13/12/2026. */
+  sfx: {
+    endpoint: 'mirelo-ai/sfx2.0/video-to-audio',
+    usdPerSecond: 0.01,
+  },
+  /** ElevenLabs Scribe v2: $0.008 per minute of input. */
+  stt: {
+    endpoint: 'fal-ai/elevenlabs/speech-to-text/scribe-v2',
+    usdPerMinute: 0.008,
+  },
+  /** ElevenLabs Eleven v4 TTS: $0.08 per 1000 characters. */
+  tts: { endpoint: 'elevenlabs/tts/eleven-v4', usdPer1kChars: 0.08 },
+} as const
+
+// Film pipeline specs (src/film/). Schemas checked against each model's
+// llms.txt on 2026-11-28.
+export const FILM_SPECS = {
+  /** Nano Banana at 16:9: the cast sheet that carries identity. */
+  castSheet: {
+    endpoint: 'fal-ai/nano-banana',
+    kind: 'image',
+    build: (p) => ({
+      aspect_ratio: p.aspectRatio ?? '16:9',
+      num_images: 1,
+      prompt: p.prompt,
+    }),
+    pick: (d) => d?.images?.[0]?.url,
+    estUsd: () => 0.0398,
+  },
+  /** Nano Banana 2.1 edit: composes a shot from cast sheet + product. */
+  composeFrame: {
+    endpoint: 'google/nano-banana-2.1/edit',
+    kind: 'image',
+    build: (p) => ({
+      aspect_ratio: p.aspectRatio ?? '9:16',
+      image_urls: p.imageUrls ?? [],
+      num_images: 1,
+      prompt: p.prompt,
+      resolution: '1K',
+      thinking_level: 'medium',
+    }),
+    pick: (d) => d?.images?.[0]?.url,
+    estUsd: () => 0.044,
+  },
+} satisfies Record<string, MediaSpec>
+
+export const FILM_ROLES: {
+  cast: MediaSpec
+  frame: MediaSpec
+  motion: MediaSpec
+} = {
+  cast: FILM_SPECS.castSheet,
+  frame: FILM_SPECS.composeFrame,
+  motion: SPECS.h3TurboI2V,
+}
+
+// Film quality gate (src/film/gate.ts). The video router schema was checked
+// against https://fal.ai/models/openrouter/router/video/llms.txt on 2026-11-28.
+export const GATE_LLM = {
+  frameModel: env.GATE_MODEL ?? 'google/gemini-3.8-flash',
+  videoEndpoint: 'openrouter/router/video',
+  videoModel: env.GATE_VIDEO_MODEL ?? 'google/gemini-3.8-flash',
 }
