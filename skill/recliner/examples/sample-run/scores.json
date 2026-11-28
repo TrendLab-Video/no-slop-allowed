@@ -1,0 +1,32 @@
+{
+  "scorer": "haiku",
+  "question": "Does this goal match the brief?",
+  "scores": [
+    {
+      "goalId": "g1",
+      "confidence": 0.86,
+      "reason": "Puts the tactile pads and portability front and centre; strong sound-first hook."
+    },
+    {
+      "goalId": "g2",
+      "confidence": 0.74,
+      "reason": "Fun and proven, but the product is secondary to the props."
+    },
+    {
+      "goalId": "g3",
+      "confidence": 0.69,
+      "reason": "Clear payoff but needs 15 s and reads as a tutorial."
+    },
+    {
+      "goalId": "g4",
+      "confidence": 0.52,
+      "reason": "Clever but risks confusing what the product is."
+    },
+    {
+      "goalId": "g5",
+      "confidence": 0.61,
+      "reason": "Mood is right, product barely visible."
+    }
+  ],
+  "selectedGoalId": "g1"
+}

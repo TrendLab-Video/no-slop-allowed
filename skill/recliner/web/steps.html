@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steps · Recliner · 36 Labs x fal</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect width='22' height='22' rx='2' fill='%230a0a0a'/%3E%3Cpath d='M5 15.5 L11 5.5 L17 15.5' stroke='%23adff00' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<main>
+  <div id="flow"></div>
+  <div class="head"><div><span class="eyebrow">Every intermediate output</span><h1>Steps</h1><p>What each stage produced, in order: references, goals and their scores, every clip attempt with its validation, and the compositions.</p></div></div>
+  <nav class="toc"><a href="#brief">Brief</a><a href="#references">References</a><a href="#goals">Goals</a><a href="#clips">Clips</a><a href="#compositions">Compositions</a><a href="#trace">Trace</a></nav>
+  <div id="view"></div>
+</main>
+<script type="module">
+import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, fmtNum, fmtMs, scoreBar, needRun } from '/app.js';
+
+header('steps');
+if (!needRun()) {
+  const diagram = flow($('#flow'));
+  const FILES = ['brief.json', 'config.json', 'references.json', 'goals.json', 'scores.json', 'plan.json', 'clips.json', 'result.json', 'traces.json'];
+  let tick = 0;
+  poll(async () => {
+    const state = await getJson('state.json');
+    if (state) diagram.render(state);
+    if (tick++ % 2) return;
+    const d = await getRun(FILES);
+    if (changed('steps', d)) render(d);
+  }, 1000);
+}
+
+const empty = (t) => `<div class="empty">${t}</div>`;
+const section = (id, title, right, body) => `<section class="section" id="${id}"><div class="sh"><h2>${title}</h2><span class="eyebrow">${right}</span></div>${body}</section>`;
+
+function render(d) {
+  const b = d['brief.json'], c = d['config.json'], refs = d['references.json'], goals = d['goals.json'], scores = d['scores.json'], clips = d['clips.json'], result = d['result.json'], traces = d['traces.json'];
+  const plan = d['plan.json'];
+  const ar = plan?.aspectRatio || b?.aspectRatio || '9:16';
+  const scoreOf = (id) => scores?.scores?.find((s) => s.goalId === id);
+  const html = [];
+
+  html.push(section('brief', 'Brief', b ? `${esc(b.source)} · ${esc(b.submittedAt?.slice(11, 19) || '')}` : 'pending', b ? `<div class="grid g2">
+    <div class="card"><h3 style="margin-bottom:10px">${esc(b.promote)}</h3><p class="small" style="margin:0 0 12px">${esc(b.objective)}</p>
+      <dl class="kv">${['url', 'platform', 'videoType', 'domain', 'aspectRatio', 'notes'].filter((k) => b[k]).map((k) => `<dt>${k}</dt><dd>${esc(b[k])}</dd>`).join('')}</dl>
+      ${b.raw ? `<details style="margin-top:10px"><summary class="eyebrow" style="cursor:pointer">Raw brief</summary><pre class="small mono" style="white-space:pre-wrap">${esc(b.raw)}</pre></details>` : ''}</div>
+    <div class="card"><h3 style="margin-bottom:10px">Config · effort ${esc(c?.effort ?? '–')}</h3><div class="chips">${c ? Object.entries(c).map(([k, v]) => `<span class="chip"><b>${esc(k)}</b>${esc(v)}</span>`).join('') : ''}</div></div>
+  </div>` : empty('Waiting for the brief.')));
+
+  html.push(section('references', 'References', refs ? `${refs.references.length} references` : 'pending', refs ? `
+    <div class="grid g3">${refs.references.map((r) => `<div class="item">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span class="tag">${esc(r.platform)}</span><span class="tag">${esc(r.id)}</span></div>
+      <h3><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a></h3>
+      <div class="metrics"><span><b>${fmtNum(r.metrics?.views)}</b> views</span><span><b>${fmtNum(r.metrics?.likes)}</b> likes</span><span><b>${fmtNum(r.metrics?.comments)}</b> comments</span><span><b>${fmtNum(r.metrics?.shares)}</b> shares</span></div>
+      <p>${esc(r.why)}</p>
+      ${r.structure ? `<dl class="kv small" style="margin-top:8px">${[['Length', r.structure.durationSeconds ? `${r.structure.durationSeconds}s` : ''], ['Hook', r.structure.hook], ['Pacing', r.structure.pacing], ['Music', r.structure.music], ['Scenes', (r.structure.scenes || []).join(' → ')]].filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}
+      ${r.screenshots?.length ? `<div class="shots">${r.screenshots.map((s) => `<a href="${fileUrl(s)}" target="_blank"><img src="${fileUrl(s)}" alt="" loading="lazy"></a>`).join('')}</div>` : ''}
+    </div>`).join('')}</div>
+    ${refs.takeaways?.length || refs.diversityNote ? `<div class="card" style="margin-top:12px"><span class="eyebrow">Takeaways</span><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">${(refs.takeaways || []).map((t) => `<li>${esc(t)}</li>`).join('')}</ul>${refs.diversityNote ? `<p class="small muted" style="margin:8px 0 0">${esc(refs.diversityNote)}</p>` : ''}</div>` : ''}` : empty('No references yet.')));
+
+  const sortedGoals = goals ? [...goals.goals].sort((a, z) => (scoreOf(z.id)?.confidence ?? -1) - (scoreOf(a.id)?.confidence ?? -1)) : [];
+  html.push(section('goals', 'Goals', goals ? `${goals.goals.length} goals${scores ? ` · scorer ${esc(scores.scorer)} · “${esc(scores.question || '')}”` : ' · not scored yet'}` : 'pending', goals ? `
+    <div class="grid g2">${sortedGoals.map((g) => {
+      const s = scoreOf(g.id); const sel = scores?.selectedGoalId === g.id;
+      return `<div class="item ${sel ? 'sel' : scores ? 'rej' : ''}">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><span class="tag">${esc(g.id)}</span><span class="tag">${esc(g.durationSeconds)}s</span><span class="tag">${esc(g.aspectRatio)}</span>${g.style ? `<span class="tag">${esc(g.style)}</span>` : ''}</div>
+        <h3>${esc(g.title)}</h3><p>${esc(g.description)}</p>
+        ${s ? `<div class="score" style="margin:10px 0 4px"><span>confidence</span>${scoreBar(s.confidence * 100, 100, sel ? true : undefined)}<span>${Math.round(s.confidence * 100)}%</span></div><p class="small muted">${esc(s.reason)}</p>` : ''}
+        ${g.creativeGuidance ? `<p class="small"><span class="eyebrow">Guidance</span> ${esc(g.creativeGuidance)}</p>` : ''}
+        ${g.audio?.musicPrompt ? `<p class="small"><span class="eyebrow">Music</span> ${esc(g.audio.musicPrompt)}</p>` : ''}
+        <ol class="scenes">${(g.scenes || []).map((sc) => `<li><span>${esc(sc.description)}${sc.onScreenText ? ` <span class="muted mono small">“${esc(sc.onScreenText)}”</span>` : ''}</span><span class="d">${esc(sc.durationSeconds)}s</span></li>`).join('')}</ol>
+      </div>`;
+    }).join('')}</div>` : empty('No goals yet.')));
+
+  const planScenes = Object.fromEntries((plan?.scenes || []).map((s) => [s.id, s]));
+  html.push(section('clips', 'Clips', clips ? `${clips.scenes.length} scenes · ${clips.scenes.reduce((n, s) => n + s.attempts.length, 0)} attempts` : 'pending', clips ? clips.scenes.map((sc, i) => `
+    <div class="scene-block"><div class="sh2"><h3>Scene ${i + 1} · ${esc(sc.sceneId)}</h3><span class="small muted">${esc(planScenes[sc.sceneId]?.description || '')}</span>
+      <span class="eyebrow" style="margin-left:auto">${sc.acceptedAttempt != null ? `accepted attempt ${esc(sc.acceptedAttempt)}` : 'no attempt accepted yet'}</span></div>
+      <div class="attempts">${sc.attempts.map((a) => {
+        const acc = sc.acceptedAttempt === a.attempt; const v = a.validation;
+        const tag = acc ? '<span class="tag ok">accepted</span>' : v ? '<span class="tag bad">rejected</span>' : a.status === 'failed' ? '<span class="tag bad">failed</span>' : `<span class="tag ${a.status === 'generating' ? 'run' : ''}">${esc(a.status)}</span>`;
+        return `<div class="attempt ${acc ? 'acc' : ''}">
+          ${a.status === 'generated' && a.file ? video(fileUrl(a.file), { ar, badge: tag, badge2: `<span class="tag">#${esc(a.attempt)}</span>` }) : `<div class="media ar-${ar.replace(':', '-')}" style="display:grid;place-items:center;color:#93a097;font:12px var(--mono)">${esc(a.status)}${a.error ? `<br>${esc(a.error)}` : ''}<span class="badge">${tag}</span></div>`}
+          <div class="body">
+            ${v ? `<div class="score"><span>${esc(v.score)}</span>${scoreBar(v.score, 100, v.passed)}<span>${v.passed ? 'pass' : 'fail'}</span></div><p>${esc(v.reason)}</p>${v.steering ? `<div class="steer">↻ ${esc(v.steering)}</div>` : ''}` : '<p class="muted">Not validated yet.</p>'}
+            ${a.steering ? `<div class="steer" style="background:var(--pale-blue);color:#0a3a8f">steered: ${esc(a.steering)}</div>` : ''}
+            <details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">prompt · ${esc(a.model || '')}</summary><p class="small mono">${esc(a.prompt)}</p></details>
+          </div></div>`;
+      }).join('')}</div></div>`).join('') : empty('No clips yet.')));
+
+  html.push(section('compositions', 'Compositions', result ? `${result.results.length} composed · selected ${esc(result.selectedId || '–')}` : 'pending', result ? `
+    <div class="attempts">${[...result.results].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1)).map((r) => {
+      const sel = result.selectedId === r.id; const v = r.validation;
+      return `<div class="attempt ${sel ? 'acc' : ''}">${video(fileUrl(r.file), { ar, poster: r.thumbnail ? fileUrl(r.thumbnail) : '', badge: sel ? '<span class="tag ok">selected</span>' : '', badge2: `<span class="tag">${esc(r.compositor)}</span>` })}
+        <div class="body">${v ? `<div class="score"><span>${esc(v.score)}</span>${scoreBar(v.score, 100, v.passed)}<span>${v.passed ? 'pass' : 'fail'}</span></div><p>${esc(v.reason)}</p>` : '<p class="muted">Not validated yet.</p>'}
+        <p class="small muted">${esc(r.id)} · attempt ${esc(r.attempt)} · ${esc(r.durationSeconds)}s</p></div></div>`;
+    }).join('')}</div>` : empty('No compositions yet.')));
+
+  html.push(section('trace', 'Trace', traces ? `${traces.steps.length} steps · <a href="${fileUrl('traces.json')}" target="_blank">traces.json</a>` : 'pending', traces?.steps?.length ? `
+    <div class="card" style="padding:0"><table style="width:100%;border-collapse:collapse;font-size:13px">${traces.steps.map((s) => `<tr style="border-top:1px solid var(--line-soft)">
+      <td class="mono small muted" style="padding:8px 12px;white-space:nowrap">${esc(s.at?.slice(11, 19) || '')}</td><td style="padding:8px 12px"><span class="tag">${esc(s.stage || '')}</span></td>
+      <td style="padding:8px 12px">${esc(s.name)}</td><td class="mono small muted" style="padding:8px 12px">${esc(s.model || '')}</td>
+      <td class="mono small muted" style="padding:8px 12px;text-align:right">${fmtMs(s.duration_ms)}</td></tr>`).join('')}</table></div>` : empty('No trace steps yet.')));
+
+  $('#view').innerHTML = html.join('');
+}
+</script>
+</body>
+</html>
