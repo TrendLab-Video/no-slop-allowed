@@ -87,3 +87,18 @@ pre-commit install
 ```
 
 The hooks run Gitleaks plus custom checks for common API-key shapes, Ruff, whitespace/end-of-file checks, JSON/YAML validation and a large-file guard. `.env` is gitignored; do not commit fal, Tavily or model-provider keys.
+
+### Install the skill
+
+The skill is a self-contained folder (no dependencies to install, nothing hosted).
+
+1. Get it: download `recliner-skill.zip` from the repository's Releases page or the latest "Package skill" workflow run, or build it with `scripts/package-skill.sh` (writes `dist/recliner-skill.zip`). In a clone of this repo it is already installed at `.claude/skills/recliner`.
+2. Unzip it to `~/.claude/skills/recliner/` (every workspace) or `<project>/.claude/skills/recliner/` (one project).
+3. In the workspace you run from, create `.env` with `FAL_KEY=...`. Optional: `TAVILY_API_KEY` or `PARALLEL_API_KEY` (research), `JEV_API_KEY` (scoring), `RECLINER_MIN_BALANCE` (fal spend floor in dollars, default 100, 0 turns it off).
+4. Check the machine: `node ~/.claude/skills/recliner/bin/recliner.mjs doctor`. Required: Node 22+ and ffmpeg. Recommended: Blender, yt-dlp, rsvg-convert, Python 3.11+.
+5. In a local agent session (for example Claude Code) opened in that workspace:
+   - `/recliner new content for <topic>` opens the Brief page (local, `127.0.0.1` only);
+   - `/recliner path/to/brief.md --effort 2` runs headless;
+   - `/recliner brief1.md brief2.md --effort 2` runs several briefs in parallel.
+
+Each run writes `runs/<runId>/` and exports `outputs/<brief>/final.mp4`, `traces.json` and `creative_rationale.json`.
