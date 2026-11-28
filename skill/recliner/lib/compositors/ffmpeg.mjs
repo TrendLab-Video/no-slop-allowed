@@ -157,12 +157,12 @@ export async function compose({ segments, width, height, fps = 30, transition = 
 }
 
 // Ensure a delivered file is web-safe H.264/AAC with faststart (used after Blender renders).
-export async function finalize(input, outFile, { bed = null, fps = 30 } = {}) {
+export async function finalize(input, outFile, { bed = null, fps = 30, copyVideo = false } = {}) {
   const total = await probeDuration(input);
   const args = ['-i', input];
   if (bed) args.push('-i', bed); else args.push('-f', 'lavfi', '-t', String(total), '-i', 'anullsrc=r=48000:cl=stereo');
-  args.push('-map', '0:v:0', '-map', '1:a:0', '-filter:a', `atrim=0:${total},apad=whole_dur=${total}`,
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-r', String(fps),
+  const video = copyVideo ? ['-c:v', 'copy'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-r', String(fps)];
+  args.push('-map', '0:v:0', '-map', '1:a:0', '-filter:a', `atrim=0:${total},apad=whole_dur=${total}`, ...video,
     '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', '-t', String(total), outFile);
   await ff(args);
   return outFile;
