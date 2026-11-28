@@ -57,7 +57,7 @@ After the brief there is no user input. Each stage is run by a sub-agent from it
 | Effort | Scenes | Clip retries | Final retries | Pass score | Budget | Video model |
 |---|---|---|---|---|---|---|
 | 1 Quick | 2 | 1 | 0 | 50 | 6 min | Vidu Q3 Turbo |
-| 2 Light | 3 | 1 | 0 | 60 | 10 min | Vidu Q3 Turbo |
+| 2 Light | 3 | 1 | 0 | 60 | 12 min | Vidu Q3 Turbo |
 | 3 Standard | 4 | 1 | 1 | 70 | 15 min | Seedance v1 Pro Fast |
 | 4 High | 5 | 2 | 1 | 75 | 20 min | LTX-2.3 Fast |
 | 5 Max | 6 | 3 | 2 | 80 | 30 min | Kling v3 Pro |
