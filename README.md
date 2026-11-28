@@ -20,7 +20,7 @@ What shape it takes is up to you. It can be a set of agent skills, a TypeScript 
 Each input describes what is being promoted and the objective, without creative direction. What kind of piece you make and how your system gets there is up to you.
 
 - **Passable input**: your system must accept a passed-in brief and run end to end without interactive Q&A
-- **Hidden briefs**: 20 minutes before the submission deadline we will release hidden briefs. You run your system on them locally and include those outputs in your submission
+- **Hidden briefs**: 30 minutes before the submission deadline (15:30) we will release hidden briefs. You run your system on them locally and include those outputs in your submission
 - **Starter briefs**: sample briefs live in [`briefs/`](briefs/) so you can test while you build
 - **Open format**: think across different video modalities and what frontier capabilities can actually do (images, AI-generated video, code-driven visuals and anything else)
 - **Open stack**: any language, framework, skill setup or agent architecture is fair game
@@ -48,9 +48,9 @@ Each input describes what is being promoted and the objective, without creative 
 
 1. Fork this repository and add your fork on the Your team page of the [hackathon portal](https://hack.36labs.ai/team) straight away
 2. Build everything today in your fork. Commit as often as you can and push to GitHub as you go: it helps judges see what you're working on
-3. When the hidden briefs are released 20 minutes before the deadline, generate the number of videos shown for each brief on the Task page. Submit the outputs without manual editing
+3. When the hidden briefs are released at 15:30, 30 minutes before the deadline, generate the number of videos shown for each brief on the Task page. Submit the outputs without manual editing
 4. Fill in [`SUBMISSION.md`](SUBMISSION.md) with one row per video and a short description of how your system works
-5. Check your fork URL on the hackathon portal is up to date before the deadline
+5. Upload each video into its slot on the Your team page of the hackathon portal, pick your presentation file there, and check your fork URL is up to date before the deadline
 
 For each submitted video, include both artifacts:
 1. **Video output**: the final rendered video chosen by your system
