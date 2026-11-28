@@ -45,7 +45,7 @@ Two invocations:
   4. Open `url` in the user's browser (`open` on macOS, `xdg-open` on Linux, `start` on Windows, or tell the user the URL if no opener exists).
   5. `recliner wait-brief <runId>` blocks until the user presses Start, then prints `brief.json` and `config.json`. This is the last user input.
 - **`/recliner <path/to/brief.md>`** (headless, required for hidden briefs)
-  1. `recliner new-run --slug <file-name> --brief <path> [--effort n]` writes `brief.json` and `config.json` at once and prints `{ runId }`. `--effort` is 1–5 (default 1; use 3 for hidden briefs unless told otherwise). Do not start the server or open a browser unless asked.
+  1. `recliner new-run --slug <file-name> --brief <path> [--effort n]` writes `brief.json` and `config.json` at once and prints `{ runId }`. `--effort` is 1–5 (default 1; use 2 for hidden briefs unless told otherwise). Do not start the server or open a browser unless asked.
 
 Read `$RUN/brief.json` and `$RUN/config.json` now and keep them in mind. Note the start time: the time budget is measured from `brief.submittedAt`.
 
@@ -187,7 +187,7 @@ recliner rank <runId>
 
 ## 8. Output (stage `output`)
 
-First write the output trace step (`recliner trace <runId> -`: the selected result, its score, retries and degradations used), **then** `recliner export <runId>`, which copies the selected video, `traces.json` and available validation evidence to `outputs/<brief-slug>/`; a step written after export is missing from the exported trace. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
+First write the output trace step (`recliner trace <runId> -`: the selected result, its score, retries and degradations used), **then** `recliner export <runId>`, which copies the selected video, `traces.json`, `creative_rationale.json` and available validation evidence to `outputs/<brief-slug>/`; a step written after export is missing from the exported trace. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
 
 ## Time budget
 

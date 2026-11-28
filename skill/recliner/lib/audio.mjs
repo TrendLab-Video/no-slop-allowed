@@ -50,7 +50,11 @@ export async function generateAssets(runId, plan, config = {}) {
   fs.mkdirSync(runPath(runId, 'audio'), { recursive: true });
 
   // stable-audio 2.5 ($0.20 a track) for efforts 1-3; ElevenLabs music ($0.60 a minute, richer) for 4-5.
-  const primary = config.musicModel || ((config.effort || 3) >= 4 ? MUSIC_MODEL : MUSIC_FALLBACK_MODEL);
+  // A model that worked once is remembered per run (audio/music-model.txt) so a flaky primary
+  // is not retried on every compose; the file cache above covers the asset itself.
+  const modelMarker = runPath(runId, 'audio/music-model.txt');
+  const remembered = fs.existsSync(modelMarker) ? fs.readFileSync(modelMarker, 'utf8').trim() : null;
+  const primary = config.musicModel || remembered || ((config.effort || 3) >= 4 ? MUSIC_MODEL : MUSIC_FALLBACK_MODEL);
   const secondary = primary === MUSIC_MODEL ? MUSIC_FALLBACK_MODEL : MUSIC_MODEL;
   const musicArgs = (m) => (m.includes('elevenlabs')
     ? { prompt: musicPrompt, music_length_ms: seconds * 1000, force_instrumental: true }
@@ -63,6 +67,9 @@ export async function generateAssets(runId, plan, config = {}) {
       notes.push(`music: ${primary} failed (${rec.error}); trying ${secondary}`);
       rec = await falToFile(secondary, musicArgs(secondary), tmp);
       trace(runId, 'music-fallback', rec, musicPrompt);
+    }
+    if (rec.status === 'ok' && rec.endpoint && rec.endpoint !== primary) {
+      try { fs.writeFileSync(modelMarker, rec.endpoint); } catch { /* marker is best-effort */ }
     }
     return rec;
   });
