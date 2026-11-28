@@ -15,6 +15,7 @@ export const VIDEO_MODELS = {
   4: 'fal-ai/kling-video/v3/pro/text-to-video',
   5: 'fal-ai/kling-video/v3/pro/text-to-video',
 };
+export const IMAGE_MODEL = 'fal-ai/flux/schnell';
 export const MUSIC_MODEL = 'elevenlabs/music/v2.5';
 export const MUSIC_FALLBACK_MODEL = 'fal-ai/stable-audio-25/text-to-audio';
 export const TTS_MODEL = 'fal-ai/elevenlabs/tts/turbo-v2.5';
@@ -243,3 +244,35 @@ export function videoArgs(model, { prompt, aspectRatio = '16:9', seconds = 5, re
   }
   return { prompt, aspect_ratio: aspectRatio, duration: seconds };
 }
+
+// ---- Keyframe-first generation -------------------------------------------------------------------
+// Image-to-video endpoint for a text-to-video model: ".../text-to-video" -> ".../image-to-video";
+// veo endpoints without a suffix get "/image-to-video".
+export function imageToVideoModel(model) {
+  if (/\/image-to-video$/.test(model)) return model;
+  if (model.includes('text-to-video')) return model.replace('text-to-video', 'image-to-video');
+  if (model.includes('veo3') || model.includes('ltx-video')) return `${model}/image-to-video`;
+  return null;
+}
+
+// Image-to-video arguments: the text-to-video mapping plus the keyframe under the model's image key.
+export function imageToVideoArgs(model, opts, imageUrl) {
+  const args = videoArgs(model, opts);
+  if (model.includes('kling-video') || model.startsWith('kling/')) {
+    delete args.aspect_ratio; // Kling takes the frame from the start image
+    return { ...args, start_image_url: imageUrl };
+  }
+  return { ...args, image_url: imageUrl };
+}
+
+// Still keyframe arguments. FLUX schnell/dev/pro take image_size; ultra and most others take aspect_ratio.
+export function imageArgs(model, { prompt, aspectRatio = '16:9' }) {
+  if (model.includes('flux') && !model.includes('ultra')) {
+    const size = { '9:16': 'portrait_16_9', '16:9': 'landscape_16_9', '1:1': 'square_hd' }[aspectRatio] || 'landscape_16_9';
+    return { prompt, image_size: size, num_images: 1, output_format: 'jpeg', enable_safety_checker: true };
+  }
+  return { prompt, aspect_ratio: aspectRatio, num_images: 1, output_format: 'jpeg' };
+}
+
+// A local image as a data URI, for when a keyframe's fal CDN url is missing.
+export const dataUri = (file) => `data:image/jpeg;base64,${fs.readFileSync(file).toString('base64')}`;
