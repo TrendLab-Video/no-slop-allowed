@@ -83,6 +83,7 @@ export function setStage(runId, stageId, status, note = '') {
   if (['running', 'retrying'].includes(status)) state.currentStage = stageId;
   if (status === 'failed') state.status = 'failed';
   else if (stageId === 'output' && status === 'done') state.status = 'done';
+  else if (['running', 'retrying'].includes(status) && stageId !== 'brief') state.status = 'running'; // also resumes a failed run
   else if (state.status !== 'failed' && !(stageId === 'brief' && status === 'running')) state.status = 'running';
   state.updatedAt = now;
   writeJson(runId, 'state.json', state);
