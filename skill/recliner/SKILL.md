@@ -18,6 +18,7 @@ You are the orchestrator. You run the stages below in order, hand each stage's s
 - Node 22 and ffmpeg/ffprobe on PATH. Keys in `.env` at the repo root: `FAL_KEY` (required), `JEV_API_KEY` (optional).
 - > **Recommendation:** `yt-dlp` on PATH. With it, `fetch-ref` captures real frames, duration and cut counts from reference videos; without it, each reference gets one image.
 - > **Recommendation:** Blender, the preferred compositor (ffmpeg is the fallback).
+- > **Recommendation:** a search key, `TAVILY_API_KEY` or `PARALLEL_API_KEY` (optional). With one, the references stage uses `recliner search` for fast, current results, and with Tavily `fetch-ref` gains an image fallback. Without one, the agent's built-in web search is used.
 
 ## fal skills
 
