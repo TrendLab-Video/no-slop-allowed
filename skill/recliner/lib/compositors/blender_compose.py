@@ -61,8 +61,9 @@ for i, seg in enumerate(job["segments"]):
     text = (seg.get("text") or "").strip()
     if text:
         L = seg["layout"]
-        tstart = start + (T if i > 0 else 0) + int(0.2 * FPS)
-        tend = start + length - (T if i < len(job["segments"]) - 1 else 0)
+        # Caption window from compose.mjs (seconds into the segment): after the cross-fade in, before the one out.
+        tstart = start + int(round(seg.get("textIn", 0.3) * FPS))
+        tend = start + min(length, int(round(seg.get("textOut", seg["seconds"] - 0.5) * FPS)))
         t = strips.new_effect(f"text{i}", "TEXT", 6, tstart, length=max(1, tend - tstart))
         t.text = "\n".join(L["lines"])
         t.font_size = L["fontSize"]

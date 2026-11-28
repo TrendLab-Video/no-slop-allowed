@@ -9,6 +9,7 @@
   "aspectRatio": "9:16",
   "style": "cinematic macro photography, warm golden morning light, shallow depth of field, 35mm film grain",
   "referenceIds": ["ref-1"],
+  "endCard": { "headline": "Dawn Roasters", "subline": "Small-batch coffee, roasted at first light", "durationSeconds": 1.8 },
   "audio": {
     "musicPrompt": "warm lo-fi acoustic guitar and soft brushed drums, calm morning mood, 80 bpm, instrumental",
     "voiceover": null

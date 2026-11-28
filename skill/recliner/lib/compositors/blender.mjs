@@ -20,7 +20,9 @@ export async function compose({ segments, width, height, fps = 30, transition = 
   // Blender does not retime movie strips, so every clip must share the scene frame rate.
   // Use the clips' own rate when they agree (one model, no re-encode); otherwise conform them to `fps`.
   const rates = await Promise.all(segments.map((s) => frameRate(s.file)));
-  const common = rates.every((r) => r && r === rates[0]) && rates[0] >= 23 && rates[0] <= 60 ? rates[0] : null;
+  // The end card is a generated still clip, so only the real clips decide the rate (the card is conformed).
+  const clipRates = rates.filter((r, i) => !segments[i].endCard);
+  const common = clipRates.length && clipRates.every((r) => r && r === clipRates[0]) && clipRates[0] >= 23 && clipRates[0] <= 60 ? clipRates[0] : null;
   const sceneFps = common || fps;
   const notes = [];
   const files = await Promise.all(segments.map(async (s, i) => {
