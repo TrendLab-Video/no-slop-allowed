@@ -4,7 +4,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { probe } from '../src/film/probe.ts'
-import { pickTextColour, renderCard, renderSuper } from '../src/film/titles.ts'
+import {
+  layoutSuper,
+  pickTextColour,
+  renderCard,
+  renderSuper,
+} from '../src/film/titles.ts'
 
 const FFMPEG = Bun.which('ffmpeg') ?? '/opt/homebrew/bin/ffmpeg'
 
@@ -275,5 +280,80 @@ describe('renderSuper', () => {
     const px = await decode(out)
     expect(inkIn(px, 0, 0, px.w, Math.floor(px.h * 0.1))).toBe(0)
     expect(inkIn(px, 0, Math.ceil(px.h * 0.8), px.w, px.h)).toBe(0)
+  })
+})
+
+describe('renderSuper plates', () => {
+  const TEXT = 'Twelve hours under a bus.'
+  const BOX = { height: 1920, width: 1080 }
+
+  test('a scrim fills the band behind the text at its opacity', async () => {
+    const layout = await layoutSuper(TEXT, { ...BOX, position: 'lower' })
+    const mid = layout.rect.y + Math.floor(layout.rect.h / 2)
+    const out = await renderSuper(
+      TEXT,
+      { ...BOX, plate: 'scrim', plateOpacity: 0.55, position: 'lower' },
+      f('scrim.png'),
+    )
+    const px = await decode(out)
+    expect(Math.abs(alphaAt(px, 4, mid) - 0.55 * 255)).toBeLessThan(6)
+    expect(Math.abs(alphaAt(px, px.w - 5, mid) - 0.55 * 255)).toBeLessThan(6)
+    expect(alphaAt(px, 4, 4)).toBe(0)
+    expect(alphaAt(px, 4, px.h - 4)).toBe(0)
+  })
+
+  test('a box is a solid rounded plate around the text', async () => {
+    const layout = await layoutSuper(TEXT, { ...BOX, position: 'centre' })
+    const mid = layout.rect.y + Math.floor(layout.rect.h / 2)
+    const out = await renderSuper(
+      TEXT,
+      { ...BOX, plate: 'box', plateOpacity: 0.85, position: 'centre' },
+      f('box.png'),
+    )
+    const px = await decode(out)
+    const left = layout.rect.x - 12
+    expect(Math.abs(alphaAt(px, left, mid) - 0.85 * 255)).toBeLessThan(6)
+    expect(alphaAt(px, 4, mid)).toBe(0)
+    expect(alphaAt(px, left, layout.rect.y - 120)).toBe(0)
+  })
+
+  test('dark text on a white scrim is dark ink', async () => {
+    const out = await renderSuper(
+      TEXT,
+      {
+        ...BOX,
+        fg: '#111111',
+        plate: 'scrim',
+        plateOpacity: 0.55,
+        position: 'lower',
+      },
+      f('dark-scrim.png'),
+    )
+    const px = await decode(out)
+    const layout = await layoutSuper(TEXT, { ...BOX, position: 'lower' })
+    const mid = layout.rect.y + Math.floor(layout.rect.h / 2)
+    const i = (mid * px.w + 4) * 4
+    expect(px.data[i]).toBe(255)
+    let dark = 0
+    for (let y = layout.rect.y; y < layout.rect.y + layout.rect.h; y++) {
+      for (let x = layout.rect.x; x < layout.rect.x + layout.rect.w; x++) {
+        if ((px.data[(y * px.w + x) * 4] as number) < 60) dark++
+      }
+    }
+    expect(dark).toBeGreaterThan(1000)
+  })
+
+  test('the text keeps the top, bottom and right safe areas', async () => {
+    const long = Array.from({ length: 12 }, () => 'relentless').join(' ')
+    for (const position of ['upper', 'centre', 'lower'] as const) {
+      const layout = await layoutSuper(long, { ...BOX, position })
+      expect(layout.rect.y).toBeGreaterThanOrEqual(Math.ceil(1920 * 0.12))
+      expect(layout.rect.y + layout.rect.h).toBeLessThanOrEqual(
+        Math.floor(1920 * 0.8),
+      )
+      expect(layout.rect.x + layout.rect.w).toBeLessThanOrEqual(
+        Math.floor(1080 * 0.88),
+      )
+    }
   })
 })

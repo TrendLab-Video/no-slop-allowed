@@ -22,6 +22,8 @@ export type CardSpec = {
 export type SuperOpts = {
   fg?: string
   height: number
+  plate?: 'box' | 'none' | 'scrim'
+  plateOpacity?: number
   position?: 'centre' | 'lower' | 'upper'
   width: number
 }
@@ -308,37 +310,132 @@ export async function renderCard(
   return writePng(await toSvg(tree, { height, width }), width, outPath)
 }
 
-export async function renderSuper(
+export type Rect = { h: number; w: number; x: number; y: number }
+
+export type SuperLayout = { fontSize: number; lines: number; rect: Rect }
+
+type SuperLook = {
+  fg: string
+  plate: 'box' | 'none' | 'scrim'
+  plateOpacity: number
+}
+
+type SuperMetrics = { lines: number; maxLines: number; size: number }
+
+const SAFE_TOP = 0.12
+const SAFE_BOTTOM = 0.2
+const SAFE_LEFT = 0.08
+const SAFE_RIGHT = 0.12
+const SCRIM_PLATEAU = [0.28, 0.72]
+const BOX_PAD_EM = 0.6
+const BOX_RADIUS_EM = 0.3
+
+const superWidth = (width: number) =>
+  Math.round(width * (1 - SAFE_LEFT - SAFE_RIGHT))
+
+const superStyle = (fg: string, px: number): TextStyle => ({
+  ...titleStyle(fg, px),
+  lineHeight: 1.15,
+})
+
+async function superMetrics(
   text: string,
-  opts: SuperOpts,
-  outPath: string,
-): Promise<string> {
-  const { height, width } = opts
-  const fg = opts.fg ?? LIGHT
-  const maxWidth = Math.round(width * TEXT_FRACTION)
-  const floor = Math.round(width * 0.05)
-  let size = Math.round(width * 0.085)
-  const lineBudget = Math.floor((height * 0.55) / (size * 1.15))
+  fg: string,
+  box: { height: number; width: number },
+): Promise<SuperMetrics> {
+  const maxWidth = superWidth(box.width)
+  const floor = Math.round(box.width * 0.05)
+  let size = Math.round(box.width * 0.085)
+  const lineBudget = Math.floor((box.height * 0.55) / (size * 1.15))
   const maxLines = Math.max(2, Math.min(4, lineBudget))
-  const style = (px: number): TextStyle => ({
-    ...titleStyle(fg, px),
-    lineHeight: 1.15,
-  })
-  let lines = await countLines(text, style(size), maxWidth)
+  let lines = await countLines(text, superStyle(fg, size), maxWidth)
   while (lines > maxLines && size > floor) {
     size = Math.max(floor, Math.round(size * 0.93))
-    lines = await countLines(text, style(size), maxWidth)
+    lines = await countLines(text, superStyle(fg, size), maxWidth)
   }
-  const position = opts.position ?? 'lower'
+  return { lines, maxLines, size }
+}
+
+function plateColour(fg: string): [number, number, number] {
+  return luminance(fg) > 0.5 ? [0, 0, 0] : [255, 255, 255]
+}
+
+function shadowFor(fg: string): string {
+  const c = plateColour(fg).join(',')
+  return (
+    `0 2px 22px rgba(${c},0.6), 0 0 8px rgba(${c},0.4), ` +
+    `0 1px 3px rgba(${c},0.6)`
+  )
+}
+
+type SuperGeometry = {
+  height: number
+  inkWidth?: number
+  position: 'centre' | 'lower' | 'upper'
+  rect?: Rect
+  width: number
+}
+
+function superTree(
+  text: string,
+  m: SuperMetrics,
+  look: SuperLook,
+  geo: SuperGeometry,
+  shadow: boolean,
+): Node {
+  const { height, position, width } = geo
   const justify = {
     centre: 'center',
     lower: 'flex-end',
     upper: 'flex-start',
   }[position]
   const edge = Math.round(height * 0.05)
-  const padBottom = Math.round(height * 0.2) + (position === 'lower' ? edge : 0)
-  const padTop = Math.round(height * 0.1) + (position === 'upper' ? edge : 0)
-  const tree = el(
+  const padBottom =
+    Math.round(height * SAFE_BOTTOM) + (position === 'lower' ? edge : 0)
+  const padTop =
+    Math.round(height * SAFE_TOP) + (position === 'upper' ? edge : 0)
+  const isBox = look.plate === 'box' && geo.inkWidth !== undefined
+  const pad = Math.round(m.size * BOX_PAD_EM)
+  const [r, g, b] = plateColour(look.fg)
+  const textStyle: Record<string, unknown> = {
+    ...superStyle(look.fg, m.size),
+    ...(m.lines > m.maxLines ? { lineClamp: m.maxLines } : {}),
+    position: 'relative',
+    width: superWidth(width),
+    wordBreak: 'break-word',
+  }
+  if (isBox) {
+    Object.assign(textStyle, {
+      backgroundColor: `rgba(${r},${g},${b},${look.plateOpacity})`,
+      borderRadius: Math.round(m.size * BOX_RADIUS_EM),
+      padding: pad,
+      width: (geo.inkWidth as number) + 8,
+    })
+  } else if (shadow) {
+    textStyle.textShadow = shadowFor(look.fg)
+  }
+  const layers: Node[] = []
+  if (look.plate === 'scrim' && geo.rect) {
+    const band = Math.round(geo.rect.h * 2.4)
+    const mid = geo.rect.y + geo.rect.h / 2
+    const top = Math.max(0, Math.round(mid - band / 2))
+    const [p0, p1] = SCRIM_PLATEAU as [number, number]
+    const solid = `rgba(${r},${g},${b},${look.plateOpacity})`
+    const clear = `rgba(${r},${g},${b},0)`
+    layers.push(
+      el('div', {
+        backgroundImage:
+          `linear-gradient(to bottom, ${clear} 0%, ` +
+          `${solid} ${p0 * 100}%, ${solid} ${p1 * 100}%, ${clear} 100%)`,
+        height: Math.min(band, height - top),
+        left: 0,
+        position: 'absolute',
+        top,
+        width,
+      }),
+    )
+  }
+  return el(
     'div',
     {
       alignItems: 'center',
@@ -349,24 +446,67 @@ export async function renderSuper(
       height,
       justifyContent: justify,
       paddingBottom: padBottom,
+      paddingLeft: Math.round(width * SAFE_LEFT),
+      paddingRight: Math.round(width * SAFE_RIGHT),
       paddingTop: padTop,
       width,
     },
-    [
-      el(
-        'div',
-        {
-          ...style(size),
-          ...(lines > maxLines ? { lineClamp: maxLines } : {}),
-          textShadow:
-            '0 2px 22px rgba(0,0,0,0.6), 0 0 8px rgba(0,0,0,0.4), ' +
-            '0 1px 3px rgba(0,0,0,0.6)',
-          width: maxWidth,
-          wordBreak: 'break-word',
-        },
-        text,
-      ),
-    ],
+    [...layers, el('div', textStyle, text)],
   )
+}
+
+function inkRect(svg: string, width: number): Rect {
+  const fit = { fitTo: { mode: 'width' as const, value: width } }
+  const img = new Resvg(svg, fit).render()
+  const px = img.pixels
+  let x0 = img.width
+  let y0 = img.height
+  let x1 = -1
+  let y1 = -1
+  for (let y = 0; y < img.height; y++) {
+    for (let x = 0; x < img.width; x++) {
+      if ((px[(y * img.width + x) * 4 + 3] as number) <= 8) continue
+      x0 = Math.min(x0, x)
+      x1 = Math.max(x1, x)
+      y0 = Math.min(y0, y)
+      y1 = Math.max(y1, y)
+    }
+  }
+  if (x1 < 0) return { h: 0, w: 0, x: 0, y: 0 }
+  return { h: y1 - y0 + 1, w: x1 - x0 + 1, x: x0, y: y0 }
+}
+
+export async function layoutSuper(
+  text: string,
+  opts: Pick<SuperOpts, 'height' | 'position' | 'width'>,
+): Promise<SuperLayout> {
+  const look: SuperLook = { fg: LIGHT, plate: 'none', plateOpacity: 0 }
+  const m = await superMetrics(text, LIGHT, opts)
+  const geo = { ...opts, position: opts.position ?? 'lower' }
+  const tree = superTree(text, m, look, geo, false)
+  const svg = await toSvg(tree, opts)
+  return { fontSize: m.size, lines: m.lines, rect: inkRect(svg, opts.width) }
+}
+
+export async function renderSuper(
+  text: string,
+  opts: SuperOpts,
+  outPath: string,
+): Promise<string> {
+  const { height, width } = opts
+  const look: SuperLook = {
+    fg: opts.fg ?? LIGHT,
+    plate: opts.plate ?? 'none',
+    plateOpacity: opts.plateOpacity ?? 0,
+  }
+  const position = opts.position ?? 'lower'
+  const m = await superMetrics(text, look.fg, opts)
+  let geo: SuperGeometry = { height, position, width }
+  if (look.plate !== 'none') {
+    const plain = superTree(text, m, look, geo, false)
+    const rect = inkRect(await toSvg(plain, { height, width }), width)
+    geo = { ...geo, inkWidth: rect.w, rect }
+  }
+  const tree = superTree(text, m, look, geo, true)
   return writePng(await toSvg(tree, { height, width }), width, outPath)
 }
