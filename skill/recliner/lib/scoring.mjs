@@ -97,6 +97,54 @@ export function productImages(runId) {
 }
 
 // plan.json always carries endCard { headline, subline, durationSeconds } (older shape { text, seconds } is converted).
+// Controlled vocabulary for styleTags (goals.md lists the same values).
+export const MODALITIES = ['product-macro', 'kinetic-type', 'ugc-creator', 'talking-head', 'athlete-talent', 'ui-demo', 'stop-motion', 'mockumentary', 'pov', 'documentary', 'lifestyle-montage', 'animation', 'other'];
+export const HOOK_TYPES = ['physical-action', 'sound-first', 'reveal', 'question', 'bold-claim', 'pattern-interrupt', 'pov-entry', 'before-after', 'text-first', 'other'];
+const MODALITY_WORDS = [
+  ['ugc-creator', /\bugc\b|creator|selfie|phone-shot/], ['talking-head', /talking[- ]head|to camera|testimonial/],
+  ['kinetic-type', /kinetic|typograph/], ['stop-motion', /stop[- ]motion/], ['mockumentary', /mockumentary/],
+  ['ui-demo', /\bui\b|app demo|screen record|interface/], ['pov', /\bpov\b|first[- ]person/],
+  ['documentary', /documentary|vérité|verite/], ['animation', /animat|cartoon|claymation/],
+  ['athlete-talent', /athlete|talent|runner|player|dancer/], ['product-macro', /macro|product[- ]truth|close-up|detail/],
+  ['lifestyle-montage', /montage|lifestyle/],
+];
+const HOOK_WORDS = [
+  ['pov-entry', /\bpov\b/], ['question', /\?|question/], ['before-after', /\bbefore\b.*\bafter\b/],
+  ['physical-action', /hits|slams|pops|kicks|drops|pours|presses|strikes|lands|pushes|grabs|throws|taps/],
+  ['sound-first', /sound|bang|snap/], ['reveal', /reveal|unveil|lifts|pulls back/], ['text-first', /text|caption|title card/], ['bold-claim', /claim/],
+];
+const COLOURS = /\b(black|white|grey|gray|silver|gold|red|orange|amber|yellow|volt|lime|green|teal|cyan|blue|navy|indigo|purple|violet|pink|magenta|brown|beige|cream|tan|sodium|neon|pastel|chrome)\b/g;
+const pick = (table, text, fallback) => (table.find(([, re]) => re.test(text)) || [fallback])[0];
+const clause = (s, n = 8) => String(s || '').split(/[,.;:]/)[0].trim().split(/\s+/).slice(0, n).join(' ') || null;
+const asList = (p) => (Array.isArray(p) ? p : String(p || '').split(/\s*[\/,&+]\s*|\s+and\s+/)).map((x) => String(x).trim()).filter(Boolean);
+
+// Copy a goal's styleTags into the plan; fill anything missing from style/description/scenes so style memory is never thin.
+export function normaliseStyleTags(goal = {}) {
+  const t = goal.styleTags || {};
+  const text = [goal.title, goal.description, goal.style, goal.creativeGuidance].join(' ').toLowerCase();
+  const s1 = goal.scenes?.[0] || {};
+  const s1Text = `${s1.prompt || ''} ${s1.description || ''}`.toLowerCase();
+  const camera = (goal.scenes || []).map((sc) => clause(sc.keyframePrompt, 4)).filter(Boolean).join(' → ');
+  const palette = asList(t.palette).length ? asList(t.palette) : [...new Set(String(goal.style || '').toLowerCase().match(COLOURS) || [])];
+  const derived = [];
+  const take = (key, value, fallback) => {
+    if (value != null && value !== '' && !(Array.isArray(value) && !value.length)) return value;
+    derived.push(key);
+    return fallback;
+  };
+  const out = {
+    modality: take('modality', t.modality, pick(MODALITY_WORDS, text, 'other')),
+    hookType: take('hookType', t.hookType, pick(HOOK_WORDS, s1Text, 'other')),
+    openingAction: take('openingAction', t.openingAction, clause(s1.prompt || s1.description, 12)),
+    palette: take('palette', palette.length ? palette.slice(0, 3) : null, []),
+    pacing: take('pacing', t.pacing, goal.scenes?.length ? `${goal.scenes.length} shots of ${goal.scenes[0].durationSeconds ?? '?'}s` : null),
+    cameraLanguage: take('cameraLanguage', t.cameraLanguage, camera || null),
+    musicGenre: take('musicGenre', t.musicGenre, clause(goal.audio?.musicPrompt, 4)),
+  };
+  if (derived.length) out.derived = derived;
+  return out;
+}
+
 export function normaliseEndCard(card, brief = {}, intent = null) {
   const c = card || {};
   const headline = c.headline || (c.text ? String(c.text).split(/[\n:—–-]/)[0].trim() : '') || brief.promote || String(intent?.product || '').split(/[(,.;]/)[0].trim().split(/\s+/).slice(0, 5).join(' ');
@@ -166,6 +214,7 @@ export async function scoreRun(runId, { scorer } = {}) {
     confidence: best.confidence,
     intent: goalsDoc.intent ?? null,
     endCard: normaliseEndCard(goal.endCard, brief, goalsDoc.intent),
+    styleTags: normaliseStyleTags(goal),
     scenes: goal.scenes.map((sc) => ({ ...sc, keyframePrompt: sc.keyframePrompt || sc.prompt })),
     productImages: productImages(runId),
   });

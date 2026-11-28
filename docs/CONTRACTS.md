@@ -47,7 +47,8 @@ Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 mi
 `{ references: [{ id, kind: reference|brand, title, url, platform, metrics: { views, likes, comments, shares }, why, structure: { durationSeconds, scenes: [string], pacing, music, hook }, screenshots: [path] }], takeaways: [string], diversityNote }`
 
 **`goals.json`**
-`{ goals: [{ id, title, creativeThesis, description, realWorldGrounding: [string], creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
+`{ goals: [{ id, title, creativeThesis, description, realWorldGrounding: [string], creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds }, styleTags: { modality, hookType, openingAction, palette: [3 colour words], pacing, cameraLanguage, musicGenre }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
+`styleTags` is required (controlled vocabulary for `modality` and `hookType` in steps/goals.md); `score` copies it into `plan.json`, deriving missing fields from `style`, `description` and the scenes (listed in `styleTags.derived`), and `style-memory` records it per run.
 `keyframePrompt` is the still (image model); `prompt` is the motion from that still (image-to-video), or the text-to-video prompt when `config.keyframes` is false.
 
 **`scores.json`**

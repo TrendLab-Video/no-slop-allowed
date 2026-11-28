@@ -34,8 +34,11 @@ export function recordRun(runId) {
     modality: t.modality || null,
     style: plan.style || null,
     hookType: t.hookType || null,
+    openingAction: t.openingAction || null,
     palette: t.palette || null,
     pacing: t.pacing || null,
+    cameraLanguage: t.cameraLanguage || null,
+    musicGenre: t.musicGenre || null,
     referenceIds: plan.referenceIds || [],
     referenceUrls: (readJson(runId, 'references.json', {}).references || []).filter((r) => (plan.referenceIds || []).includes(r.id)).map((r) => r.url),
     at: new Date().toISOString(),
@@ -53,3 +56,9 @@ export function recordRun(runId) {
 }
 
 export const recent = (n = 8) => readMemory().entries.slice(-n);
+
+// One short line per entry, oldest first: the fields goals must not repeat.
+export const compact = (e) => {
+  const pal = Array.isArray(e.palette) ? e.palette.join('/') : e.palette || '-';
+  return `${e.briefSlug || e.runId} | modality=${e.modality || '-'} | hook=${e.hookType || '-'} | opening=${e.openingAction || '-'} | palette=${pal} | pacing=${e.pacing || '-'} | camera=${e.cameraLanguage || '-'} | music=${e.musicGenre || '-'}`;
+};
