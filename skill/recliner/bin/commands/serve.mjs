@@ -59,7 +59,11 @@ function readBody(req, limit = 1e6) {
 function listRuns() {
   let ids = [];
   try { ids = fs.readdirSync(runsDir()).filter((d) => fs.existsSync(path.join(runsDir(), d, 'state.json'))); } catch {}
-  return ids.sort().reverse().map((id) => ({ runId: id, state: readJson(id, 'state.json'), brief: readJson(id, 'brief.json') }));
+  return ids.sort().reverse().map((id) => {
+    const full = readJson(id, 'result.json');
+    const results = full?.results?.map((r) => ({ id: r.id, file: r.file, thumbnail: r.thumbnail, durationSeconds: r.durationSeconds, validation: r.validation ? { score: r.validation.score, passed: r.validation.passed } : null })) || [];
+    return { runId: id, state: readJson(id, 'state.json'), brief: readJson(id, 'brief.json'), result: full ? { selectedId: full.selectedId, results } : null };
+  });
 }
 
 // fal status for the Brief page and header: lib/fal.mjs checkAccount() (free balance check), the same

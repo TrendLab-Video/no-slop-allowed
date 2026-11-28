@@ -14,7 +14,7 @@
 </main>
 <footer>Recliner · local only · runs/<span id="fr"></span></footer>
 <script type="module">
-import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage, withKeyframeValidations, metrics, refImages, isBrand, refBadge, verdictHead } from '/app.js';
+import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, scoreBar, mediaStage, withKeyframeValidations, metrics, refImages, isBrand, refBadge } from '/app.js';
 
 header(runId ? 'brief' : 'runs');
 $('#fr').textContent = runId || '';
@@ -38,14 +38,43 @@ const PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts', 'YouTube', 'Li
 if (!runId) {
   $('#flow').remove();
   const view = $('#view');
-  view.innerHTML = `<div class="head"><div><span class="eyebrow">Recliner</span><h1>Runs</h1><p>One brief in, one finished promo video out. Each run is a folder in <code>runs/</code>.</p></div>
-    <button class="btn" id="new">New run <span class="arrow">→</span></button></div><div class="runs-list" id="list"><div class="empty">Loading…</div></div>`;
+  view.innerHTML = `<div class="head slim gallery-head"><div><span class="eyebrow">Recliner</span><h1>Make a promo video</h1>
+    <p>Describe the outcome once. Recliner studies proven references, writes the creative direction, generates the scenes, checks quality, and delivers a finished cut.</p>
+    <div class="links"><button class="btn big" id="new">Create video <span class="arrow">→</span></button></div></div></div>
+    <div class="gallery-title"><h2>Your videos</h2><span class="small muted">Newest first</span></div>
+    <div class="run-gallery" id="list"><div class="empty">Loading…</div></div>`;
   $('#new').onclick = async () => { const { runId } = await api('/api/runs', {}); location.href = `/?run=${encodeURIComponent(runId)}`; };
   const { runs } = await api('/api/runs');
-  $('#list').innerHTML = runs.length ? runs.map((r) => `<a href="/?run=${encodeURIComponent(r.runId)}">
-      ${statusTag(r.state?.status)}<span>${esc(r.brief?.promote || r.brief?.objective?.slice(0, 80) || 'Untitled brief')}</span>
-      <span class="small muted">${esc(r.state?.stages?.find((s) => s.id === r.state.currentStage)?.label || '')}</span>
-      <span class="rid">${esc(r.runId)}</span></a>`).join('') : '<div class="empty">No runs yet. Click New run, or run <code>recliner new-run --sample</code>.</div>';
+  const STAGE_HUMAN = { references: 'Studying references', goals: 'Writing directions', scoring: 'Choosing direction', clips: 'Generating scenes', clip_validation: 'Reviewing scenes', composition: 'Assembling edit', final_validation: 'Checking quality', output: 'Preparing delivery' };
+  const humanStatus = (r) => {
+    const st = r.state?.status || 'unknown';
+    if (st === 'done' && r.result?.results?.length) return 'Ready to watch';
+    if (st === 'done') return 'Finished';
+    if (st === 'running') return STAGE_HUMAN[r.state?.currentStage] || 'Creating';
+    if (st === 'awaiting_brief') return 'Needs a brief';
+    if (st === 'failed') return 'Needs attention';
+    return st.replace('_', ' ');
+  };
+  const progressOf = (r) => {
+    const stages = r.state?.stages || [];
+    if (!stages.length) return 0;
+    if (r.state?.status === 'done') return 100;
+    return Math.round((stages.filter((s) => ['done', 'skipped'].includes(s.status)).length / stages.length) * 100);
+  };
+  const bestOf = (r) => r.result?.results?.find((x) => x.id === r.result.selectedId) || [...(r.result?.results || [])].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1))[0];
+  $('#list').innerHTML = runs.length ? runs.map((r) => {
+    const best = bestOf(r);
+    const title = r.brief?.promote || r.brief?.objective?.slice(0, 80) || 'Untitled brief';
+    const score = best?.validation?.score;
+    const stateCls = r.state?.status === 'done' ? 'ok' : r.state?.status === 'failed' ? 'bad' : r.state?.status === 'running' ? 'run' : 'info';
+    return `<a class="run-card" href="/?run=${encodeURIComponent(r.runId)}">
+      <div class="run-thumb">${best?.thumbnail ? `<img src="${fileUrl(best.thumbnail, r.runId)}" alt="" loading="lazy">` : best?.file ? `<video src="${fileUrl(best.file, r.runId)}#t=0.5" preload="metadata" muted playsinline></video>` : `<div class="run-empty"><span>${esc((title || 'R')[0] || 'R')}</span></div>`}
+        <span class="tag ${stateCls}">${esc(humanStatus(r))}</span></div>
+      <div class="run-body"><h3>${esc(title)}</h3>
+        <p>${esc(r.brief?.objective || 'No objective yet')}</p>
+        <div class="run-meta"><span>${best?.durationSeconds ? `${esc(best.durationSeconds)}s` : esc(r.brief?.platform || 'draft')}</span>${score != null ? `<span>${esc(score)}/100 quality</span>` : r.state?.status === 'running' ? `<span>${progressOf(r)}% complete</span>` : ''}<span>${esc(r.runId.slice(0, 15))}</span></div>
+      </div></a>`;
+  }).join('') : '<div class="empty">No videos yet. Create your first one above, or run <code>recliner new-run --sample</code>.</div>';
 } else {
   start();
 }
@@ -57,13 +86,14 @@ async function start() {
   if (!first['state.json']) { view.innerHTML = `<div class="empty">No run <code>${esc(runId)}</code>. <a href="/">See all runs</a>.</div>`; return; }
   diagram.render(first['state.json']);
   let briefDone = !!first['brief.json'];
+  $('#flow').hidden = !briefDone;
   // One loop: diagram every second from the start, live detail once a brief exists.
   // If the brief lands from elsewhere (headless, another tab), the form gives way to the live view.
   poll(async () => {
     const state = await getJson('state.json');
     if (state) diagram.render(state);
     if (!briefDone && state?.stages?.[0]?.status === 'done') briefDone = true;
-    if (briefDone) await live(view, state);
+    if (briefDone) { $('#flow').hidden = false; await live(view, state); }
   }, 1000);
   if (!briefDone) briefForm(view, first['prefill.json'] || {}, () => { briefDone = true; }, () => briefDone);
 }
@@ -80,12 +110,17 @@ async function briefForm(view, prefill, onStarted, isDone) {
     ${Array.isArray(type) ? `<select id="c-${k}">${type.map((o) => `<option>${o}</option>`).join('')}</select>` : `<input id="c-${k}" type="${type}" ${type === 'number' ? 'min="0" step="1"' : ''}>`}</div>`; };
 
   view.innerHTML = `
-  <div class="head"><div><span class="eyebrow">Step 0 · Brief</span><h1>What are we promoting?</h1>
-    <p>Fill in the brief, choose how much effort to spend, then start. After Start the brief is locked and this page becomes the live run view.</p></div></div>
+  <div class="head slim create-head"><div><span class="eyebrow">Create</span><h1>Describe the video you want to make</h1>
+    <p>Start simple. Recliner will infer the structure, style, references, and technical settings. You only need to fine-tune if you want to.</p></div></div>
   <form class="form" id="f" autocomplete="off">
     <div class="card">
-      <div class="field"><label for="promote">What to promote</label><input id="promote" type="text" placeholder="Product, brand, event or idea"></div>
-      <div class="field"><label for="objective">Objective</label><textarea id="objective" placeholder="What should the video achieve? Who is it for?"></textarea></div>
+      <div class="field"><label for="promote">What are you promoting?</label><input id="promote" type="text" placeholder="Product, brand, event or idea"></div>
+      <div class="field"><label for="objective">What should the video achieve?</label><textarea id="objective" placeholder="Who is it for, what should they feel, and what should they do next?"></textarea>
+        <div class="examples"><span>Try:</span>${[
+          ['Pocket synth', 'A tactile product teaser for a portable synth', 'Make bedroom producers want to pick it up and start a beat today.'],
+          ['Running shoe', 'A fast UGC-style ad for a running shoe', 'Make runners feel the shoe is light, energetic, and worth trying on their next run.'],
+          ['Coffee brand', 'A cinematic launch film for a coffee brand', 'Make the first coffee of the day feel warm, crafted, and worth seeking out.'],
+        ].map(([k, pr, ob]) => `<button type="button" data-promote="${esc(pr)}" data-objective="${esc(ob)}">${esc(k)}</button>`).join('')}</div></div>
       <div class="field"><label for="url">Link</label><input id="url" type="url" placeholder="https://"></div>
       <div class="row2">
         <div class="field"><label for="platform">Platform</label><select id="platform">${PLATFORMS.map((p) => `<option>${p}</option>`).join('')}</select></div>
@@ -101,22 +136,32 @@ async function briefForm(view, prefill, onStarted, isDone) {
     <div class="card">
       <div class="effort">
         <div class="effort-top"><span class="lbl">Effort</span><span class="effort-val" id="ev"></span></div>
-        <input type="range" id="effort" min="1" max="5" step="1">
+        <input type="range" id="effort" min="1" max="5" step="1" aria-label="Quality and time effort">
         <div class="ticks" id="ticks">${[1, 2, 3, 4, 5].map((i) => `<span data-v="${i}">${esc(presets[i].label)}</span>`).join('')}</div>
       </div>
-      <div class="cfg">${MAIN_CFG.map(cfgField).join('')}</div>
-      <details class="adv" id="adv">
-        <summary>Advanced</summary>
-        <div class="cfg">${ADV_CFG.map(cfgField).join('')}
-          <div class="field wide"><label for="k-fal">fal API key ${keys.fal ? '<span class="tag ok">set</span>' : '<span class="tag bad">missing</span>'}</label><input id="k-fal" type="password" placeholder="${keys.fal ? 'Leave blank to keep the saved key' : 'FAL_KEY'}"></div>
-          <div class="field wide"><label for="k-jev">Jev API key ${keys.jev ? '<span class="tag ok">set</span>' : '<span class="tag">optional</span>'}</label><input id="k-jev" type="password" placeholder="${keys.jev ? 'Leave blank to keep the saved key' : 'JEV_API_KEY (falls back to Haiku scoring)'}"></div>
-          <div class="small muted wide" style="grid-column:1/-1">Keys are written to the local <code>.env</code> by the server and never shown again or stored in the run folder.</div>
-        </div>
+      <p class="small muted effort-note">Choose a quality/time preset. Technical defaults update automatically.</p>
+      <div class="process-preview"><span>Understand</span><i></i><span>Plan scenes</span><i></i><span>Generate</span><i></i><span>Review</span></div>
+      <details class="adv" id="tune">
+        <summary>Fine-tune generation</summary>
+        <div class="cfg">${MAIN_CFG.map(cfgField).join('')}</div>
+        <details class="adv nested" id="adv">
+          <summary>Advanced pipeline settings</summary>
+          <div class="cfg">${ADV_CFG.map(cfgField).join('')}
+            <div class="field wide"><label for="k-fal">fal API key ${keys.fal ? '<span class="tag ok">set</span>' : '<span class="tag bad">missing</span>'}</label><input id="k-fal" type="password" placeholder="${keys.fal ? 'Leave blank to keep the saved key' : 'FAL_KEY'}"></div>
+            <div class="field wide"><label for="k-jev">Jev API key ${keys.jev ? '<span class="tag ok">set</span>' : '<span class="tag">optional</span>'}</label><input id="k-jev" type="password" placeholder="${keys.jev ? 'Leave blank to keep the saved key' : 'JEV_API_KEY (falls back to Haiku scoring)'}"></div>
+            <div class="small muted wide" style="grid-column:1/-1">Keys are written to the local <code>.env</code> by the server and never shown again or stored in the run folder.</div>
+          </div>
+        </details>
       </details>
-      <div class="start"><button class="btn big" id="go" type="submit">Start <span class="arrow">→</span></button><span class="falst" id="falst"><span class="tag">fal · checking…</span></span><span class="err" id="err"></span></div>
+      <div class="start"><button class="btn big" id="go" type="submit">Create video <span class="arrow">→</span></button><span class="falst" id="falst"><span class="tag">fal · checking…</span></span><span class="err" id="err"></span></div>
     </div>
   </form>`;
 
+  view.querySelectorAll('.examples button').forEach((btn) => (btn.onclick = () => {
+    $('#promote').value = btn.dataset.promote;
+    $('#objective').value = btn.dataset.objective;
+    $('#objective').focus();
+  }));
   for (const k of BRIEF_FIELDS) if (k !== 'aspectRatio' && prefill[k] != null && $(`#${k}`)) $(`#${k}`).value = prefill[k];
   if (prefill.platform && !PLATFORMS.includes(prefill.platform)) $('#platform').insertAdjacentHTML('afterbegin', `<option selected>${esc(prefill.platform)}</option>`);
 
@@ -145,6 +190,7 @@ async function briefForm(view, prefill, onStarted, isDone) {
     markEdited(k);
   }
   if (ADV_CFG.some(([k]) => edited.has(k))) $('#adv').open = true;
+  if (MAIN_CFG.some(([k]) => edited.has(k)) || ADV_CFG.some(([k]) => edited.has(k))) $('#tune').open = true;
   $('#effort').addEventListener('input', (e) => applyEffort(Number(e.target.value)));
   view.querySelectorAll('#ticks span').forEach((s) => (s.onclick = () => applyEffort(Number(s.dataset.v))));
   applyEffort(effort);
@@ -217,34 +263,56 @@ function renderLive(d) {
   const selGoal = plan || goals?.goals?.find((g) => g.id === scores?.selectedGoalId);
   const conf = (id) => scores?.scores?.find((s) => s.goalId === id)?.confidence;
   const sel = result?.results?.find((r) => r.id === result.selectedId);
-  const allAttempts = (clips?.scenes || []).flatMap((s) => s.attempts.map((a) => ({ ...a, sceneId: s.sceneId, accepted: s.acceptedAttempt === a.attempt })));
+  const generated = (clips?.scenes || []).filter((s) => s.attempts.some((a) => a.status === 'generated')).length;
+  const sceneCount = plan?.scenes?.length || clips?.scenes?.length || 0;
+  const cur = d.state?.stages?.find((s) => s.id === d.state.currentStage);
 
-  return `
-  <div class="live">
-    <div class="grid">
-      <div class="card"><div class="sh" style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><h2>Brief</h2><span class="tag">${esc(b.source || '')}</span><span class="tag" style="margin-left:auto">locked</span></div>
+  const directionCard = selGoal ? `
+    <div class="card direction-card"><span class="eyebrow">Creative direction</span>
+      <h2>${esc(selGoal.title)}</h2>
+      <p>${esc(selGoal.description || '')}</p>
+      ${(conf(selGoal.id) ?? plan?.confidence) != null ? `<div class="score"><span>brief fit</span>${scoreBar((conf(selGoal.id) ?? plan?.confidence) * 100, 100, true)}<span>${Math.round((conf(selGoal.id) ?? plan?.confidence) * 100)}%</span></div>` : ''}
+      <ol class="scenes compact-scenes">${(selGoal.scenes || []).map((s) => `<li><span>${esc(s.description)}</span><span class="d">${esc(s.durationSeconds)}s</span></li>`).join('')}</ol>
+    </div>` : `
+    <div class="card direction-card"><span class="eyebrow">Creative direction</span>
+      <h2>${goals?.goals?.length ? 'Choosing the strongest direction' : refs?.references?.length ? 'Learning from proven references' : 'Understanding the brief'}</h2>
+      <p>${goals?.goals?.length ? `${goals.goals.length} distinct directions are being compared against the brief.` : refs?.references?.length ? `${refs.references.length} references found. The system is extracting pacing, hooks, and structure before writing concepts.` : 'Recliner is turning the brief into a creative strategy before generation starts.'}</p>
+      ${refs?.takeaways?.length ? `<ul class="takeaway-list">${refs.takeaways.slice(0, 3).map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+    </div>`;
+
+  const outcomeCard = sel ? `
+    <div class="card outcome-card ready"><span class="eyebrow">Outcome</span>
+      <h2>${sel.validation?.passed === false ? 'Best available cut is ready' : 'Your video is ready'}</h2>
+      <p>${sel.validation?.reason ? esc(sel.validation.reason) : 'The composed video has been generated and is ready to review.'}</p>
+      <div class="quality-line"><span>Quality review</span><b>${esc(sel.validation?.score ?? '–')}/100</b></div>
+      <div class="links"><a class="btn" href="/result.html${q}">Watch and download <span class="arrow">→</span></a></div>
+    </div>` : `
+    <div class="card outcome-card"><span class="eyebrow">Outcome</span>
+      <h2>${sceneCount ? `Building ${sceneCount} scene${sceneCount === 1 ? '' : 's'}` : 'Preparing the video'}</h2>
+      <p>${sceneCount ? `${generated} of ${sceneCount} scenes have moving video so far. Scenes are reviewed and regenerated when they miss the brief.` : cur ? esc(cur.note || cur.label) : 'The first visual direction is being prepared.'}</p>
+      ${sceneCount ? `<div class="mini-progress"><i style="width:${Math.round((generated / Math.max(sceneCount, 1)) * 100)}%"></i></div>` : ''}
+      <div class="links"><a class="btn ghost" href="/steps.html${q}">Behind the scenes</a></div>
+    </div>`;
+
+  const technicalCards = `
+    <div class="grid g2 technical-grid">
+      <div class="card"><div class="card-h"><h2>Brief</h2><span class="tag">locked</span></div>
         <dl class="kv">${[['Platform', b.platform], ['Type', b.videoType], ['Domain', b.domain], ['Aspect', b.aspectRatio], ['Link', b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.url)}</a>` : ''], ['Notes', esc(b.notes)]]
           .filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${k === 'Link' || k === 'Notes' ? v : esc(v)}</dd>`).join('')}</dl></div>
-      <div class="card"><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><h2>Config</h2><span class="tag info">effort ${esc(c.effort ?? '–')}</span></div>
+      <div class="card"><div class="card-h"><h2>Technical settings</h2><span class="tag info">effort ${esc(c.effort ?? '–')}</span></div>
         <div class="chips">${Object.entries(c).filter(([k]) => k !== 'effort').map(([k, v]) => `<span class="chip"><b>${esc(k)}</b>${esc(v)}</span>`).join('')}</div></div>
-      <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>References</h2><span class="eyebrow" style="margin-left:auto">${refs ? `${refs.references.length} found` : 'pending'}</span></div>
+      <div class="card wide-card"><div class="card-h"><h2>Reference evidence</h2><span class="eyebrow">${refs ? `${refs.references.length} found` : 'pending'}</span></div>
         ${refs ? `<div class="refcards">${refs.references.map((r) => { const imgs = refImages(r); return `<div class="refcard ${isBrand(r) ? 'isbrand' : ''}">
             <div class="rc-img">${imgs[0] ? `<img src="${fileUrl(imgs[0])}" alt="" loading="lazy">` : `<div class="rc-none">${esc(r.platform || 'no image')}</div>`}<span class="badge">${refBadge(r)}</span>${imgs.length > 1 ? `<span class="badge2"><span class="tag">${imgs.length} frames</span></span>` : ''}</div>
             <div class="rc-body"><div class="rc-t">${esc(r.title)}</div><div class="metrics">${r.platform ? `<span>${esc(r.platform)}</span>` : ''}${metrics(r.metrics, ['views', 'likes'])}</div></div></div>`; }).join('')}</div>`
           : '<div class="empty">Searching for proven references…</div>'}</div>
-    </div>
-    <div class="grid">
-      <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Selected goal</h2><span class="eyebrow" style="margin-left:auto">${goals ? `${goals.goals.length} goals${scores ? ` · scored by ${esc(scores.scorer)}` : ''}` : 'pending'}</span></div>
-        ${selGoal ? `<h3>${esc(selGoal.title)}</h3><p class="small" style="margin:6px 0 10px">${esc(selGoal.description)}</p>
-          <div class="score"><span>confidence</span>${scoreBar((conf(selGoal.id) ?? plan?.confidence ?? 0) * 100, 100, true)}<span>${Math.round((conf(selGoal.id) ?? plan?.confidence ?? 0) * 100)}%</span></div>
-          <ol class="scenes">${(selGoal.scenes || []).map((s) => `<li><span>${esc(s.description)}</span><span class="d">${esc(s.durationSeconds)}s</span></li>`).join('')}</ol>`
-          : goals ? `<div class="chips">${goals.goals.map((g) => `<span class="chip">${esc(g.title)}${conf(g.id) != null ? ` · ${Math.round(conf(g.id) * 100)}%` : ''}</span>`).join('')}</div><div class="empty" style="margin-top:10px">Scoring goals against the brief…</div>`
-          : '<div class="empty">Writing candidate goals…</div>'}</div>
-      <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Result</h2><span class="eyebrow" style="margin-left:auto">${result ? `${result.results.length} composition${result.results.length === 1 ? '' : 's'}` : 'pending'}</span></div>
-        ${sel ? `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${video(fileUrl(sel.file), { ar, controls: false, autoplay: true, poster: sel.thumbnail ? fileUrl(sel.thumbnail) : '' })}
-            <div>${verdictHead(sel.validation, c.passScore)}${sel.validation?.reason ? `<p class="small vquote"><span class="vlabel">Validator saw</span>${esc(sel.validation.reason)}</p>` : ''}<a class="btn" href="/result.html${q}">Watch the result <span class="arrow">→</span></a></div></div>`
-          : '<div class="empty">The composed video appears here.</div>'}</div>
-    </div>
+      ${sel ? `<div class="card wide-card"><div class="card-h"><h2>Preview</h2><span class="eyebrow">generated output</span></div><div class="preview-inline">${video(fileUrl(sel.file), { ar, controls: true, autoplay: false, poster: sel.thumbnail ? fileUrl(sel.thumbnail) : '' })}</div></div>` : ''}
+    </div>`;
+
+  return `
+  <div class="live-simple">
+    <div class="live-cards">${directionCard}${outcomeCard}</div>
+    <details class="tech-details"><summary>Run inputs and technical details</summary>${technicalCards}</details>
   </div>`;
 }
 </script>
