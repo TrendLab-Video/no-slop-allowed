@@ -22,17 +22,23 @@ You are the orchestrator. You run the stages below in order, hand each stage's s
 
 ## fal skills
 
-fal publishes agent skills for video craft (built into the fal Agent; https://fal.ai/docs/documentation/agent/skills). **If a fal skill below is available in your environment, load and follow it for that stage, and tell the stage's sub-agent to load it too; otherwise the step file's condensed guidance applies.** Name any fal skill you used in the stage's trace step.
+fal publishes agent skills for video craft (https://fal.ai/docs/documentation/agent/skills). This folder bundles verbatim copies, under their MIT licence, in `fal-skills/` (see `fal-skills/README.md`). For each stage below:
 
-| Stage | fal skill |
-|---|---|
-| whole run | fal-video-production (brief → script → shots → clips → audio → text) |
-| references | cinematography |
-| goals | fal-script-writer; ugc for creator formats; fal-shot-craft, cinematography (h3-cinematic-prompter for Hailuo H3) for scene prompts |
-| clips, clip retries | fal-video-generation |
-| clip validation | fal-shot-craft, cinematography (steering) |
-| composition | video-compositing, fal-motion-graphics (text, end card), fal-audio-generation (music, voiceover) |
-| final validation | fal-video-production, video-compositing |
+1. **If the fal skill is installed in your environment, load it and use it directly.**
+2. **If it is not installed, read the bundled copy at `fal-skills/<name>/SKILL.md` in this skill folder and follow it.** Also pass that file's path to the stage's sub-agent. Read the copy's `references/` files when its SKILL.md points to them.
+3. **Only if neither is available, use the condensed guidance in the step file.** This is the last resort.
+
+In the stage's trace step, record each fal skill used and its source: `"falSkills": [{ "name": "fal-shot-craft", "source": "installed" | "bundled" | "condensed" }]`.
+
+| Stage | fal skill | Bundled copy |
+|---|---|---|
+| whole run | fal-video-production (brief → script → shots → clips → audio → text) | `fal-skills/fal-video-production/SKILL.md` |
+| references | cinematography | `fal-skills/cinematography/SKILL.md` |
+| goals | fal-script-writer; ugc for creator formats; fal-shot-craft and cinematography for scene prompts (h3-cinematic-prompter for Hailuo H3, if installed; not bundled) | `fal-skills/fal-script-writer/SKILL.md`, `fal-skills/ugc/SKILL.md`, `fal-skills/fal-shot-craft/SKILL.md`, `fal-skills/cinematography/SKILL.md` |
+| clips, clip retries | fal-video-generation | `fal-skills/fal-video-generation/SKILL.md` |
+| clip validation | fal-shot-craft, cinematography (steering) | `fal-skills/fal-shot-craft/SKILL.md`, `fal-skills/cinematography/SKILL.md` |
+| composition | video-compositing, fal-motion-graphics (text, end card), fal-audio-generation (music, voiceover) | `fal-skills/video-compositing/SKILL.md`, `fal-skills/fal-motion-graphics/SKILL.md`, `fal-skills/fal-audio-generation/SKILL.md` |
+| final validation | fal-video-production, video-compositing | `fal-skills/fal-video-production/SKILL.md`, `fal-skills/video-compositing/SKILL.md` |
 
 ## 0. Brief (stage `brief`)
 
