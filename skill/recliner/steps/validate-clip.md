@@ -26,6 +26,8 @@ If the fal skills **fal-shot-craft** and **cinematography** are available in you
 | 20 | **Creative guidance and style**: follows the goal's `creativeGuidance` and `style`; continuity with the other scenes (colourway, wardrobe, location) |
 | 20 | **Reference quality markers**: has the energy the references prove (hook strength if this is scene 1, pacing, framing); does not look like generic AI stock |
 
+**Automatic fail (score ≤ 30):** the product (or the proxy named in the scene) is not clearly visible in most frames, or the scene's subject is missing (for example a cropped person where the shoe should be, or an empty background). The `steering` must then put it back concretely: name the product first with its colour, material and shape, say where it sits in frame (centred, filling a third of the frame) and that it is visible from the first frame. Example: "White mesh running shoe with volt-yellow midsole centred in frame from the first frame, ankle-height close-up, foot planted on wet asphalt, camera static."
+
 Scene 1 also carries the hook: if nothing in the first frame would stop a scroll, cap the score at 65.
 
 `passed` = `score >= config.passScore`.
