@@ -53,7 +53,7 @@ Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 mi
 **`scores.json`**
 `{ scorer, question, scores: [{ goalId, confidence: 0..1, reason }], selectedGoalId }`
 
-**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. `score` guarantees `endCard` and a `keyframePrompt` per scene. This is the input to clip generation.
+**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. `score` guarantees `endCard` and a `keyframePrompt` per scene, and adds `productImages: [path]` (run-relative, up to 3): the brand reference's selected front/hero product photos, the ground truth for the product's look and the image references for keyframe generation. The brand entry in `references.json` carries them as `productImages` (plus `rejectedImages: [{ path, reason }]`). This is the input to clip generation.
 
 **`clips.json`**
 `{ scenes: [{ sceneId, acceptedKeyframe, acceptedAttempt, attempts: [{ attempt, keyframe: { file: "clips/<sceneId>/<attempt>.keyframe.png", prompt, model, requestId, status: generating|generated|failed, error, validation }, file: "clips/<sceneId>/<attempt>.mp4", model, prompt, steering, requestId, status: generating|generated|failed, error, durationSeconds, validation: { score: 0..100, passed, reason, steering } }] }] }`

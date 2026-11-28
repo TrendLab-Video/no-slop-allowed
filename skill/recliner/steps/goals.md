@@ -8,7 +8,7 @@ Never ask the user anything. Time cap: the seconds the orchestrator gave you (de
 
 - `$RUN/brief.json`, `$RUN/config.json` (`goalsCount`, `scenes`, `clipSeconds`), `$RUN/references.json`
 - Style memory: `recliner style-memory --recent 8` (what recent runs chose: modality, hookType, palette, pacing, references). Empty on the first run.
-- **Reference images**: open every file in each reference's `screenshots`, and above all the `kind: "brand"` entry's image. From the brand image, write down what the product actually looks like: colours, materials, shape, the brand mark and where it sits on the product (for example "black swoosh on the lateral side, white midsole"), and the brand palette. Use those exact words in every `keyframePrompt`. Never describe a product look you have not seen or cannot verify; when no image exists, describe its well-known, current design.
+- **Reference images**: open every file in each reference's `screenshots`, and above all the brand entry's `productImages` (selected front/hero photos of the actual product; they are ground truth, while other brand images may be partial or wrong). From the product photos, write down what the product actually looks like: colours, materials, shape, the brand mark and where it sits on the product (for example "black swoosh on the lateral side, white midsole"), and the brand palette. Use those exact words in every `keyframePrompt`. Never describe a product look you have not seen or cannot verify; when no image exists, describe its well-known, current design.
 
 ## 0. Steer away from recent runs (diversity is judged)
 

@@ -9,7 +9,8 @@ Never ask the user anything. Time cap: 90 s, or 10% of `config.timeBudgetMinutes
 - `runId`, `sceneId`, `attempt` (given by the orchestrator)
 - `$RUN/plan.json`: the scene (`prompt`, `description`, `onScreenText`), the goal's `creativeGuidance`, `style`, `referenceIds`
 - `$RUN/clips.json`: the attempt (`file`, `prompt`, `steering`)
-- `$RUN/references.json`: the referenced entries' `structure` and `why` (quality markers), their `screenshots`, and the `kind: "brand"` image (what the product and its mark really look like). Look at these images too.
+- `$RUN/references.json`: the referenced entries' `structure` and `why` (quality markers), their `screenshots`. Look at these images too.
+- `$RUN/plan.json` `productImages`: **ground truth for the product's look**. Judge product accuracy against these, not against other brand images, which may show the back or a crop.
 
 If the fal skills **fal-shot-craft** and **cinematography** are available in your environment, load and follow them to judge the shot and word the steering; otherwise apply the condensed guidance here.
 

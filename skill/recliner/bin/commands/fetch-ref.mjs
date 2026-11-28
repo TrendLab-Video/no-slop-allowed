@@ -13,7 +13,7 @@ function brandImageQuery(brand, product) {
   const p = String(product).split(/[(,.;:]/)[0].trim().split(/\s+/).slice(0, 6).join(' ');
   const b = String(brand).trim();
   const both = p.toLowerCase().startsWith(b.toLowerCase()) ? p : `${b} ${p}`;
-  return `${both.trim()} product photo`.replace(/\s+/g, ' ');
+  return `${both.trim()} product photo front`.replace(/\s+/g, ' ');
 }
 
 const onPath = (bin) => spawnSync(process.platform === 'win32' ? 'where' : 'which', [bin], { stdio: 'ignore' }).status === 0;
@@ -127,7 +127,22 @@ async function oembedThumb(url) {
   return out;
 }
 
-async function candidates(url, tried) {
+// Product-looking <img> sources on a page (src, data-src, largest srcset entry), skipping icons, logos and sprites.
+function pageImgTags(html, base) {
+  const out = [];
+  for (const t of html.match(/<img\b[^>]*>/gi) || []) {
+    const srcset = (t.match(/\b(?:srcset|data-srcset)\s*=\s*["']([^"']+)["']/i) || [])[1];
+    const biggest = srcset ? srcset.split(',').map((s) => s.trim().split(/\s+/)).sort((a, b) => (parseInt(b[1]) || 0) - (parseInt(a[1]) || 0))[0]?.[0] : null;
+    const src = biggest || (t.match(/\b(?:data-src|src)\s*=\s*["']([^"']+)["']/i) || [])[1];
+    if (!src || /^data:|\.svg(\?|$)|logo|icon|sprite|favicon|avatar|badge|pixel|1x1/i.test(src)) continue;
+    const w = parseInt((t.match(/\bwidth\s*=\s*["']?(\d+)/i) || [])[1] || '0', 10);
+    if (w && w < 300) continue;
+    try { out.push(new URL(decode(src), base).href); } catch {}
+  }
+  return out.slice(0, 8);
+}
+
+async function candidates(url, tried, { pageImgs = false } = {}) {
   const list = [];
   const yt = youtubeId(url);
   if (yt) list.push(`https://i.ytimg.com/vi/${yt}/maxresdefault.jpg`, `https://i.ytimg.com/vi/${yt}/hqdefault.jpg`);
@@ -136,7 +151,11 @@ async function candidates(url, tried) {
   try {
     const r = await get(url, 'text/html,application/xhtml+xml');
     tried.push({ url, status: r.status });
-    if (r.ok && /html/i.test(r.headers.get('content-type') || '')) list.push(...metaImages((await r.text()).slice(0, 400000), r.url));
+    if (r.ok && /html/i.test(r.headers.get('content-type') || '')) {
+      const html = (await r.text()).slice(0, 800000);
+      list.push(...metaImages(html, r.url));
+      if (pageImgs) list.push(...pageImgTags(html, r.url));
+    }
   } catch (err) {
     tried.push({ url, error: err.name === 'TimeoutError' ? 'timeout' : err.message });
   }
@@ -145,12 +164,12 @@ async function candidates(url, tried) {
 
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' };
 
-async function download(img, dir, n) {
+async function download(img, dir, n, minBytes = 2000) {
   const r = await get(img, 'image/avif,image/webp,image/*,*/*');
   const type = (r.headers.get('content-type') || '').split(';')[0].trim();
-  if (!r.ok || !type.startsWith('image/')) throw new Error(`${r.status} ${type || 'no type'}`);
+  if (!r.ok || !type.startsWith('image/') || type === 'image/svg+xml') throw new Error(`${r.status} ${type || 'no type'}`);
   const buf = Buffer.from(await r.arrayBuffer());
-  if (buf.length < 2000) throw new Error(`too small (${buf.length} B, likely a placeholder)`);
+  if (buf.length < minBytes) throw new Error(`too small (${buf.length} B, likely an icon or placeholder)`);
   fs.mkdirSync(dir, { recursive: true });
   const file = `${dir}/${n}.${EXT[type] || 'jpg'}`;
   fs.writeFileSync(file, buf);
@@ -173,25 +192,31 @@ export default async function ([runId, refId, rawUrl], flags) {
   const tried = [];
   const dir = runPath(runId, 'references', refId);
   // 1. Video posts: real frames and measured pacing (yt-dlp + ffmpeg). Any failure falls through to one image.
-  const video = flags.kind === 'brand' || flags['no-video'] ? null : await captureVideo(url, dir, tried);
-  let saved = null;
+  const isBrand = flags.kind === 'brand';
+  const video = isBrand || flags['no-video'] ? null : await captureVideo(url, dir, tried);
+  // 2. Page images. A reference keeps one; the brand keeps up to 2 (og:image can be the back of the product,
+  //    so large <img> product shots on the page are candidates too). Brand images must be real photos (>= 15 KB).
+  const savedList = [];
   if (!video) {
-    for (const img of await candidates(url, tried)) {
+    let n = 1;
+    for (const img of await candidates(url, tried, { pageImgs: isBrand })) {
       try {
-        saved = { ...(await download(img, dir, 1)), source: img };
-        break;
+        const d = await download(img, dir, n, isBrand ? 15000 : 2000);
+        savedList.push({ ...d, source: img });
+        n++;
+        if (savedList.length >= (isBrand ? 2 : 1)) break;
       } catch (err) {
         tried.push({ url: img, error: err.name === 'TimeoutError' ? 'timeout' : err.message });
       }
     }
   }
+  const saved = savedList[0] || null;
   const file = targetFile(runId, refId, typeof flags.file === 'string' ? flags.file : null);
   // 3. Search-provider fallback (key-gated, Tavily only: Parallel returns no images). For references with no
   //    image yet: images on that page (extract), else an image search on title + platform. For the brand:
   //    always add an image search for "<brand> <product> product photo" so goals see the real product.
   const sources = {};
   const extra = [];
-  const isBrand = flags.kind === 'brand';
   if (!video && (!saved || isBrand) && searchProvider() === 'tavily') {
     const existing = (readJson(runId, file, {}).references || []).find((r) => r.id === refId) || {};
     const brief = readJson(runId, 'brief.json', {});
@@ -209,14 +234,14 @@ export default async function ([runId, refId, rawUrl], flags) {
         tried.push({ tool: 'tavily-image-search', url: q, result: `${found.length} images` });
       } catch (err) { tried.push({ tool: 'tavily-image-search', url: q, result: err.message.slice(0, 160) }); }
     }
-    let n = saved ? 2 : 1;
+    let n = savedList.length + 1;
     for (const img of found) {
       if (extra.length >= 2) break;
       try {
         // tiktok.com/api/img answers 403 to direct fetches: use that video's oEmbed thumbnail instead.
         const post = tiktokPostFromImage(img.url);
         if (post) img.url = (await oembedThumb(post))[0] || img.url;
-        const d = await download(img.url, dir, n);
+        const d = await download(img.url, dir, n, isBrand ? 15000 : 2000);
         const r = `references/${refId}/${path.basename(d.file)}`;
         extra.push(r);
         sources[r] = { url: img.url, via: img.via, description: img.description || null, query: img.via === 'tavily-image-search' ? q : null };
@@ -224,8 +249,8 @@ export default async function ([runId, refId, rawUrl], flags) {
       } catch (err) { tried.push({ url: img.url, error: err.message }); }
     }
   }
-  if (saved) sources[`references/${refId}/${path.basename(saved.file)}`] = { url: saved.source, via: 'page' };
-  const rels = video ? video.frames.map((f) => `references/${refId}/${path.basename(f)}`) : [...(saved ? [`references/${refId}/${path.basename(saved.file)}`] : []), ...extra];
+  for (const s of savedList) sources[`references/${refId}/${path.basename(s.file)}`] = { url: s.source, via: 'page' };
+  const rels = video ? video.frames.map((f) => `references/${refId}/${path.basename(f)}`) : [...savedList.map((s) => `references/${refId}/${path.basename(s.file)}`), ...extra];
   const rel = rels[0] || null;
   updateJson(runId, file, { references: [] }, (doc) => {
     doc.references ||= [];
