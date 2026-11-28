@@ -66,22 +66,31 @@ for i, seg in enumerate(job["segments"]):
         t = strips.new_effect(f"text{i}", "TEXT", 6, tstart, length=max(1, tend - tstart))
         t.text = "\n".join(L["lines"])
         t.font_size = L["fontSize"]
-        t.use_bold = True
         if font:
             t.font = font
+        else:
+            t.use_bold = True
         t.color = (1, 1, 1, 1)
         t.use_shadow = True
-        t.shadow_color = (0, 0, 0, 0.8)
+        t.shadow_color = (0, 0, 0, 0.7)
         try:
-            t.shadow_blur = 0.6
-            t.shadow_offset = 0.04
+            t.shadow_blur = 0.5
+            t.shadow_offset = 0.03
+        except Exception:
+            pass
+        # Dark rounded plate behind the words.
+        try:
+            t.use_box = True
+            t.box_color = (0, 0, 0, 0.55)
+            t.box_margin = 0.025
+            t.box_roundness = 0.6
         except Exception:
             pass
         t.alignment_x = "CENTER"
         t.anchor_x = "CENTER"
         t.anchor_y = "CENTER"
         t.location = (0.5, 1 - L["centerY"] / H)
-        t.wrap_width = 0.9
+        t.wrap_width = 0.0  # lines are pre-wrapped by textLayout
         t.blend_type = "ALPHA_OVER"
         fade = int(0.35 * FPS)
         key_alpha(t, [(tstart, 0.0), (tstart + fade, 1.0), (max(tstart + fade, tend - int(0.25 * FPS)), 1.0), (tend, 0.0)])

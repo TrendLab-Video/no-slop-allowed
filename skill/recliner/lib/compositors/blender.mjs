@@ -2,11 +2,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { which, sh, ff, probeDuration, textLayout, finalize } from './ffmpeg.mjs';
+import { which, sh, ff, probeDuration, textLayout, finalize, FONT_FILES } from './ffmpeg.mjs';
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'blender_compose.py');
 const MAC_APP = '/Applications/Blender.app/Contents/MacOS/Blender';
-const FONTS = ['/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/System/Library/Fonts/Helvetica.ttc', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'];
 
 export function findBlender() {
   if (process.env.BLENDER_BIN && fs.existsSync(process.env.BLENDER_BIN)) return process.env.BLENDER_BIN;
@@ -34,7 +33,7 @@ export async function compose({ segments, width, height, fps = 30, transition = 
   const job = {
     segments: segments.map((s, i) => ({ ...s, file: files[i], layout: s.text ? textLayout(s.text, width, height) : null })),
     width, height, fps: sceneFps, transition, bed, out: raw,
-    fontFile: FONTS.find((f) => fs.existsSync(f)) || null,
+    fontFile: FONT_FILES.find((f) => fs.existsSync(f)) || null,
   };
   const jobFile = path.join(workDir, 'blender_job.json');
   fs.writeFileSync(jobFile, JSON.stringify(job, null, 2));
