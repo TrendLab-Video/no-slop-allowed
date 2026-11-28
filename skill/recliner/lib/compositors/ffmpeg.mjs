@@ -11,9 +11,9 @@ export function which(bin) {
   try { return execFileSync('/usr/bin/which', [bin], { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null; } catch { return null; }
 }
 
-export function sh(bin, args, { timeoutMs = 10 * 60000 } = {}) {
+export function sh(bin, args, { timeoutMs = 10 * 60000, cwd = undefined, env = undefined } = {}) {
   return new Promise((resolve, reject) => {
-    const p = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'], cwd, env: env ? { ...process.env, ...env } : process.env });
     let out = '', err = '';
     p.stdout.on('data', (d) => (out += d));
     p.stderr.on('data', (d) => (err += d));
@@ -22,7 +22,7 @@ export function sh(bin, args, { timeoutMs = 10 * 60000 } = {}) {
     p.on('close', (code) => {
       clearTimeout(t);
       if (code === 0) resolve({ out, err });
-      else reject(new Error(`${path.basename(bin)} exited ${code}: ${err.split('\n').filter(Boolean).slice(-6).join(' | ')}`));
+      else reject(new Error(`${path.basename(bin)} exited ${code}: ${(`${err}\n${out}`).split('\n').filter(Boolean).slice(-8).join(' | ')}`));
     });
   });
 }

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sneldao/recliner/schemas/repair_plan.schema.json",
+  "title": "Recliner repair plan",
+  "type": "object",
+  "required": ["artifact_type", "version", "created_at", "source_brief", "based_on_validation_report", "actions", "max_actions", "budget"],
+  "properties": {
+    "artifact_type": {"const": "repair_plan"},
+    "version": {"type": "string"},
+    "created_at": {"type": "string"},
+    "source_brief": {"type": "string"},
+    "based_on_validation_report": {"type": ["string", "null"]},
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "finding_id", "owner_skill", "action_type", "target", "parameters", "priority", "expected_effect"],
+        "properties": {
+          "id": {"type": "string"},
+          "finding_id": {"type": "string"},
+          "owner_skill": {"type": "string"},
+          "action_type": {"enum": ["adjust_timing", "move_object", "rewrite_text", "change_camera", "replace_asset", "rerender_shot", "adjust_audio"]},
+          "target": {"type": "string"},
+          "parameters": {"type": "object"},
+          "priority": {"type": "integer", "minimum": 1},
+          "expected_effect": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "max_actions": {"type": "integer", "minimum": 0},
+    "budget": {
+      "type": "object",
+      "required": ["max_additional_render_seconds", "max_iterations"],
+      "properties": {
+        "max_additional_render_seconds": {"type": "number", "minimum": 0},
+        "max_iterations": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

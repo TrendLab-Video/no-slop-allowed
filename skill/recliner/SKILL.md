@@ -152,11 +152,19 @@ A score below 30 means the product or subject is missing: that scene gets one re
 
 ## 6. Composition (stage `composition`)
 
-`recliner compose <runId>`. If video-compositing, fal-motion-graphics or fal-audio-generation is available, follow it for anything you add beyond the command (text, end card, music, voiceover); `plan.json` carries `onScreenText`, `endCard` and `audio`. It uses `config.compositor` (Blender recommended, ffmpeg fallback, handled inside the command), adds audio when `config.audio` is true and adds an entry to `result.json`. If it fails with Blender, retry once; the command falls back to ffmpeg.
+`recliner compose <runId>`. If video-compositing, fal-motion-graphics or fal-audio-generation is available, follow it for anything you add beyond the command (text, end card, music, voiceover); `plan.json` carries `onScreenText`, `endCard` and `audio`. It uses `config.compositor` (Blender recommended, ffmpeg fallback, handled inside the command), adds audio when `config.audio` is true and adds an entry to `result.json`. Blender can run locally or on the remote host configured with `RECLINER_REMOTE_BLENDER_HOST`; if it fails with Blender, retry once. The command falls back to ffmpeg.
 
 ## 7. Final validation (stage `final_validation`)
 
 Sub-agent: `steps/validate-final.md` for the newest result. Writes `$RUN/compositions/<attempt>/validation.json` with the score, breakdown and `repairs`.
+
+After every composition, also run deterministic technical validation:
+
+```bash
+recliner validate-output <runId> --attempt <n>
+```
+
+This writes `$RUN/compositions/<attempt>/validation_report.json`, `repair_plan.json` and `contact-sheet.png`, merges a `technicalValidation` summary into `result.json`, and appends its own trace step. It checks playability, duration against `plan.durationSeconds`, resolution, black/frozen segments and audio silence/clipping. Treat a blocker as a failed composition even when the creative score passes; use the repair plan to decide whether a recompose, audio repair or clip retry is the right fix. If Python/ffmpeg validation itself errors, note the degradation in the trace and continue: technical validation must never prevent export.
 
 Retry loop:
 
@@ -170,6 +178,7 @@ while score < config.passScore and retries < config.finalRetries and budget allo
     recliner accept-clips <runId>
     recliner compose <runId>
     validate the new result (steps/validate-final.md)
+    recliner validate-output <runId> --attempt <new composition attempt>
     retries += 1
 recliner rank <runId>
 ```
@@ -178,7 +187,7 @@ recliner rank <runId>
 
 ## 8. Output (stage `output`)
 
-First write the output trace step (`recliner trace <runId> -`: the selected result, its score, retries and degradations used), **then** `recliner export <runId>`, which copies the selected video and `traces.json` to `outputs/<brief-slug>/`; a step written after export is missing from the exported trace. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
+First write the output trace step (`recliner trace <runId> -`: the selected result, its score, retries and degradations used), **then** `recliner export <runId>`, which copies the selected video, `traces.json` and available validation evidence to `outputs/<brief-slug>/`; a step written after export is missing from the exported trace. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
 
 ## Time budget
 
