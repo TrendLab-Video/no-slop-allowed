@@ -50,7 +50,7 @@ Read `$RUN/brief.json` and `$RUN/config.json` now and keep them in mind. Note th
 
 1. **Hard rule: every brief finishes, exported, inside 12 minutes** of the start. Note the start time.
 2. For each brief, in parallel: `recliner new-run --slug <file-name> --brief <path> --effort <n>`. Then run `recliner preflight` once (on the first run): if it fails, mark `clips` failed on every run and stop.
-3. Launch **one orchestrating sub-agent per brief, all in one message**. Hand each one this SKILL.md, its `runId`, and the brief's 12-minute deadline as a clock time. Each follows the single-brief pipeline from stage 1 to `export`, headless, with no questions. Each ends with `outputs/<brief-slug>/final.mp4` and `traces.json`.
+3. Launch **one orchestrating sub-agent per brief, all in one message**. Hand each one this SKILL.md, its `runId`, the brief's 12-minute deadline as a clock time, and a **different modality hint** per brief (parallel runs cannot see each other in the style memory). Pick hints from: product macro, kinetic type, creator/UGC, athlete or talent documentary, UI demo, tactile stop-motion, deadpan comedy. Match each hint to the brief it suits best. Each follows the single-brief pipeline from stage 1 to `export`, headless, with no questions. Each ends with `outputs/<brief-slug>/final.mp4` and `traces.json`.
    > **Recommendation (Claude Code):** sub-agents cannot start their own sub-agents, so each brief's orchestrator follows the step files itself. It runs the per-clip validations as parallel shell or tool calls where it can, and otherwise one after another.
 4. **When time is short, degrade in this order**, per brief:
    1. Skip all retries.
@@ -97,7 +97,7 @@ Question for every goal: **"Does this goal match the intended brief?"** confiden
 
 Time cap: 5% of the budget (minimum 15 s). `score` appends its own trace step.
 
-`plan.json` is the input to everything after this point.
+`plan.json` is the input to everything after this point. Then record the chosen style: `recliner style-memory <runId>` (appends to `runs/style-memory.json`, which later runs' goals steer away from).
 
 ## 4. Clips (stage `clips`)
 
