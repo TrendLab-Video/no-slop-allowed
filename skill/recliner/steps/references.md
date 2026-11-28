@@ -39,7 +39,9 @@ If the fal skill **cinematography** is available in your environment, load and f
 - **The brand's own image:** if you have no angle or the `platform` angle, also run `recliner fetch-ref <runId> brand <brief.url> --kind brand --title "<brand> site"` (plus `--file` as above). This adds a `kind: "brand"` entry whose image shows what the product, logo and palette actually look like. Skip it when `brief.url` is empty.
 - `structure.scenes` may be reconstructed from coverage when you cannot watch the video; say so in `why`.
 
-> **Recommendation:** use your host's web search and fetch tools. Do not log in anywhere.
+> **Recommendation:** Tavily (`TAVILY_API_KEY`) or Parallel (`PARALLEL_API_KEY`) via `recliner search <runId> "<query>" [--max 8] [--recency month]` for fast, current results. It prints `{ provider, query, results: [{ title, url, snippet, publishedAt, image }], images }` and logs the search to the trace. Without a key, or if it errors, use your host's built-in web search instead; the output you write is the same either way. Do not log in anywhere.
+
+With `TAVILY_API_KEY` set, `fetch-ref` also falls back to Tavily for images when a page blocks plain fetches (common on TikTok and Instagram). It tries the page's images first, then an image search on the reference's title and platform. For the brand it always adds up to two "`<brand> <product>` product photo" images, so goals see the real product. Each image's origin is recorded in `screenshotSources`.
 
 Fallback: if search or fetch is unavailable, write entries from what you reliably know, with `null` metrics where you do not know the figure, and add "metrics unverified (no web access)" to `why`.
 
