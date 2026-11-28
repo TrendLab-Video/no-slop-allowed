@@ -40,23 +40,25 @@ All JSON. Paths inside files are relative to the run folder.
 `file` is the brief's path relative to the repo root (for example `briefs/02-nike.md`) when it came from a file; `export` uses it for `traces.brief` and the `outputs/<brief-slug>/` folder name (falling back to the run slug).
 
 **`config.json`** (effort slider resolved, with user overrides applied)
-`{ effort: 1..5, scenes, clipSeconds, parallelism, videoModel, imageModel, resolution, referencesCount, goalsCount, clipRetries, finalRetries, passScore, timeBudgetMinutes, scorer: jev|haiku, compositor: blender|ffmpeg, audio: true|false }`
+`{ effort: 1..5, scenes, clipSeconds, parallelism, videoModel, imageModel, resolution, referencesCount, goalsCount, clipRetries, finalRetries, passScore, timeBudgetMinutes, scorer: jev|haiku, compositor: blender|ffmpeg, audio: true|false, keyframes: true|false (default true) }`
 Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 minutes (2 scenes, cheapest fast model, 0 retries) for build testing.
 
 **`references.json`**
 `{ references: [{ id, title, url, platform, metrics: { views, likes, comments, shares }, why, structure: { durationSeconds, scenes: [string], pacing, music, hook }, screenshots: [path] }], takeaways: [string], diversityNote }`
 
 **`goals.json`**
-`{ goals: [{ id, title, description, creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, scenes: [{ id, index, durationSeconds, description, prompt, onScreenText }] }] }`
+`{ goals: [{ id, title, description, creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
+`keyframePrompt` is the still (image model); `prompt` is the motion from that still (image-to-video), or the text-to-video prompt when `config.keyframes` is false.
 
 **`scores.json`**
 `{ scorer, question, scores: [{ goalId, confidence: 0..1, reason }], selectedGoalId }`
 
-**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. This is the input to clip generation.
+**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. `score` guarantees `endCard` and a `keyframePrompt` per scene. This is the input to clip generation.
 
 **`clips.json`**
-`{ scenes: [{ sceneId, acceptedAttempt, attempts: [{ attempt, file: "clips/<sceneId>/<attempt>.mp4", model, prompt, steering, requestId, status: generating|generated|failed, error, durationSeconds, validation: { score: 0..100, passed, reason, steering } }] }] }`
-`acceptedAttempt` is the highest scoring attempt, whether or not it passed.
+`{ scenes: [{ sceneId, acceptedKeyframe, acceptedAttempt, attempts: [{ attempt, keyframe: { file: "clips/<sceneId>/<attempt>.keyframe.png", prompt, model, requestId, status: generating|generated|failed, error, validation }, file: "clips/<sceneId>/<attempt>.mp4", model, prompt, steering, requestId, status: generating|generated|failed, error, durationSeconds, validation: { score: 0..100, passed, reason, steering } }] }] }`
+`acceptedAttempt` is the highest scoring attempt, whether or not it passed. `acceptedKeyframe` is the attempt holding the highest scoring still; `generate-clips` (video) animates it.
+Keyframe validators write `clips/<sceneId>/<attempt>.keyframe.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`), merged by `accept-clips` into `keyframe.validation`.
 Validation sub-agents run in parallel, so they never write `clips.json`: each writes `clips/<sceneId>/<attempt>.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`) and `accept-clips` merges them.
 
 **`result.json`**
@@ -74,7 +76,7 @@ The final validator writes `compositions/<attempt>/validation.json` (`{ id, atte
 | `new-run [--slug s] [--prefill file.json] [--brief brief.md]` | Creates a run. With `--brief`, writes `brief.json` and `config.json` at once (headless). Prints `{ runId, url }` |
 | `wait-brief <runId>` | Blocks until `brief.json` exists, then prints it with `config.json` |
 | `stage`, `trace` | As above |
-| `generate-clips <runId> [--scene id --steering "..."]` | fal generation, all scenes in parallel, or one scene as a retry attempt. Updates `clips.json` |
+| `generate-clips <runId> [--keyframes-only] [--scene id --steering "..."]` | fal generation, all scenes in parallel, or one scene as a retry attempt. `--keyframes-only` makes stills from `keyframePrompt`; without it, video animates each scene's `acceptedKeyframe` (or text-to-video when `config.keyframes` is false). Updates `clips.json` |
 | `preflight [runId] [--probe]` | Checks `FAL_KEY` is set and accepted by fal (free balance check; `--probe` submits a tiny job). Exits 1 with a one-line reason; with a runId, adds a trace step |
 | `frames <video> <outDir> [--count 6]` | Extracts evenly spaced frames for validation sub-agents |
 | `accept-clips <runId>` | Sets `acceptedAttempt` per scene from validation scores |
