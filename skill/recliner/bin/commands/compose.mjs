@@ -85,7 +85,8 @@ export default async function ([runId], flags) {
   // Keep the composed length within the validator's tolerance of plan.durationSeconds: the end card
   // sits on top of the scenes, so without this every video lands ~card.seconds over plan and fails
   // the duration gate. Trim the last segment (the card when present).
-  const target = plan.durationSeconds ? plan.durationSeconds + 1 : Infinity;
+  // The end card is counted on top of plan.durationSeconds (validate-output allows for it), so it keeps its full length.
+  const target = plan.durationSeconds ? plan.durationSeconds + (card ? card.seconds : 0) + 1 : Infinity;
   const sum = (segs) => segs.reduce((a, s, i) => a + s.seconds - (i ? s.xfadeIn : 0), 0);
   if (sum(segments) > target && segments.length) {
     const lastSeg = segments[segments.length - 1];

@@ -48,7 +48,9 @@ export default async function ([runId], flags) {
   if (typeof plan.durationSeconds === 'number' && plan.durationSeconds > 0) {
     const tolerance = Math.max(1, plan.durationSeconds * 0.1);
     args.push('--duration-min', String(Math.max(1, plan.durationSeconds - tolerance)));
-    args.push('--duration-max', String(plan.durationSeconds + tolerance));
+    // The end card plays after the planned scenes, so it extends the allowed length.
+    const cardSeconds = plan.endCard ? Number(plan.endCard.durationSeconds ?? plan.endCard.seconds ?? 1.5) || 0 : 0;
+    args.push('--duration-max', String(plan.durationSeconds + cardSeconds + tolerance));
   }
   let cliOut = '';
   let error = null;
