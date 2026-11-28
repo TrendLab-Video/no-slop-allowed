@@ -7,7 +7,7 @@ description: Turn a brief into a finished, validated promo video with no further
 
 You are the orchestrator. You run the stages below in order, hand each stage's step file to a sub-agent, and keep the run moving until there is a video and an export. Every stage reads and writes JSON in the run folder (`runs/<runId>/`); the shapes are in `docs/CONTRACTS.md` and in each step file.
 
-`recliner` below means `node <this skill folder>/bin/recliner.mjs`, run from the repository root. `$RUN` means `runs/<runId>`.
+`recliner` below means `node <this skill folder>/bin/recliner.mjs`, run from the repository root (in zsh, use a function such as `recliner() { node <path>/bin/recliner.mjs "$@"; }`, not a string variable). `$RUN` means `runs/<runId>`.
 
 ## The one rule
 
@@ -57,7 +57,7 @@ Sub-agent: `steps/goals.md`. Writes `$RUN/goals.json` with about `config.goalsCo
 Question for every goal: **"Does this goal match the intended brief?"** confidence 0..1.
 
 - If `config.scorer` is `jev` and `JEV_API_KEY` is set: `recliner score <runId>`. It scores every goal, writes `scores.json` and `plan.json`.
-- Otherwise, or if that fails: one Haiku sub-agent with `steps/scoring.md` writes `$RUN/scores.json`, then run `recliner score <runId>` to validate it, select the top goal and write `plan.json`.
+- Otherwise, or if that fails: one Haiku sub-agent with `steps/scoring.md` writes `$RUN/scores.json`, then run `recliner score <runId> --scorer haiku` to validate it, select the top goal and write `plan.json`.
 - Last resort: write `scores.json` yourself per `steps/scoring.md`, then `recliner score <runId>`.
 
 `plan.json` is the input to everything after this point.

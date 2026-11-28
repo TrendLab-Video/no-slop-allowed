@@ -11,7 +11,7 @@ Never ask the user anything. Hard cap: 3 minutes.
 ## 1. Intent
 
 Decide, in a sentence each, and put these in the trace via your return summary:
-- **What is being sold**, concretely (the product, not the category).
+- **What is being sold**, concretely (the product, not the category). If the brief names only a brand, pick one real hero product line that the references and the platform suit best, say why, and do not default to the brand's most famous product every time (variety across runs is judged).
 - **Objective type**: awareness, launch, consideration, conversion, or community.
 - **Audience** and the single thing they should feel or do after watching.
 - **The one message** that must survive if everything else is cut.
