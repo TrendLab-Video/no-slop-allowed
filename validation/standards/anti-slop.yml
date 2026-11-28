@@ -1,0 +1,27 @@
+{
+  "artifact_type": "validation_standards",
+  "version": "0.1.0",
+  "domain": "anti-slop",
+  "standards": [
+    {
+      "id": "anti_slop.generic_visuals",
+      "severity": "major",
+      "description": "Visuals are specific to the brief and could not belong unchanged to any brand."
+    },
+    {
+      "id": "anti_slop.empty_copy",
+      "severity": "major",
+      "description": "Copy avoids vague claims, buzzwords and unsupported superlatives."
+    },
+    {
+      "id": "anti_slop.static_generated_shots",
+      "severity": "major",
+      "description": "Shots use deliberate camera, object or typography motion rather than slow zooms over static generated imagery."
+    },
+    {
+      "id": "anti_slop.uncanny_avatar",
+      "severity": "major",
+      "description": "Avatar use avoids uncanny realism, broken faces and fragile lip sync."
+    }
+  ]
+}

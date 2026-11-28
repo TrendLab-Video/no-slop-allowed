@@ -245,6 +245,18 @@ Subagents review:
 
 They should inspect the script, scene plan, keyframes, contact sheets, draft render and final render — not just the finished mp4.
 
+## Validation orchestration and cost
+
+The validation implementation follows the hybrid strategy in [`validation-cost-strategy.md`](validation-cost-strategy.md):
+
+- local deterministic validation is authoritative
+- Band is optional coordination/observability for remote critic agents
+- Band Free is sufficient for the hackathon topology
+- Band must never block hidden-brief completion
+- reviewers should use compact evidence, especially contact sheets rather than full videos
+- cheap/fast models should run before any stronger escalation model
+- validation reports should record cost, latency and degraded-mode status
+
 ## Validation decision model
 
 Use hard gates plus soft scores.

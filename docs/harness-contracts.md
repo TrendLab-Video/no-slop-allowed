@@ -277,9 +277,20 @@ Output of the validation control plane.
       "repairable": true
     }
   ],
-  "summary": "plain-language summary"
+  "summary": "plain-language summary",
+  "agentic_review_status": "completed|degraded|not_run",
+  "cost": {
+    "band_plan": "free|pro|enterprise|not_used",
+    "model_input_tokens": 0,
+    "model_output_tokens": 0,
+    "estimated_model_cost_usd": 0,
+    "tavily_credits": 0,
+    "wall_time_ms": 0
+  }
 }
 ```
+
+`agentic_review_status` must be present even when Band or model reviewers fail. Validation should degrade locally rather than silently omitting review status.
 
 ## `repair_plan.json`
 

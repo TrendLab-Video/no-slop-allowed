@@ -70,3 +70,5 @@ Schedule, judging criteria, prizes, team setup and fal credits are on the hackat
 
 - [Recliner: Blender-native creative harness vision](docs/skill-based-harness.md)
 - [Harness artifact contracts](docs/harness-contracts.md)
+- [Validation cost and orchestration strategy](docs/validation-cost-strategy.md)
+- [Validation control plane implementation](validation/README.md)
