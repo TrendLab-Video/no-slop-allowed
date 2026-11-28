@@ -74,7 +74,7 @@ export function scoreBar(score, max = 100, pass) {
 }
 
 export function video(src, { ar = '9:16', poster = '', controls = true, autoplay = false, badge = '', badge2 = '' } = {}) {
-  if (!src) return `<div class="media ${arClass(ar)}"><div class="empty" style="height:100%;display:grid;place-items:center;border:0;color:#93a097">No video yet</div></div>`;
+  if (!src) return `<div class="media ${arClass(ar)}"><div class="empty" style="height:100%;display:grid;place-items:center;border:0;color:var(--muted)">No video yet</div></div>`;
   return `<div class="media ${arClass(ar)}">
     <video src="${esc(src)}#t=0.1" ${poster ? `poster="${esc(poster)}"` : ''} preload="metadata" playsinline ${controls ? 'controls' : ''} ${autoplay ? 'autoplay muted loop' : ''}></video>
     ${badge ? `<span class="badge">${badge}</span>` : ''}${badge2 ? `<span class="badge2">${badge2}</span>` : ''}
@@ -91,16 +91,18 @@ export function header(active) {
   const el = document.createElement('header');
   el.className = 'top';
   el.innerHTML = `<div class="top-in">
-    <a class="brand" href="/${q}">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect width="22" height="22" rx="2" fill="#0a0a0a"/><path d="M5 15.5 L11 5.5 L17 15.5" stroke="#adff00" stroke-width="2" fill="none"/><circle cx="11" cy="15.5" r="1.6" fill="#adff00"/></svg>
-      <span>36 Labs</span><span class="x">x</span><span>fal</span><span class="prod">Recliner</span>
+    <a class="brand" href="/${q}" title="Recliner">
+      <span class="wm">36 Labs</span><span class="x">×</span>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span class="wm" style="margin-left:-4px">fal</span>
+      <span class="prod">No Slop Allowed</span><span class="prod2">· Recliner</span>
     </a>
     <nav class="nav">
       <a href="/" class="${active === 'runs' ? 'on' : ''}">Runs</a>
-      <a href="/${q}" class="${active === 'brief' ? 'on' : ''} ${off}">Brief · Live</a>
+      <a href="/${q}" class="${active === 'brief' ? 'on' : ''} ${off}">Brief</a>
       <a href="/steps.html${q}" class="${active === 'steps' ? 'on' : ''} ${off}">Steps</a>
       <a href="/result.html${q}" class="${active === 'result' ? 'on' : ''} ${off}">Result</a>
     </nav>
+    <div class="top-right">${runId ? esc(runId) : 'local'}</div>
   </div>`;
   document.body.prepend(el);
 }
@@ -108,37 +110,39 @@ export function header(active) {
 // Live workflow diagram: 9 stages, horizontal. Call render(state) on every poll.
 export function flow(container) {
   container.innerHTML = `<div class="flow-wrap">
-    <div class="flow-head"><span class="pulse idle"></span><span class="rid"></span><span class="status"></span><span class="right"><span class="total"></span><span class="polled"></span></span></div>
+    <div class="flow-head"><span class="ttl">Workflow</span><span class="pulse idle"></span><span class="status"></span><span class="right"><span class="total"></span><span class="polled"></span></span></div>
     <div class="flow"></div>
-    <div class="flow-note" hidden><span class="eyebrow"></span><span class="txt"></span></div>
+    <div class="flow-note" hidden><span class="tag"></span><span class="txt"></span></div>
   </div>`;
   const $f = (s) => container.querySelector(s);
   let last = null;
   const draw = () => {
     const state = last;
-    if (!state) { $f('.flow').innerHTML = '<div class="small" style="grid-column:1/-1;color:#93a097">Waiting for state.json…</div>'; return; }
+    if (!state) { $f('.flow').innerHTML = '<div class="small" style="grid-column:1/-1;color:var(--muted)">Waiting for state.json…</div>'; return; }
     const live = state.status === 'running' || state.status === 'awaiting_brief';
     $f('.pulse').className = `pulse ${state.status === 'running' ? '' : 'idle'}`;
-    $f('.rid').textContent = state.runId;
     $f('.status').innerHTML = statusTag(state.status);
     const end = live ? null : state.updatedAt;
-    $f('.total').textContent = `elapsed ${fmtMs(elapsed(state.createdAt, end))}`;
+    $f('.total').textContent = `Elapsed ${fmtMs(elapsed(state.createdAt, end))}`;
     $f('.flow').innerHTML = state.stages.map((s, i) => {
       const t = s.startedAt ? fmtMs(elapsed(s.startedAt, s.finishedAt || (live ? null : state.updatedAt))) : '';
-      const meta = s.status === 'pending' ? '' : s.status === 'done' ? t : `${s.status}${t ? ` · ${t}` : ''}`;
-      const icon = s.status === 'done' ? '✓' : s.status === 'failed' ? '!' : String(i).padStart(2, '0');
+      const icon = { done: '✓', failed: '✕', retrying: '↻', skipped: '–' }[s.status] || '';
+      const note = s.note || (s.status === 'running' ? 'Working…' : s.status === 'retrying' ? 'Retrying…' : s.status === 'pending' ? 'Waiting' : '');
       return `<div class="st ${esc(s.status)}" title="${esc(`${s.label}: ${s.status}${s.note ? ` · ${s.note}` : ''}`)}">
-        <div class="node">${icon}</div><div class="nm">${esc(s.label)}</div><div class="meta">${esc(meta)}</div><div class="note">${esc(s.note || '')}</div></div>`;
+        <div class="top-row"><span>${String(i + 1).padStart(2, '0')}</span><span class="t">${esc(t)}</span><span class="ic">${icon}</span></div>
+        <div class="nm">${esc(s.label)}</div><div class="note">${esc(note)}</div></div>`;
     }).join('');
     const cur = state.stages.find((s) => s.id === state.currentStage);
     const note = $f('.flow-note');
     if (cur && (cur.status === 'running' || cur.status === 'retrying' || cur.status === 'failed')) {
       note.hidden = false;
-      note.querySelector('.eyebrow').textContent = `${cur.label} · ${cur.status}`;
+      note.querySelector('.tag').className = `tag ${{ running: 'run', retrying: 'retry', failed: 'bad' }[cur.status]}`;
+      note.querySelector('.tag').textContent = `${cur.label} · ${cur.status}`;
       note.querySelector('.txt').textContent = cur.note || (cur.id === 'brief' ? 'Waiting for the brief to be submitted.' : 'Working…');
     } else if (state.status === 'done') {
       note.hidden = false;
-      note.querySelector('.eyebrow').textContent = 'Complete';
+      note.querySelector('.tag').className = 'tag ok';
+      note.querySelector('.tag').textContent = 'Complete';
       note.querySelector('.txt').textContent = 'The run finished. See the Result page.';
     } else note.hidden = true;
   };

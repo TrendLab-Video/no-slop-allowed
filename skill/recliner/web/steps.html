@@ -81,10 +81,10 @@ function render(d) {
         const acc = sc.acceptedAttempt === a.attempt; const v = a.validation;
         const tag = acc ? '<span class="tag ok">accepted</span>' : v ? '<span class="tag bad">rejected</span>' : a.status === 'failed' ? '<span class="tag bad">failed</span>' : `<span class="tag ${a.status === 'generating' ? 'run' : ''}">${esc(a.status)}</span>`;
         return `<div class="attempt ${acc ? 'acc' : ''}">
-          ${a.status === 'generated' && a.file ? video(fileUrl(a.file), { ar, badge: tag, badge2: `<span class="tag">#${esc(a.attempt)}</span>` }) : `<div class="media ar-${ar.replace(':', '-')}" style="display:grid;place-items:center;color:#93a097;font:12px var(--mono)">${esc(a.status)}${a.error ? `<br>${esc(a.error)}` : ''}<span class="badge">${tag}</span></div>`}
+          ${a.status === 'generated' && a.file ? video(fileUrl(a.file), { ar, badge: tag, badge2: `<span class="tag">#${esc(a.attempt)}</span>` }) : `<div class="media ar-${ar.replace(':', '-')}" style="display:grid;place-items:center;color:var(--faint);font:12px var(--mono)">${esc(a.status)}${a.error ? `<br>${esc(a.error)}` : ''}<span class="badge">${tag}</span></div>`}
           <div class="body">
             ${v ? `<div class="score"><span>${esc(v.score)}</span>${scoreBar(v.score, 100, v.passed)}<span>${v.passed ? 'pass' : 'fail'}</span></div><p>${esc(v.reason)}</p>${v.steering ? `<div class="steer">↻ ${esc(v.steering)}</div>` : ''}` : '<p class="muted">Not validated yet.</p>'}
-            ${a.steering ? `<div class="steer" style="background:var(--pale-blue);color:#0a3a8f">steered: ${esc(a.steering)}</div>` : ''}
+            ${a.steering ? `<div class="steer alt-steer">steered: ${esc(a.steering)}</div>` : ''}
             <details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">prompt · ${esc(a.model || '')}</summary><p class="small mono">${esc(a.prompt)}</p></details>
           </div></div>`;
       }).join('')}</div></div>`).join('') : empty('No clips yet.')));
