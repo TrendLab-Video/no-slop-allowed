@@ -5,7 +5,7 @@ import {
   run as falRun, download, toolCall, videoArgs, imageArgs, imageToVideoModel, imageToVideoArgs, dataUri,
   checkAccount, getBalance, minBalance, VIDEO_MODELS, IMAGE_MODEL,
 } from '../../lib/fal.mjs';
-import { probeDuration } from '../../lib/compositors/ffmpeg.mjs';
+import { probeDuration, kenBurns, dimensions } from '../../lib/compositors/ffmpeg.mjs';
 import { generateAssets } from '../../lib/audio.mjs';
 
 export const describe = 'generate-clips <runId> [--scene id] [--steering "..."] [--keyframes-only] [--no-keyframes]: keyframe still then image-to-video per scene, in parallel; updates clips.json';
@@ -89,6 +89,8 @@ export default async function ([runId], flags) {
   const useKeyframes = keyframesOnly || (config.keyframes !== false && !flags['no-keyframes']);
   const aspectRatio = config.aspectRatio || plan.aspectRatio || readJson(runId, 'brief.json', {})?.aspectRatio || '16:9';
   const parallelism = config.parallelism || 4;
+  // Per-clip fal budget; past it the request is cancelled and the scene falls back to a Ken Burns still.
+  const clipTimeoutSeconds = Number(config.clipTimeoutSeconds) || 240;
   const scenes = [...plan.scenes].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
   const targets = flags.scene ? scenes.filter((s) => s.id === flags.scene) : scenes;
   if (!targets.length) throw new Error(`Scene ${flags.scene} not in plan.json`);
@@ -199,7 +201,7 @@ export default async function ([runId], flags) {
       const imageUrl = imageMode ? job.keyframe.url || dataUri(runPath(runId, job.keyframe.file)) : null;
       const args = imageMode ? imageToVideoArgs(m, opts, imageUrl) : videoArgs(m, opts);
       const rec = await falRun(m, args, {
-        timeoutMs: (config.clipTimeoutMinutes || 8) * 60000,
+        timeoutMs: clipTimeoutSeconds * 1000,
         onSubmit: (r) => update(sid, job.attempt, { requestId: r.requestId, model: m, prompt, mode: imageMode ? 'image-to-video' : 'text-to-video' }),
       });
       if (imageUrl?.startsWith('data:')) {
@@ -213,13 +215,15 @@ export default async function ([runId], flags) {
       return rec;
     };
     let rec = await videoCall(i2v || model, !!(i2v && job.keyframe));
-    // Fallbacks (never after a stop error): image-to-video failure -> text-to-video; unknown endpoint (404) -> effort default.
-    if (rec.status === 'failed' && !rec.stop && rec.imageMode) { notes.push(`image-to-video failed (${rec.error}); fell back to text-to-video`); rec = await videoCall(model, false); }
+    // Fallbacks, never after a stop error or a timeout (another fal call would blow the time budget):
+    // unknown endpoint (404) -> effort default; image-to-video failure -> text-to-video.
     const fallback = VIDEO_MODELS[config.effort || 3];
-    if (rec.status === 'failed' && !rec.stop && / -> 404:/.test(rec.error || '') && fallback !== model) {
-      notes.push(`${model} not found; used ${fallback}`);
-      rec = await videoCall(job.keyframe && imageToVideoModel(fallback) ? imageToVideoModel(fallback) : fallback, !!(job.keyframe && imageToVideoModel(fallback)));
+    if (rec.status === 'failed' && !rec.stop && !rec.timeout && / -> 404:/.test(rec.error || '') && fallback && fallback !== model) {
+      notes.push(`${rec.endpoint} not found; used ${fallback}`);
+      const fi2v = job.keyframe ? imageToVideoModel(fallback) : null;
+      rec = await videoCall(fi2v || fallback, !!fi2v);
     }
+    if (rec.status === 'failed' && !rec.stop && !rec.timeout && rec.imageMode) { notes.push(`image-to-video failed (${rec.error}); fell back to text-to-video`); rec = await videoCall(model, false); }
     let durationSeconds = null;
     if (rec.status === 'ok' && rec.url) {
       try {
@@ -227,8 +231,19 @@ export default async function ([runId], flags) {
         durationSeconds = await probeDuration(runPath(runId, job.file));
       } catch (err) { rec.status = 'failed'; rec.error = `download: ${err.message}`; }
     } else if (rec.status === 'ok') { rec.status = 'failed'; rec.error = 'fal result had no video url'; }
+    let mode = rec.imageMode ? 'image-to-video' : 'text-to-video';
+    // Last resort so a run always completes on time: a Ken Burns move over the keyframe, rendered locally.
+    if (rec.status !== 'ok' && !rec.stop && job.keyframe && hasFile(runId, job.keyframe.file)) {
+      try {
+        const { width, height } = dimensions(aspectRatio, 1280);
+        await kenBurns(runPath(runId, job.keyframe.file), runPath(runId, job.file), { seconds: job.seconds + 0.5, width, height, variant: order(sid) });
+        durationSeconds = await probeDuration(runPath(runId, job.file));
+        notes.push(`fal video failed (${rec.error}); used a Ken Burns move over the keyframe`);
+        rec = { ...rec, status: 'ok', error: null, endpoint: 'local:ffmpeg-ken-burns', fallbackFrom: rec.endpoint };
+        mode = 'ken-burns';
+      } catch (err) { notes.push(`Ken Burns fallback failed: ${err.message}`); }
+    }
     const ok = rec.status === 'ok';
-    const mode = rec.imageMode ? 'image-to-video' : 'text-to-video';
     update(sid, job.attempt, { status: ok ? 'generated' : 'failed', error: rec.error, requestId: rec.requestId, model: rec.endpoint, prompt: rec.prompt, mode, durationSeconds, notes });
     appendTraceLocked(runId, {
       ...traceBase,

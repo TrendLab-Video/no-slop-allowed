@@ -181,6 +181,21 @@ export async function finalize(input, outFile, { bed = null, fps = 30, copyVideo
   return outFile;
 }
 
+// Ken Burns move over a still (the fallback when fal video times out): a slow push-in or pull-out with a
+// slight drift, rendered at 2x then downsampled so the motion does not jitter. `variant` picks the move.
+export async function kenBurns(image, outFile, { seconds = 5, width = 720, height = 1280, fps = 30, variant = 0 } = {}) {
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  const n = Math.round(seconds * fps);
+  const W2 = width * 2, H2 = height * 2;
+  const zoomIn = variant % 2 === 0;
+  const z = zoomIn ? `1+0.14*on/${n}` : `1.14-0.14*on/${n}`;
+  const dx = [0.5, 0.42, 0.58][variant % 3];
+  const zoompan = `zoompan=z='${z}':x='(iw-iw/zoom)*${dx}':y='(ih-ih/zoom)/2':d=${n}:s=${width}x${height}:fps=${fps}`;
+  await ff(['-loop', '1', '-i', image, '-vf', `scale=${W2}:${H2}:force_original_aspect_ratio=increase,crop=${W2}:${H2},${zoompan},format=yuv420p`,
+    '-frames:v', String(n), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-r', String(fps), outFile]);
+  return outFile;
+}
+
 export async function thumbnail(video, file, at = null) {
   const dur = (await probeDuration(video)) || 1;
   const t = at ?? Math.min(1.2, dur / 3);

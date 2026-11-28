@@ -7,12 +7,16 @@ import { loadEnv } from './env.mjs';
 
 const QUEUE = 'https://queue.fal.run';
 
-// Default models per effort level (1..5). lib/effort.mjs presets may reference these.
+// Default models per effort level (1..5). lib/effort.mjs presets may reference these. Text-to-video ids;
+// imageToVideoModel() derives the image-to-video variant used with keyframes.
+// Measured 2026-11-28, one 5s image-to-video clip each from the same keyframe (wall time incl. queue):
+//   vidu q3 turbo 40s ~$0.035 (540p) | seedance v1 pro fast 33s ~$0.05 (480p) / ~$0.11 (720p) | ltx-2.3 fast 20s $0.36 (6s, 1080p)
+//   seedance 2.0 fast (previous default) 157-261s ~$0.77 per clip at 480p.
 export const VIDEO_MODELS = {
-  1: 'bytedance/seedance-2.0/fast/text-to-video', // 480p, fast and cheap
-  2: 'bytedance/seedance-2.0/fast/text-to-video', // 720p
-  3: 'bytedance/seedance-2.0/fast/text-to-video', // 720p
-  4: 'fal-ai/kling-video/v3/pro/text-to-video',
+  1: 'fal-ai/vidu/q3/text-to-video/turbo',
+  2: 'fal-ai/vidu/q3/text-to-video/turbo',
+  3: 'fal-ai/bytedance/seedance/v1/pro/fast/text-to-video',
+  4: 'fal-ai/ltx-2.3/text-to-video/fast',
   5: 'fal-ai/kling-video/v3/pro/text-to-video',
 };
 export const IMAGE_MODEL = 'fal-ai/flux/schnell';
@@ -160,6 +164,8 @@ export async function poll(submitted, { timeoutMs = 10 * 60 * 1000, intervalMs =
     }
     await sleep(intervalMs);
   }
+  // Cancel so an abandoned request stops costing money (fal only cancels jobs still in the queue).
+  if (submitted.cancel_url) await fetch(submitted.cancel_url, { method: 'PUT', headers: { Authorization: `Key ${falKey()}` }, signal: AbortSignal.timeout(5000) }).catch(() => {});
   const err = new Error(`fal request ${submitted.request_id} timed out after ${Math.round(timeoutMs / 1000)}s`);
   err.timeout = true;
   throw err;
@@ -208,6 +214,7 @@ export async function run(endpoint, args, opts = {}) {
     rec.status = 'failed';
     rec.error = err.message;
     rec.stop = isStopError(err);
+    rec.timeout = !!err.timeout;
   }
   rec.duration_ms = Date.now() - started;
   return rec;
@@ -224,6 +231,13 @@ export const toolCall = (rec) => ({
 export function videoArgs(model, { prompt, aspectRatio = '16:9', seconds = 5, resolution, negativePrompt }) {
   const pick = (allowed, want) => allowed.reduce((a, b) => (Math.abs(b - want) < Math.abs(a - want) ? b : a));
   const neg = negativePrompt || 'blur, distortion, warped text, extra fingers, low quality, watermark';
+  if (model.includes('seedance/v1')) {
+    const res = ['480p', '720p', '1080p'].includes(resolution) ? resolution : '720p';
+    return { prompt, aspect_ratio: aspectRatio, duration: String(pick([3, 4, 5, 6, 7, 8, 9, 10], seconds)), resolution: res };
+  }
+  if (model.includes('vidu')) {
+    return { prompt, duration: Math.round(Math.min(8, Math.max(2, seconds))), resolution: resolution === '480p' ? '540p' : '720p', audio: false, ...(model.includes('text-to-video') ? { aspect_ratio: aspectRatio } : {}) };
+  }
   if (model.includes('seedance')) {
     const res = ['480p', '720p'].includes(resolution) ? resolution : '720p';
     return { prompt, aspect_ratio: aspectRatio, duration: String(pick([4, 5, 6, 7, 8, 9, 10, 11, 12], seconds)), resolution: res, generate_audio: false };
