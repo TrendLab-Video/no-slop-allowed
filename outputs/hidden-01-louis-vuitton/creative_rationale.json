@@ -1,0 +1,112 @@
+{
+  "artifact_type": "creative_rationale",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T15:36:20.764Z",
+  "runId": "20261128-153126-hidden-01-louis-vuitton",
+  "brief": {
+    "file": "briefs/hidden-01-louis-vuitton.md",
+    "promote": "Louis Vuitton",
+    "objective": "A French fashion house founded in Paris in 1854 as a trunk maker. Its collections include luggage, handbags, clothing, shoes and accessories.",
+    "platform": "TikTok",
+    "aspectRatio": "9:16"
+  },
+  "creativeThesis": "A Monogram Keepall told in three sounds of the bench: brass clicks, leather settles, the bag stands finished in raking light.",
+  "intent": null,
+  "realWorldGrounding": [
+    "Real LV product photo: Monogram canvas Keepall Bandouliere 50, vachetta trim, brass padlock",
+    "Brand fact from brief: Paris trunk maker since 1854",
+    "Savoir-Faire films (ref-1, ref-2): macro craft beats on a workbench"
+  ],
+  "selectedGoal": {
+    "id": "goal-1",
+    "title": "The Workbench Keepall",
+    "description": "Tactile macro of the real Monogram Keepall on a trunk-maker's oak workbench: hardware, stitched vachetta trim, then the full bag. Craft heritage shown through material, not claims.",
+    "confidence": 0.86,
+    "style": "Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain",
+    "styleTags": {
+      "modality": "product-macro",
+      "hookType": "sound-first",
+      "openingAction": "brass padlock clicks shut on the zip pulls",
+      "palette": [
+        "honey",
+        "Monogram brown",
+        "brass gold"
+      ],
+      "pacing": "three 5s macro takes, soft hard cuts",
+      "cameraLanguage": "macro push-in to slow 20-degree orbit",
+      "musicGenre": "neo-classical cello"
+    }
+  },
+  "decisionEvidence": {
+    "scorer": "haiku",
+    "selectedReason": "Directly dramatises the brief's trunk-maker heritage through real product materials and hardware, fully grounded.",
+    "alternatives": [
+      {
+        "goalId": "goal-2",
+        "confidence": 0.62
+      },
+      {
+        "goalId": "goal-3",
+        "confidence": 0.55
+      },
+      {
+        "goalId": "goal-5",
+        "confidence": 0.48
+      },
+      {
+        "goalId": "goal-4",
+        "confidence": 0.41
+      }
+    ],
+    "referencesUsed": [
+      {
+        "id": "ref-1",
+        "kind": "reference",
+        "title": "Inside the Louis Vuitton Trunk Factory: Crafting the Iconic Monogram Canvas (Asnieres)",
+        "url": "https://www.youtube.com/watch?v=dbSKiQOugFQ",
+        "why": "Workshop-floor craft footage of trunk-making at Asnieres: the hand, the tool and the material carry the story with no talent. Transferable: macro hands-on-material beats. Metrics not verified in time (null)."
+      },
+      {
+        "id": "ref-2",
+        "kind": "reference",
+        "title": "Louis Vuitton Escale Twin Zone | Savoir-Faire | LOUIS VUITTON",
+        "url": "https://www.youtube.com/watch?v=lu2vXMvpEiY",
+        "why": "The brand's own Savoir-Faire series: a single object's making told in tactile macro with sound design. Transferable: one product, one material truth per shot. Metrics not verified in time (null)."
+      },
+      {
+        "id": "brand",
+        "kind": "brand",
+        "title": "Louis Vuitton site",
+        "url": "https://www.louisvuitton.com/",
+        "why": null
+      }
+    ],
+    "compositor": "ffmpeg"
+  },
+  "validationEvidence": {
+    "creative": {
+      "score": 72,
+      "passed": true,
+      "reason": "Coherent warm tactile macro piece: the Monogram Keepall is readable and centred in every scene from frame 1, ending on a strong front-on hero. Biggest problem: the padlock in scene 2 shows garbled generated engraving, and the opening padlock motion is subtle rather than a crisp click.",
+      "biggestProblem": "Garbled engraving on the scene-2 padlock.",
+      "slopHits": [
+        {
+          "item": "generated pseudo-text",
+          "frame": "s2 mid",
+          "note": "padlock face shows garbled engraving"
+        }
+      ]
+    },
+    "technical": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 3115,
+      "mode": "video-only"
+    }
+  }
+}

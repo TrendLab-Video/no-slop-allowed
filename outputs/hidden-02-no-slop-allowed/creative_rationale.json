@@ -1,0 +1,104 @@
+{
+  "artifact_type": "creative_rationale",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T15:35:55.713Z",
+  "runId": "20261128-153125-hidden-02-no-slop-allowed",
+  "brief": {
+    "file": "briefs/hidden-02-no-slop-allowed.md",
+    "promote": "No Slop Allowed",
+    "objective": "A one-day creative AI hackathon from 36 Labs and fal at Ramen Space in Dalston, London. Teams build systems that turn briefs into finished videos and compete for $4,000 in prizes.",
+    "platform": "TikTok",
+    "aspectRatio": "9:16"
+  },
+  "creativeThesis": "A heavy red rubber stamp slams down on a pile of glossy generic AI prints, and the type does the shouting: No Slop Allowed.",
+  "intent": {
+    "product": "No Slop Allowed, a one-day creative AI hackathon by 36 Labs and fal at Ramen Space, Dalston, London",
+    "objective": "community",
+    "audience": "London builders and creatives who make AI video and want to compete",
+    "message": "Build a system that turns a brief into a finished video, no slop, $4,000 in prizes."
+  },
+  "realWorldGrounding": [
+    "event name No Slop Allowed and organisers 36 Labs and fal (brief)",
+    "venue Ramen Space, Dalston, London (brief)",
+    "task: systems that turn briefs into finished videos (brief)",
+    "$4,000 in prizes (brief)"
+  ],
+  "selectedGoal": {
+    "id": "goal-1",
+    "title": "Stamp Out Slop",
+    "description": "Kinetic-type event teaser: three hard physical beats (stamp slam, prints swept off the desk, a laptop playing a finished vertical video) under bold cut-in captions. It sells the hackathon's whole premise, finished videos not slop, in 15 seconds.",
+    "confidence": 0.84,
+    "style": "Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts",
+    "styleTags": {
+      "modality": "kinetic-type",
+      "hookType": "physical-action",
+      "openingAction": "red stamp slams onto prints",
+      "palette": [
+        "signal red",
+        "paper white",
+        "ink black"
+      ],
+      "pacing": "three 5s beats, hard cuts on beat",
+      "cameraLanguage": "top-down locked, low slide, push-in",
+      "musicGenre": "breakbeat punk-electronic"
+    }
+  },
+  "decisionEvidence": {
+    "scorer": "haiku",
+    "selectedReason": "Directly dramatizes the event name and task with brief facts in captions; simple producible physical beats.",
+    "alternatives": [
+      {
+        "goalId": "goal-3",
+        "confidence": 0.71
+      },
+      {
+        "goalId": "goal-2",
+        "confidence": 0.62
+      },
+      {
+        "goalId": "goal-5",
+        "confidence": 0.55
+      },
+      {
+        "goalId": "goal-4",
+        "confidence": 0.48
+      }
+    ],
+    "referencesUsed": [
+      {
+        "id": "ref-1",
+        "kind": "reference",
+        "title": "2025 Reach Hackathon Promo Video",
+        "url": "https://www.youtube.com/watch?v=6s3H-Pc74yg",
+        "why": "Category-native hackathon promo; shows the event-promo beat order (theme, date, call to join). Metrics unverified (time cap). Frames/structure reconstructed from fetch-ref where available."
+      }
+    ],
+    "compositor": "blender"
+  },
+  "validationEvidence": {
+    "creative": {
+      "score": 76,
+      "passed": true,
+      "reason": "Opens on an immediate red-stamp ink burst under the NO SLOP ALLOWED caption, then a desk-clearing beat and a laptop payoff with prize and organiser facts from the brief. Captions are legible but set as plain boxed type rather than truly kinetic, and the middle shot's warehouse background is busy.",
+      "biggestProblem": "Caption typography is plain for a kinetic-type concept.",
+      "slopHits": [
+        {
+          "item": "generic caption styling",
+          "frame": "f1",
+          "note": "boxed sans captions, weaker than the kinetic-type intent"
+        }
+      ]
+    },
+    "technical": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 4110,
+      "mode": "video-only"
+    }
+  }
+}

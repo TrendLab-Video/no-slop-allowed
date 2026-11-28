@@ -1,0 +1,117 @@
+{
+  "artifact_type": "creative_rationale",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T15:35:49.673Z",
+  "runId": "20261128-153123-hidden-03-drake",
+  "brief": {
+    "file": "briefs/hidden-03-drake.md",
+    "promote": "Drake",
+    "objective": "A Toronto rapper, singer and songwriter whose music spans hip-hop, R&B and pop. His albums include Take Care, Views and Scorpion.",
+    "platform": "TikTok",
+    "aspectRatio": "9:16"
+  },
+  "creativeThesis": "One night in Toronto told through a record: the needle drops, the city listens, the sleeve comes home.",
+  "intent": {
+    "product": "Drake's music catalogue, album era Take Care, Views, Scorpion",
+    "objective": "awareness",
+    "audience": "TikTok listeners 18-34 who stream late at night",
+    "message": "Drake's albums are the sound of Toronto at night."
+  },
+  "realWorldGrounding": [
+    "Toronto skyline with the CN Tower and Lake Ontario at night",
+    "OVO Sound vinyl releases (Scorpion 2LP) as physical collectible objects",
+    "albums named from the brief: Take Care, Views, Scorpion"
+  ],
+  "selectedGoal": {
+    "id": "goal-1",
+    "title": "Toronto After Midnight",
+    "description": "A needle lands on a spinning record, a hooded listener in headphones watches the Toronto skyline from a high window, and a record sleeve rests on the sill against the city lights. It sells the music as the soundtrack of the city at night, with no face on screen.",
+    "confidence": 0.86,
+    "style": "Night navy, sodium amber and warm gold; practical light only; 35mm grain; shallow depth of field.",
+    "styleTags": {
+      "modality": "lifestyle-montage",
+      "hookType": "sound-first",
+      "openingAction": "needle drops onto spinning record",
+      "palette": [
+        "navy",
+        "amber",
+        "gold"
+      ],
+      "pacing": "three slow 5s takes, hard cuts",
+      "cameraLanguage": "macro push-in, locked window wide, slow dolly",
+      "musicGenre": "downtempo R&B instrumental"
+    }
+  },
+  "decisionEvidence": {
+    "scorer": "haiku",
+    "selectedReason": "Atmospheric Toronto-at-night piece that names all three brief albums and promotes the music through record, city and listener without likeness.",
+    "alternatives": [
+      {
+        "goalId": "goal-2",
+        "confidence": 0.7
+      },
+      {
+        "goalId": "goal-3",
+        "confidence": 0.68
+      },
+      {
+        "goalId": "goal-5",
+        "confidence": 0.62
+      },
+      {
+        "goalId": "goal-4",
+        "confidence": 0.6
+      }
+    ],
+    "referencesUsed": [
+      {
+        "id": "ref-1",
+        "kind": "reference",
+        "title": "Vinyl drop-the-needle listening clips (TikTok #vinyltok)",
+        "url": "https://www.tiktok.com/tag/vinyltok",
+        "why": "Vinyltok's dominant format: a hand lowers the needle on a spinning record in warm low light, the first note lands on the cut. Sound-first, tactile, no face needed. Metrics unknown (search returned no usable counts)."
+      },
+      {
+        "id": "ref-2",
+        "kind": "reference",
+        "title": "Night-city album visualizer rollouts (skyline at 2am, car windows, rooftop silhouettes)",
+        "url": "https://www.complex.com/music/a/complexstaff3/best-drake-vinyl-cds-buy-on-complex",
+        "why": "Transfer from the music-video/visualizer world: rollouts sell an album era through a city mood (skyline, rain on glass, late-night drives) rather than a face. Complex's vinyl guide confirms OVO Sound physical releases (Scorpion 2LP) as collectible objects. Metrics null."
+      },
+      {
+        "id": "brand",
+        "kind": "brand",
+        "title": "drakerelated.com",
+        "url": "https://drakerelated.com/",
+        "why": null
+      }
+    ],
+    "compositor": "ffmpeg"
+  },
+  "validationEvidence": {
+    "creative": {
+      "score": 74,
+      "passed": true,
+      "reason": "A coherent, moody Toronto-at-night piece: record, silhouetted listener under the CN Tower, sleeve hero, with album names only in captions and end card. The opening needle drop is subtle, so the first-second hook is soft.",
+      "biggestProblem": "Hook is a slow push-in rather than a clear needle drop.",
+      "slopHits": [
+        {
+          "item": "weak or delayed hook",
+          "frame": "f1",
+          "note": "tonearm already near the record; drop barely reads"
+        }
+      ]
+    },
+    "technical": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 5258,
+      "mode": "video-only"
+    }
+  }
+}

@@ -1,0 +1,1275 @@
+{
+  "brief": "briefs/hidden-02-no-slop-allowed.md",
+  "output_video": "outputs/hidden-02-no-slop-allowed/final.mp4",
+  "started_at": "2026-11-28T15:31:25.158Z",
+  "finished_at": "2026-11-28T15:35:55.777Z",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "brief",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "source": "file"
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "brief": {
+          "runId": "20261128-153125-hidden-02-no-slop-allowed",
+          "source": "file",
+          "file": "briefs/hidden-02-no-slop-allowed.md",
+          "promote": "No Slop Allowed",
+          "objective": "A one-day creative AI hackathon from 36 Labs and fal at Ramen Space in Dalston, London. Teams build systems that turn briefs into finished videos and compete for $4,000 in prizes.",
+          "url": "https://luma.com/x0qhqiyl",
+          "platform": "TikTok",
+          "videoType": "",
+          "domain": "",
+          "aspectRatio": "9:16",
+          "notes": "",
+          "raw": "# No Slop Allowed\n\nURL: https://luma.com/x0qhqiyl\n\nA one-day creative AI hackathon from 36 Labs and fal at Ramen Space in Dalston, London. Teams build systems that turn briefs into finished videos and compete for $4,000 in prizes.",
+          "submittedAt": "2026-11-28T15:31:25.333Z"
+        },
+        "config": {
+          "effort": 2,
+          "scenes": 3,
+          "clipSeconds": 5,
+          "parallelism": 3,
+          "videoModel": "fal-ai/vidu/q3/text-to-video/turbo",
+          "imageModel": "fal-ai/flux/schnell",
+          "resolution": "720p",
+          "referencesCount": 3,
+          "goalsCount": 5,
+          "clipRetries": 1,
+          "finalRetries": 0,
+          "passScore": 60,
+          "timeBudgetMinutes": 12,
+          "scorer": "haiku",
+          "compositor": "blender",
+          "audio": true,
+          "keyframes": true
+        }
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:31:25.416Z"
+    },
+    {
+      "id": "step-2",
+      "name": "preflight",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "fal:billing/user_balance",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "status": 200,
+            "balance": 132.2227554667,
+            "reason": null
+          }
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "reason": null,
+        "balance": 132.2227554667,
+        "floor": 100,
+        "headroom": 32.22
+      },
+      "duration_ms": 1201,
+      "at": "2026-11-28T15:31:30.134Z"
+    },
+    {
+      "id": "step-3",
+      "name": "search",
+      "stage": "references",
+      "model": "tavily",
+      "requestId": null,
+      "inputs": {
+        "query": "kinetic typography event promo hackathon TikTok",
+        "max": 8,
+        "recency": "year",
+        "days": 365,
+        "domains": [
+          "tiktok.com",
+          "youtube.com",
+          "instagram.com"
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "tavily",
+          "arguments": {
+            "query": "kinetic typography event promo hackathon TikTok"
+          },
+          "result": {
+            "results": 8,
+            "images": 5
+          }
+        }
+      ],
+      "outputs": {
+        "urls": [
+          "https://www.tiktok.com/discover/kinetic-typography-tutorial-capcut",
+          "https://www.tiktok.com/discover/kinetic-typography",
+          "https://www.tiktok.com/discover/kinetic-typography-video",
+          "https://www.tiktok.com/discover/how-to-make-kinetic-typography",
+          "https://www.youtube.com/watch?v=GL59llRByh0",
+          "https://www.tiktok.com/discover/kinetic-typography-intro-capcut",
+          "https://www.tiktok.com/discover/kinetic-typography-music-videos",
+          "https://www.tiktok.com/discover/apple-commercial-kinetic-typography"
+        ]
+      },
+      "duration_ms": 4066,
+      "at": "2026-11-28T15:31:51.229Z"
+    },
+    {
+      "id": "step-4",
+      "name": "search",
+      "stage": "references",
+      "model": "tavily",
+      "requestId": null,
+      "inputs": {
+        "query": "hackathon announcement kinetic text promo shorts",
+        "max": 8,
+        "recency": "year",
+        "days": 365,
+        "domains": "youtube.com"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "tavily",
+          "arguments": {
+            "query": "hackathon announcement kinetic text promo shorts"
+          },
+          "result": {
+            "results": 8,
+            "images": 0
+          }
+        }
+      ],
+      "outputs": {
+        "urls": [
+          "https://www.youtube.com/watch?v=zFlmwiUnm7M",
+          "https://www.youtube.com/watch?v=tUaQ1Racruo",
+          "https://www.youtube.com/shorts/4o-zBZc3GSM",
+          "https://www.youtube.com/watch?v=tUaQ1Racruo&xstg=CAMSBhUD-7L2Hw%3D%3D",
+          "https://www.youtube.com/watch?v=6s3H-Pc74yg",
+          "https://www.youtube.com/watch?v=MzsyGLUuvr8",
+          "https://www.youtube.com/watch?v=hck7c3_FlkI",
+          "https://www.youtube.com/shorts/czgVrUTCJjY"
+        ]
+      },
+      "duration_ms": 1303,
+      "at": "2026-11-28T15:31:55.561Z"
+    },
+    {
+      "id": "step-5",
+      "name": "search",
+      "stage": "references",
+      "model": "tavily",
+      "requestId": null,
+      "inputs": {
+        "query": "Duolingo OR Spotify OR Vercel bold kinetic type promo tiktok",
+        "max": 8,
+        "recency": "year",
+        "days": 365,
+        "domains": "tiktok.com"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "tavily",
+          "arguments": {
+            "query": "Duolingo OR Spotify OR Vercel bold kinetic type promo tiktok"
+          },
+          "result": {
+            "results": 8,
+            "images": 5
+          }
+        }
+      ],
+      "outputs": {
+        "urls": [
+          "https://www.tiktok.com/t/ZP8Nbx6pE",
+          "https://www.tiktok.com/@duolingo/video/7436800824820600110",
+          "https://www.tiktok.com/discover/коди-в-duolingo-2026",
+          "https://www.tiktok.com/@duolingo/video/7174458228577979694",
+          "https://www.tiktok.com/@duolingo/video/7355546655606836511",
+          "https://www.tiktok.com/@duolingo/photo/7504307800764321066",
+          "https://www.tiktok.com/@duolingo/video/7504097232229207342?lang=en",
+          "https://www.tiktok.com/@duolingo/video/7459466332103331118"
+        ]
+      },
+      "duration_ms": 3681,
+      "at": "2026-11-28T15:31:59.357Z"
+    },
+    {
+      "id": "step-6",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "ref-1",
+        "url": "https://www.youtube.com/watch?v=6s3H-Pc74yg",
+        "kind": "reference"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "yt-dlp",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=6s3H-Pc74yg"
+          },
+          "result": "exit 1: ERROR: unable to download video data: HTTP Error 403: Forbidden"
+        },
+        {
+          "tool": "fetch",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=6s3H-Pc74yg"
+          },
+          "result": 200
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "ref-1",
+        "mode": "image",
+        "files": [
+          "references/ref-1/1.jpg"
+        ],
+        "sources": {
+          "references/ref-1/1.jpg": {
+            "url": "https://i.ytimg.com/vi/6s3H-Pc74yg/maxresdefault.jpg",
+            "via": "page"
+          }
+        },
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 3202,
+      "at": "2026-11-28T15:32:11.207Z"
+    },
+    {
+      "id": "step-7",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "ref-2",
+        "url": "https://www.youtube.com/watch?v=zFlmwiUnm7M",
+        "kind": "reference"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "yt-dlp",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=zFlmwiUnm7M"
+          },
+          "result": "ok"
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "ref-2",
+        "mode": "video",
+        "frames": [
+          "references/ref-2/frame-1.jpg",
+          "references/ref-2/frame-2.jpg",
+          "references/ref-2/frame-3.jpg",
+          "references/ref-2/frame-4.jpg",
+          "references/ref-2/frame-5.jpg",
+          "references/ref-2/frame-6.jpg"
+        ],
+        "durationSeconds": 46.67,
+        "cuts": 16,
+        "secondsPerShot": 2.75,
+        "metrics": {
+          "views": 1,
+          "likes": null,
+          "comments": null,
+          "shares": null
+        },
+        "uploader": "YM FX",
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 4025,
+      "at": "2026-11-28T15:32:12.005Z"
+    },
+    {
+      "id": "step-8",
+      "name": "references (degraded)",
+      "stage": "references",
+      "model": "sonnet sub-agent",
+      "requestId": null,
+      "inputs": {
+        "angles": [
+          "platform+transfer"
+        ],
+        "count": 2
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "file": "references.json",
+        "refs": 2
+      },
+      "duration_ms": 35000,
+      "at": "2026-11-28T15:32:54.878Z",
+      "decision": "one combined angle, 2 refs",
+      "rationale": "hard 11-minute deadline; degradation step 2",
+      "falSkills": [
+        {
+          "name": "cinematography",
+          "source": "bundled"
+        }
+      ]
+    },
+    {
+      "id": "step-9",
+      "name": "goals (orchestrator-written)",
+      "stage": "goals",
+      "model": "claude-opus-5-5",
+      "requestId": null,
+      "inputs": {
+        "goalsCount": 5,
+        "modalityHint": "kinetic type"
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "goals": 5
+      },
+      "duration_ms": 50000,
+      "at": "2026-11-28T15:32:55.051Z",
+      "decision": "orchestrator wrote goals directly",
+      "rationale": "deadline; sub-agent start-up cost; goal-1 in kinetic-type per hint; avoided product-macro+physical-action ring-pull and lilac/cobalt palette from style memory",
+      "falSkills": [
+        {
+          "name": "fal-script-writer",
+          "source": "condensed"
+        },
+        {
+          "name": "fal-shot-craft",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-10",
+      "name": "score-goals",
+      "stage": "scoring",
+      "model": "haiku",
+      "requestId": null,
+      "inputs": {
+        "question": "Does this goal match the intended brief?",
+        "goals": [
+          "goal-1",
+          "goal-2",
+          "goal-3",
+          "goal-4",
+          "goal-5"
+        ],
+        "requestedScorer": "haiku"
+      },
+      "prompt": "steps/scoring.md",
+      "tool_calls": [],
+      "outputs": {
+        "scores": [
+          {
+            "goalId": "goal-1",
+            "confidence": 0.84,
+            "reason": "Directly dramatizes the event name and task with brief facts in captions; simple producible physical beats."
+          },
+          {
+            "goalId": "goal-3",
+            "confidence": 0.71,
+            "reason": "Clear brief-in/video-out metaphor but gear machinery is harder for video models."
+          },
+          {
+            "goalId": "goal-2",
+            "confidence": 0.62,
+            "reason": "Grounded in venue name but ramen could read as a food ad."
+          },
+          {
+            "goalId": "goal-5",
+            "confidence": 0.55,
+            "reason": "Fun premise but weaker hook and grounding."
+          },
+          {
+            "goalId": "goal-4",
+            "confidence": 0.48,
+            "reason": "Generic night POV; message arrives late."
+          }
+        ],
+        "selectedGoalId": "goal-1",
+        "confidence": 0.84,
+        "creativeThesis": "A heavy red rubber stamp slams down on a pile of glossy generic AI prints, and the type does the shouting: No Slop Allowed.",
+        "realWorldGrounding": [
+          "event name No Slop Allowed and organisers 36 Labs and fal (brief)",
+          "venue Ramen Space, Dalston, London (brief)",
+          "task: systems that turn briefs into finished videos (brief)",
+          "$4,000 in prizes (brief)"
+        ],
+        "files": [
+          "scores.json",
+          "plan.json"
+        ]
+      },
+      "duration_ms": 83,
+      "at": "2026-11-28T15:32:55.793Z",
+      "decision": "selected goal-1",
+      "rationale": "Directly dramatizes the event name and task with brief facts in captions; simple producible physical beats.",
+      "fallback": null
+    },
+    {
+      "id": "step-11",
+      "name": "keyframe:goal-1-s3#1",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "requestId": "01a222c9-c5a5-75e3-bed4-d83000bf9a47",
+      "inputs": {
+        "sceneId": "goal-1-s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Medium close-up: an open silver laptop centred on a bare matte black desk, its screen glowing with a vivid vertical video frame of red ink splashing on white paper, hard white top light, signal red and paper white on black, 50mm lens, 35mm film grain, no readable text. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "Medium close-up: an open silver laptop centred on a bare matte black desk, its screen glowing with a vivid vertical video frame of red ink splashing on white paper, hard white top light, signal red and paper white on black, 50mm lens, 35mm film grain, no readable text. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a222c9-c5a5-75e3-bed4-d83000bf9a47",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44b9d/VsX66FhhyyO4tVBYZYMdB.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.7310001850128174
+            },
+            "error": null,
+            "duration_ms": 2981
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s3/1.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 2981,
+      "at": "2026-11-28T15:33:02.347Z"
+    },
+    {
+      "id": "step-12",
+      "name": "keyframe:goal-1-s1#1",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "requestId": "01a222c9-c5ae-7851-a8c9-f2100b6f5196",
+      "inputs": {
+        "sceneId": "goal-1-s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Top-down close-up: a heavy red wooden-handled rubber stamp centred in frame, an inch above a messy pile of glossy blank photo prints with smeared pastel colour on a matte black desk, hard white top light, deep shadows, paper white and signal red against ink black, 35mm film grain, no text. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "Top-down close-up: a heavy red wooden-handled rubber stamp centred in frame, an inch above a messy pile of glossy blank photo prints with smeared pastel colour on a matte black desk, hard white top light, deep shadows, paper white and signal red against ink black, 35mm film grain, no text. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a222c9-c5ae-7851-a8c9-f2100b6f5196",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44b9d/PtXzcQ01iTKkFN0-NwC5n.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.8480000495910645
+            },
+            "error": null,
+            "duration_ms": 3640
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s1/1.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3640,
+      "at": "2026-11-28T15:33:02.706Z"
+    },
+    {
+      "id": "step-13",
+      "name": "keyframe:goal-1-s2#1",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "requestId": "01a222c9-c5a7-77b2-b128-dcc5c735dd1f",
+      "inputs": {
+        "sceneId": "goal-1-s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Low desk-level wide shot: a pile of glossy prints marked with red ink splashes centred on a matte black desk in a dim warehouse-like room, a single hard white light from above, signal red and paper white on black, 24mm lens, 35mm film grain, no text. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "Low desk-level wide shot: a pile of glossy prints marked with red ink splashes centred on a matte black desk in a dim warehouse-like room, a single hard white light from above, signal red and paper white on black, 24mm lens, 35mm film grain, no text. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a222c9-c5a7-77b2-b128-dcc5c735dd1f",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44b9d/MyRJBS8ZEkTW4TZYV8Cxj.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.8380000591278076
+            },
+            "error": null,
+            "duration_ms": 3345
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s2/1.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3345,
+      "at": "2026-11-28T15:33:02.781Z"
+    },
+    {
+      "id": "step-14",
+      "name": "generate-keyframes:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/flux/schnell",
+        "productImages": [],
+        "keyframesOnly": true,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 132.2227554667,
+        "balanceAfter": 132.2227554667,
+        "floor": 100,
+        "spent": 0,
+        "seconds": 8,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 7805,
+      "at": "2026-11-28T15:33:04.020Z"
+    },
+    {
+      "id": "step-15",
+      "name": "keyframe validation",
+      "stage": "clips",
+      "model": "claude-opus-5-5 (orchestrator, inline vision)",
+      "requestId": null,
+      "inputs": {
+        "stills": 3
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scores": {
+          "goal-1-s1": 72,
+          "goal-1-s2": 66,
+          "goal-1-s3": 84
+        }
+      },
+      "duration_ms": 20000,
+      "at": "2026-11-28T15:33:19.753Z",
+      "decision": "validated stills inline, no keyframe retries",
+      "rationale": "all >= passScore 60; deadline (degradation step 1: skip retries)"
+    },
+    {
+      "id": "step-16",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "goal-1-s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 72,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 66,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 84,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:33:20.072Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-17",
+      "name": "audio:music",
+      "stage": "composition",
+      "model": "fal-ai/stable-audio-25/text-to-audio",
+      "requestId": null,
+      "inputs": {
+        "prompt": "Breakbeat punk-electronic, 150 bpm, distorted 808 kick, snare rolls, gritty bass synth; hard hit at 0s on the stamp slam, driving 0-10s, full drop at 10s on the laptop payoff, stops dead at 15s for the end card; instrumental, no vocals",
+        "seconds_total": 17
+      },
+      "prompt": "Breakbeat punk-electronic, 150 bpm, distorted 808 kick, snare rolls, gritty bass synth; hard hit at 0s on the stamp slam, driving 0-10s, full drop at 10s on the laptop payoff, stops dead at 15s for the end card; instrumental, no vocals",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/stable-audio-25/text-to-audio",
+          "arguments": {
+            "prompt": "Breakbeat punk-electronic, 150 bpm, distorted 808 kick, snare rolls, gritty bass synth; hard hit at 0s on the stamp slam, driving 0-10s, full drop at 10s on the laptop payoff, stops dead at 15s for the end card; instrumental, no vocals",
+            "seconds_total": 17
+          },
+          "result": {
+            "requestId": "01a222ca-237c-74e0-861c-c321983a1702",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba1/4aAiN-g9R6RBof9PgpBgb_V1jC3oyq.wav",
+            "cost": null,
+            "metrics": {
+              "inference_time": 3.6639997959136963
+            },
+            "error": null,
+            "duration_ms": 10315
+          }
+        }
+      ],
+      "outputs": {
+        "status": "ok",
+        "url": "https://v3b.fal.media/files/b/0ab44ba1/4aAiN-g9R6RBof9PgpBgb_V1jC3oyq.wav",
+        "error": null
+      },
+      "duration_ms": 10315,
+      "at": "2026-11-28T15:33:34.102Z"
+    },
+    {
+      "id": "step-18",
+      "name": "generate-clip:goal-1-s3#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222ca-237a-7bf0-9a8f-fb44f7f9ceb9",
+      "inputs": {
+        "sceneId": "goal-1-s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The open silver laptop's screen plays the vivid red-ink video as the camera pushes in steadily toward the screen until it fills most of the frame, laptop stays centred and sharp, a single continuous take, no cuts. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The open silver laptop's screen plays the vivid red-ink video as the camera pushes in steadily toward the screen until it fills most of the frame, laptop stays centred and sharp, a single continuous take, no cuts. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44b9d/VsX66FhhyyO4tVBYZYMdB.png"
+          },
+          "result": {
+            "requestId": "01a222ca-237a-7bf0-9a8f-fb44f7f9ceb9",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba5/bk63JvuLZgWZt4mPkRTXD_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 51.38199996948242
+            },
+            "error": null,
+            "duration_ms": 53836
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s3/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s3/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 53836,
+      "at": "2026-11-28T15:34:17.416Z"
+    },
+    {
+      "id": "step-19",
+      "name": "generate-clip:goal-1-s1#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222ca-2379-73f0-b4aa-3b57c7d9a9af",
+      "inputs": {
+        "sceneId": "goal-1-s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The heavy red rubber stamp slams down hard onto the pile of glossy prints, red ink spatters outward and the prints jump and scatter, camera locked top-down, stamp stays centred, a single continuous take, no cuts. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The heavy red rubber stamp slams down hard onto the pile of glossy prints, red ink spatters outward and the prints jump and scatter, camera locked top-down, stamp stays centred, a single continuous take, no cuts. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44b9d/PtXzcQ01iTKkFN0-NwC5n.png"
+          },
+          "result": {
+            "requestId": "01a222ca-2379-73f0-b4aa-3b57c7d9a9af",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba5/NB-S3EndhC7YBXauVvi24_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 55.78699994087219
+            },
+            "error": null,
+            "duration_ms": 58051
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s1/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s1/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 58051,
+      "at": "2026-11-28T15:34:21.563Z"
+    },
+    {
+      "id": "step-20",
+      "name": "generate-clip:goal-1-s2#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222ca-237a-7c82-b12a-575626944a6b",
+      "inputs": {
+        "sceneId": "goal-1-s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The pile of red-splashed glossy prints is blown off the black desk in one gust and flies out of frame, leaving the desk bare and clean, camera slides slowly toward the empty desk, a single continuous take, no cuts. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The pile of red-splashed glossy prints is blown off the black desk in one gust and flies out of frame, leaving the desk bare and clean, camera slides slowly toward the empty desk, a single continuous take, no cuts. Style: Bold graphic still-life, hard top light, high contrast, signal red / paper white / ink black, 35mm grain, punchy hard cuts; palette signal red,paper white,ink black; camera top-down locked, low slide, push-in; pacing three 5s beats, hard cuts on beat. Continuity: Hook in frame 1: the stamp is already falling and hits by 0.5s. No faces, no readable text in the generated video; all words come from captions. Palette signal red, paper white, ink black throughout. Hard cuts on beat. Avoid glossy 3D, neon, floating objects. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44b9d/MyRJBS8ZEkTW4TZYV8Cxj.png"
+          },
+          "result": {
+            "requestId": "01a222ca-237a-7c82-b12a-575626944a6b",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba5/D-qIhnFuSx7HFUclXqrnp_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 55.79400014877319
+            },
+            "error": null,
+            "duration_ms": 58246
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/goal-1-s2/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/goal-1-s2/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 58246,
+      "at": "2026-11-28T15:34:21.967Z"
+    },
+    {
+      "id": "step-21",
+      "name": "generate-clips:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/flux/schnell",
+        "productImages": [],
+        "keyframesOnly": false,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 132.2047554667,
+        "balanceAfter": 131.4853554667,
+        "floor": 100,
+        "spent": 0.7194,
+        "seconds": 63,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 63143,
+      "at": "2026-11-28T15:34:23.369Z"
+    },
+    {
+      "id": "step-22",
+      "name": "clip validation",
+      "stage": "clip_validation",
+      "model": "claude-opus-5-5 (orchestrator, inline vision on 5-frame contact sheets)",
+      "requestId": null,
+      "inputs": {
+        "clips": 3
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scores": {
+          "goal-1-s1": 78,
+          "goal-1-s2": 68,
+          "goal-1-s3": 82
+        }
+      },
+      "duration_ms": 30000,
+      "at": "2026-11-28T15:34:42.751Z",
+      "decision": "all clips pass, no retries",
+      "rationale": "all >= 60; deadline",
+      "falSkills": [
+        {
+          "name": "fal-shot-craft",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-23",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "goal-1-s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 72,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 78,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 66,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 68,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 84,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 82,
+            "passed": true,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:34:43.092Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-24",
+      "name": "compose:comp-1",
+      "stage": "composition",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "clips": [
+          {
+            "sceneId": "goal-1-s1",
+            "attempt": 1,
+            "file": "clips/goal-1-s1/1.mp4"
+          },
+          {
+            "sceneId": "goal-1-s2",
+            "attempt": 1,
+            "file": "clips/goal-1-s2/1.mp4"
+          },
+          {
+            "sceneId": "goal-1-s3",
+            "attempt": 1,
+            "file": "clips/goal-1-s3/1.mp4"
+          }
+        ],
+        "aspectRatio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "transitions": "cut",
+        "endCardDissolve": 0.4,
+        "onScreenText": [
+          "NO SLOP ALLOWED",
+          "Brief in. Finished video out.",
+          "$4,000 in prizes",
+          ""
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "blender",
+          "arguments": {
+            "command": "/opt/homebrew/bin/blender -b --factory-startup -noaudio -P /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/skill/recliner/lib/compositors/blender_compose.py -- /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153125-hidden-02-no-slop-allowed/compositions/1/work/blender_job.json"
+          },
+          "result": {
+            "file": "compositions/1/final.mp4"
+          }
+        }
+      ],
+      "outputs": {
+        "file": "compositions/1/final.mp4",
+        "thumbnail": "compositions/1/thumb.jpg",
+        "durationSeconds": 17.05,
+        "compositor": "blender",
+        "endCard": {
+          "headline": "No Slop Allowed",
+          "subline": "36 Labs x fal, Dalston London",
+          "seconds": 2
+        },
+        "audio": {
+          "present": true,
+          "bed": "compositions/1/bed.wav",
+          "lufs": -13.6,
+          "truePeak": -0.8,
+          "audible": true
+        },
+        "notes": [
+          "clip 4 conformed from 30 to 24 fps"
+        ],
+        "audio_ms": 1010
+      },
+      "duration_ms": 46487,
+      "at": "2026-11-28T15:35:29.831Z"
+    },
+    {
+      "id": "step-25",
+      "name": "validate-output:comp-1",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "file": "compositions/1/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "/Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-02-no-slop-allowed.md",
+        "targetDurationSeconds": 15
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153125-hidden-02-no-slop-allowed/compositions/1 --video /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153125-hidden-02-no-slop-allowed/compositions/1/final.mp4 --write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153125-hidden-02-no-slop-allowed/compositions/1/validation_report.json --repair-write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153125-hidden-02-no-slop-allowed/compositions/1/repair_plan.json --contact-sheet /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153125-hidden-02-no-slop-allowed/compositions/1/contact-sheet.png --video-only --source-brief /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-02-no-slop-allowed.md --duration-min 13.5 --duration-max 18.5"
+          },
+          "result": {
+            "ok": true,
+            "status": "pass"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "pass",
+        "validationReport": "compositions/1/validation_report.json",
+        "repairPlan": "compositions/1/repair_plan.json",
+        "contactSheet": "compositions/1/contact-sheet.png",
+        "counts": {
+          "blockers": 0,
+          "major": 0,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 4475,
+      "at": "2026-11-28T15:35:39.515Z"
+    },
+    {
+      "id": "step-26",
+      "name": "final validation",
+      "stage": "final_validation",
+      "model": "claude-opus-5-5 (orchestrator, inline vision on 10-frame contact sheet)",
+      "requestId": null,
+      "inputs": {
+        "attempt": 1
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "score": 76,
+        "passed": true,
+        "technicalValidation": "pass, 0 blockers"
+      },
+      "duration_ms": 30000,
+      "at": "2026-11-28T15:35:55.083Z",
+      "decision": "pass, no final retries (finalRetries 0)",
+      "rationale": "score 76 >= 60; technical validation passed",
+      "falSkills": [
+        {
+          "name": "fal-video-production",
+          "source": "condensed"
+        },
+        {
+          "name": "video-compositing",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-27",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "comp-1",
+        "score": 76,
+        "passed": true,
+        "ranking": [
+          [
+            "comp-1",
+            76
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:35:55.258Z",
+      "decision": "selected comp-1",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-28",
+      "name": "output",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selected": "composition 1",
+        "score": 76,
+        "compositor": "blender"
+      },
+      "duration_ms": 1000,
+      "at": "2026-11-28T15:35:55.467Z",
+      "decision": "export composition 1",
+      "rationale": "only result; passed creative and technical validation",
+      "degradations": [
+        "references: one combined angle, 2 refs",
+        "goals and scores written by orchestrator, validations inline (no sub-agents) for deadline",
+        "no keyframe/clip retries"
+      ],
+      "retries": 0
+    },
+    {
+      "id": "step-29",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "selectedId": "comp-1",
+        "file": "compositions/1/final.mp4",
+        "score": 76
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/1/final.mp4",
+            "to": "outputs/hidden-02-no-slop-allowed/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/hidden-02-no-slop-allowed/final.mp4",
+        "traces": "outputs/hidden-02-no-slop-allowed/traces.json",
+        "creativeRationale": "outputs/hidden-02-no-slop-allowed/creative_rationale.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:35:55.764Z"
+    },
+    {
+      "id": "step-30",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/hidden-02-no-slop-allowed/final.mp4",
+        "finished_at": "2026-11-28T15:35:55.777Z",
+        "run_seconds": 271
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:35:55.838Z"
+    }
+  ],
+  "run_id": "20261128-153125-hidden-02-no-slop-allowed",
+  "selected_result": {
+    "id": "comp-1",
+    "file": "compositions/1/final.mp4",
+    "compositor": "blender",
+    "validation": {
+      "score": 76,
+      "passed": true,
+      "reason": "Opens on an immediate red-stamp ink burst under the NO SLOP ALLOWED caption, then a desk-clearing beat and a laptop payoff with prize and organiser facts from the brief. Captions are legible but set as plain boxed type rather than truly kinetic, and the middle shot's warehouse background is busy.",
+      "breakdown": {
+        "hook": 82,
+        "briefFit": 74,
+        "craft": 72,
+        "originality": 70,
+        "slop": 85
+      },
+      "slopHits": [
+        {
+          "item": "generic caption styling",
+          "frame": "f1",
+          "note": "boxed sans captions, weaker than the kinetic-type intent"
+        }
+      ],
+      "biggestProblem": "Caption typography is plain for a kinetic-type concept."
+    },
+    "technicalValidation": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 4110,
+      "mode": "video-only"
+    }
+  }
+}

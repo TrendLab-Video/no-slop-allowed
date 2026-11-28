@@ -1,0 +1,1281 @@
+{
+  "brief": "briefs/hidden-01-louis-vuitton.md",
+  "output_video": "outputs/hidden-01-louis-vuitton/final.mp4",
+  "started_at": "2026-11-28T15:31:26.157Z",
+  "finished_at": "2026-11-28T15:36:20.893Z",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "brief",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "source": "file"
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "brief": {
+          "runId": "20261128-153126-hidden-01-louis-vuitton",
+          "source": "file",
+          "file": "briefs/hidden-01-louis-vuitton.md",
+          "promote": "Louis Vuitton",
+          "objective": "A French fashion house founded in Paris in 1854 as a trunk maker. Its collections include luggage, handbags, clothing, shoes and accessories.",
+          "url": "https://www.louisvuitton.com/",
+          "platform": "TikTok",
+          "videoType": "",
+          "domain": "",
+          "aspectRatio": "9:16",
+          "notes": "",
+          "raw": "# Louis Vuitton\n\nURL: https://www.louisvuitton.com/\n\nA French fashion house founded in Paris in 1854 as a trunk maker. Its collections include luggage, handbags, clothing, shoes and accessories.",
+          "submittedAt": "2026-11-28T15:31:26.242Z"
+        },
+        "config": {
+          "effort": 2,
+          "scenes": 3,
+          "clipSeconds": 5,
+          "parallelism": 3,
+          "videoModel": "fal-ai/vidu/q3/text-to-video/turbo",
+          "imageModel": "fal-ai/flux/schnell",
+          "resolution": "720p",
+          "referencesCount": 3,
+          "goalsCount": 5,
+          "clipRetries": 1,
+          "finalRetries": 0,
+          "passScore": 60,
+          "timeBudgetMinutes": 12,
+          "scorer": "haiku",
+          "compositor": "blender",
+          "audio": true,
+          "keyframes": true
+        }
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:31:26.300Z"
+    },
+    {
+      "id": "step-2",
+      "name": "preflight",
+      "stage": "brief",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "fal:billing/user_balance",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "status": 200,
+            "balance": 132.2227554667,
+            "reason": null
+          }
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "reason": null,
+        "balance": 132.2227554667,
+        "floor": 100,
+        "headroom": 32.22
+      },
+      "duration_ms": 1244,
+      "at": "2026-11-28T15:31:32.998Z"
+    },
+    {
+      "id": "step-3",
+      "name": "search",
+      "stage": "references",
+      "model": "tavily",
+      "requestId": null,
+      "inputs": {
+        "query": "Louis Vuitton savoir-faire trunk craftsmanship video",
+        "max": 8,
+        "recency": "year",
+        "days": 540,
+        "domains": [
+          "tiktok.com",
+          "youtube.com",
+          "instagram.com"
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "tavily",
+          "arguments": {
+            "query": "Louis Vuitton savoir-faire trunk craftsmanship video"
+          },
+          "result": {
+            "results": 8,
+            "images": 5
+          }
+        }
+      ],
+      "outputs": {
+        "urls": [
+          "https://www.youtube.com/watch?v=dbSKiQOugFQ",
+          "https://www.instagram.com/reel/DZE-NYGBN_C",
+          "https://www.instagram.com/popular/louis-vuitton-founded-1854-paris-trunk-maker",
+          "https://www.instagram.com/popular/assouline-louis-vuitton-book",
+          "https://www.youtube.com/watch?v=lu2vXMvpEiY",
+          "https://www.instagram.com/popular/louis-vuitton-punching-bag",
+          "https://www.instagram.com/popular/louis-vuitton-monogram-strap",
+          "https://www.instagram.com/popular/louis-vuitton-dog-bed-trunk"
+        ]
+      },
+      "duration_ms": 3855,
+      "at": "2026-11-28T15:31:47.059Z"
+    },
+    {
+      "id": "step-4",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "brand",
+        "url": "https://www.louisvuitton.com/",
+        "kind": "brand"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "fetch",
+          "arguments": {
+            "url": "https://www.louisvuitton.com/"
+          },
+          "result": 200
+        },
+        {
+          "tool": "tavily-extract",
+          "arguments": {
+            "url": "https://www.louisvuitton.com/"
+          },
+          "result": "0 images"
+        },
+        {
+          "tool": "tavily-image-search",
+          "arguments": {
+            "url": "Louis Vuitton Monogram Keepall bag product photo front"
+          },
+          "result": "4 images"
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "brand",
+        "mode": "search",
+        "files": [
+          "references/brand/1.webp",
+          "references/brand/2.webp"
+        ],
+        "sources": {
+          "references/brand/1.webp": {
+            "url": "https://us.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-keepall-bandouliere-50--M41416_PM2_Front%20view.jpg",
+            "via": "tavily-image-search",
+            "description": null,
+            "query": "Louis Vuitton Monogram Keepall bag product photo front"
+          },
+          "references/brand/2.webp": {
+            "url": "https://us.louisvuitton.com/images/is/image/lv/1/PP_VP_L/louis-vuitton-keepall-bandouliere-50--M3A674_PM2_Front%20view.jpg",
+            "via": "tavily-image-search",
+            "description": null,
+            "query": "Louis Vuitton Monogram Keepall bag product photo front"
+          }
+        },
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 4768,
+      "at": "2026-11-28T15:31:47.843Z"
+    },
+    {
+      "id": "step-5",
+      "name": "references merge (orchestrator)",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "angles": [
+          "platform"
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        "recliner search",
+        "recliner fetch-ref brand"
+      ],
+      "outputs": {
+        "count": 3
+      },
+      "duration_ms": 40000,
+      "at": "2026-11-28T15:32:10.397Z",
+      "decision": "Orchestrator did references itself: 2 brand-native savoir-faire films + brand entry with 1 product image",
+      "rationale": "11-minute hard deadline; degradation step 2 (one angle, 2 references)",
+      "alternatives_rejected": [
+        "two angle sub-agents (startup cost)",
+        "grey Shadow Keepall image (different product)"
+      ]
+    },
+    {
+      "id": "step-6",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "ref-1",
+        "url": "https://www.youtube.com/watch?v=dbSKiQOugFQ",
+        "kind": "reference"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "yt-dlp",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=dbSKiQOugFQ"
+          },
+          "result": "ok"
+        },
+        {
+          "tool": "fetch",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=dbSKiQOugFQ"
+          },
+          "result": 200
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "ref-1",
+        "mode": "image",
+        "files": [
+          "references/ref-1/1.jpg"
+        ],
+        "sources": {
+          "references/ref-1/1.jpg": {
+            "url": "https://i.ytimg.com/vi/dbSKiQOugFQ/maxresdefault.jpg",
+            "via": "page"
+          }
+        },
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 2950,
+      "at": "2026-11-28T15:32:13.543Z"
+    },
+    {
+      "id": "step-7",
+      "name": "fetch-ref",
+      "stage": "references",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "referenceId": "ref-2",
+        "url": "https://www.youtube.com/watch?v=lu2vXMvpEiY",
+        "kind": "reference"
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "yt-dlp",
+          "arguments": {
+            "url": "https://www.youtube.com/watch?v=lu2vXMvpEiY"
+          },
+          "result": "ok"
+        }
+      ],
+      "outputs": {
+        "ok": true,
+        "referenceId": "ref-2",
+        "mode": "video",
+        "frames": [
+          "references/ref-2/frame-1.jpg",
+          "references/ref-2/frame-2.jpg",
+          "references/ref-2/frame-3.jpg",
+          "references/ref-2/frame-4.jpg",
+          "references/ref-2/frame-5.jpg",
+          "references/ref-2/frame-6.jpg"
+        ],
+        "durationSeconds": 36.8,
+        "cuts": 10,
+        "secondsPerShot": 3.35,
+        "metrics": {
+          "views": 4457,
+          "likes": 276,
+          "comments": 8,
+          "shares": null
+        },
+        "uploader": "Louis Vuitton",
+        "recordedIn": "references.json"
+      },
+      "duration_ms": 3062,
+      "at": "2026-11-28T15:32:13.665Z"
+    },
+    {
+      "id": "step-8",
+      "name": "goals written by orchestrator",
+      "stage": "goals",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "modalityHint": "tactile product macro / craft"
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "goals": 5
+      },
+      "duration_ms": 60000,
+      "at": "2026-11-28T15:32:48.188Z",
+      "decision": "goal-1 product-macro + sound-first (avoids last style-memory pair product-macro+physical-action); hero product Monogram Keepall Bandouliere 50",
+      "rationale": "hard deadline; modality hint; only brief facts used (Paris, 1854, trunk maker), no claims or people",
+      "falSkills": [
+        {
+          "name": "fal-script-writer",
+          "source": "condensed"
+        },
+        {
+          "name": "fal-shot-craft",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-9",
+      "name": "score-goals",
+      "stage": "scoring",
+      "model": "haiku",
+      "requestId": null,
+      "inputs": {
+        "question": "Does this goal match the intended brief?",
+        "goals": [
+          "goal-1",
+          "goal-2",
+          "goal-3",
+          "goal-4",
+          "goal-5"
+        ],
+        "requestedScorer": "haiku"
+      },
+      "prompt": "steps/scoring.md",
+      "tool_calls": [],
+      "outputs": {
+        "scores": [
+          {
+            "goalId": "goal-1",
+            "confidence": 0.86,
+            "reason": "Directly dramatises the brief's trunk-maker heritage through real product materials and hardware, fully grounded."
+          },
+          {
+            "goalId": "goal-2",
+            "confidence": 0.62,
+            "reason": "Uses brief facts but type carries the idea more than the product."
+          },
+          {
+            "goalId": "goal-3",
+            "confidence": 0.55,
+            "reason": "On-brand travel mood but thin product truth."
+          },
+          {
+            "goalId": "goal-5",
+            "confidence": 0.48,
+            "reason": "Generic POV arrival could suit any luggage brand."
+          },
+          {
+            "goalId": "goal-4",
+            "confidence": 0.41,
+            "reason": "Stop-motion packing risks complex physics and off-tone for the house."
+          }
+        ],
+        "selectedGoalId": "goal-1",
+        "confidence": 0.86,
+        "creativeThesis": "A Monogram Keepall told in three sounds of the bench: brass clicks, leather settles, the bag stands finished in raking light.",
+        "realWorldGrounding": [
+          "Real LV product photo: Monogram canvas Keepall Bandouliere 50, vachetta trim, brass padlock",
+          "Brand fact from brief: Paris trunk maker since 1854",
+          "Savoir-Faire films (ref-1, ref-2): macro craft beats on a workbench"
+        ],
+        "files": [
+          "scores.json",
+          "plan.json"
+        ]
+      },
+      "duration_ms": 96,
+      "at": "2026-11-28T15:32:55.784Z",
+      "decision": "selected goal-1",
+      "rationale": "Directly dramatises the brief's trunk-maker heritage through real product materials and hardware, fully grounded.",
+      "fallback": null
+    },
+    {
+      "id": "step-10",
+      "name": "scoring fallback",
+      "stage": "scoring",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selected": "goal-1"
+      },
+      "duration_ms": 15000,
+      "at": "2026-11-28T15:32:55.981Z",
+      "decision": "Orchestrator wrote scores.json itself (last-resort path)",
+      "rationale": "deadline; skipped Haiku sub-agent startup"
+    },
+    {
+      "id": "step-11",
+      "name": "keyframe:s2#1",
+      "stage": "clips",
+      "model": "fal-ai/nano-banana/edit",
+      "requestId": "01a222c9-c79a-7d21-8dbe-cd1f0863a4d4",
+      "inputs": {
+        "sceneId": "s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Macro detail shot: A brown Louis Vuitton Monogram canvas Keepall Bandouliere 50 duffle bag with gold LV Monogram flower and LV initial pattern, natural cowhide-leather trim, rolled leather handles, gold brass padlock and buckles, leather name tag, the rolled natural leather handle and yellow-stitched vachetta trim meeting the brown Monogram canvas, centred, oak workbench, warm raking light from the right, dust motes, 100mm macro. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/nano-banana/edit",
+          "arguments": {
+            "prompt": "Macro detail shot: A brown Louis Vuitton Monogram canvas Keepall Bandouliere 50 duffle bag with gold LV Monogram flower and LV initial pattern, natural cowhide-leather trim, rolled leather handles, gold brass padlock and buckles, leather name tag, the rolled natural leather handle and yellow-stitched vachetta trim meeting the brown Monogram canvas, centred, oak workbench, warm raking light from the right, dust motes, 100mm macro. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+            "aspect_ratio": "9:16",
+            "num_images": 1,
+            "output_format": "png",
+            "image_urls": [
+              "references/brand/1.webp"
+            ]
+          },
+          "result": {
+            "requestId": "01a222c9-c79a-7d21-8dbe-cd1f0863a4d4",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44b9d/-_lzAOIMLmj9MQK2uUu66_kd5LH3v5.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 10.38700008392334
+            },
+            "error": null,
+            "duration_ms": 12451
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s2/1.keyframe.png",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 12451,
+      "at": "2026-11-28T15:33:11.682Z"
+    },
+    {
+      "id": "step-12",
+      "name": "keyframe:s1#1",
+      "stage": "clips",
+      "model": "fal-ai/nano-banana/edit",
+      "requestId": "01a222c9-c7b5-73a3-ada8-d5e99c55c7a5",
+      "inputs": {
+        "sceneId": "s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Extreme macro close-up: A brown Louis Vuitton Monogram canvas Keepall Bandouliere 50 duffle bag with gold LV Monogram flower and LV initial pattern, natural cowhide-leather trim, rolled leather handles, gold brass padlock and buckles, leather name tag, the gold brass padlock hanging on the zip pulls centred in frame against Monogram canvas, on an oak workbench, warm tungsten raking light from the left, shallow depth of field, fine film grain. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/nano-banana/edit",
+          "arguments": {
+            "prompt": "Extreme macro close-up: A brown Louis Vuitton Monogram canvas Keepall Bandouliere 50 duffle bag with gold LV Monogram flower and LV initial pattern, natural cowhide-leather trim, rolled leather handles, gold brass padlock and buckles, leather name tag, the gold brass padlock hanging on the zip pulls centred in frame against Monogram canvas, on an oak workbench, warm tungsten raking light from the left, shallow depth of field, fine film grain. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+            "aspect_ratio": "9:16",
+            "num_images": 1,
+            "output_format": "png",
+            "image_urls": [
+              "references/brand/1.webp"
+            ]
+          },
+          "result": {
+            "requestId": "01a222c9-c7b5-73a3-ada8-d5e99c55c7a5",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44b9d/nDtFotQBplivJNOENK3yz_oPmEcx3y.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 10.205000162124634
+            },
+            "error": null,
+            "duration_ms": 12722
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s1/1.keyframe.png",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 12722,
+      "at": "2026-11-28T15:33:11.990Z"
+    },
+    {
+      "id": "step-13",
+      "name": "keyframe:s3#1",
+      "stage": "clips",
+      "model": "fal-ai/nano-banana/edit",
+      "requestId": "01a222c9-c7c6-77d2-83df-46dffec490e2",
+      "inputs": {
+        "sceneId": "s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": true
+      },
+      "prompt": "Hero medium shot, eye level: A brown Louis Vuitton Monogram canvas Keepall Bandouliere 50 duffle bag with gold LV Monogram flower and LV initial pattern, natural cowhide-leather trim, rolled leather handles, gold brass padlock and buckles, leather name tag, whole bag front view centred filling the frame, standing on an oak trunk-maker's workbench, warm tungsten key light, soft dark workshop behind. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/nano-banana/edit",
+          "arguments": {
+            "prompt": "Hero medium shot, eye level: A brown Louis Vuitton Monogram canvas Keepall Bandouliere 50 duffle bag with gold LV Monogram flower and LV initial pattern, natural cowhide-leather trim, rolled leather handles, gold brass padlock and buckles, leather name tag, whole bag front view centred filling the frame, standing on an oak trunk-maker's workbench, warm tungsten key light, soft dark workshop behind. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks. The product must match the reference images exactly: same shape, colours, controls and markings.",
+            "aspect_ratio": "9:16",
+            "num_images": 1,
+            "output_format": "png",
+            "image_urls": [
+              "references/brand/1.webp"
+            ]
+          },
+          "result": {
+            "requestId": "01a222c9-c7c6-77d2-83df-46dffec490e2",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44b9e/Qj85f4xOLt1EMyIsjxGer_ceKmNOJi.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 11.160000085830688
+            },
+            "error": null,
+            "duration_ms": 14467
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s3/1.keyframe.png",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 14467,
+      "at": "2026-11-28T15:33:14.109Z"
+    },
+    {
+      "id": "step-14",
+      "name": "generate-keyframes:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/nano-banana/edit",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "keyframesOnly": true,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 132.2227554667,
+        "balanceAfter": 132.2047554667,
+        "floor": 100,
+        "spent": 0.018,
+        "seconds": 19,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 19150,
+      "at": "2026-11-28T15:33:15.371Z"
+    },
+    {
+      "id": "step-15",
+      "name": "keyframe validation (orchestrator)",
+      "stage": "clips",
+      "model": "claude-opus-5-5",
+      "requestId": null,
+      "inputs": {
+        "stills": [
+          "s1/1",
+          "s2/1",
+          "s3/1"
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "s1": 82,
+        "s2": 72,
+        "s3": 86
+      },
+      "duration_ms": 20000,
+      "at": "2026-11-28T15:33:31.908Z",
+      "decision": "All stills pass; validated inline by orchestrator",
+      "rationale": "deadline; skipped Haiku sub-agent startup"
+    },
+    {
+      "id": "step-16",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 82,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 72,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          },
+          {
+            "sceneId": "s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 86,
+            "keyframePassed": true,
+            "acceptedAttempt": null,
+            "score": null,
+            "passed": false,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:33:32.247Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-17",
+      "name": "audio:music",
+      "stage": "composition",
+      "model": "fal-ai/stable-audio-25/text-to-audio",
+      "requestId": null,
+      "inputs": {
+        "prompt": "Minimal neo-classical, 70 bpm, solo cello, felt piano, soft brass-click percussion; sparse 0-5s, warm swell 5-10s, full on the hero bag at 10s, fades to silence for the end card; instrumental, no vocals",
+        "seconds_total": 17
+      },
+      "prompt": "Minimal neo-classical, 70 bpm, solo cello, felt piano, soft brass-click percussion; sparse 0-5s, warm swell 5-10s, full on the hero bag at 10s, fades to silence for the end card; instrumental, no vocals",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/stable-audio-25/text-to-audio",
+          "arguments": {
+            "prompt": "Minimal neo-classical, 70 bpm, solo cello, felt piano, soft brass-click percussion; sparse 0-5s, warm swell 5-10s, full on the hero bag at 10s, fades to silence for the end card; instrumental, no vocals",
+            "seconds_total": 17
+          },
+          "result": {
+            "requestId": "01a222ca-5278-7c41-9ac5-e1288d511618",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba1/MfaOgMf4UItDpG5HY9zQV_YIaLyRE9.wav",
+            "cost": null,
+            "metrics": {
+              "inference_time": 3.6540000438690186
+            },
+            "error": null,
+            "duration_ms": 5770
+          }
+        }
+      ],
+      "outputs": {
+        "status": "ok",
+        "url": "https://v3b.fal.media/files/b/0ab44ba1/MfaOgMf4UItDpG5HY9zQV_YIaLyRE9.wav",
+        "error": null
+      },
+      "duration_ms": 5770,
+      "at": "2026-11-28T15:33:41.514Z"
+    },
+    {
+      "id": "step-18",
+      "name": "generate-clip:s1#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222ca-5276-7d92-b092-529884d936ce",
+      "inputs": {
+        "sceneId": "s1",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The gold brass padlock on the Louis Vuitton Monogram Keepall swings and clicks shut against the zip pulls, then settles still, camera slowly pushes in, Monogram canvas stays sharp, a single continuous take, no cuts. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The gold brass padlock on the Louis Vuitton Monogram Keepall swings and clicks shut against the zip pulls, then settles still, camera slowly pushes in, Monogram canvas stays sharp, a single continuous take, no cuts. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44b9d/nDtFotQBplivJNOENK3yz_oPmEcx3y.png"
+          },
+          "result": {
+            "requestId": "01a222ca-5276-7d92-b092-529884d936ce",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba6/hvhVPHyoV0z7bPE5xQV8W_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 51.71599984169006
+            },
+            "error": null,
+            "duration_ms": 53875
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s1/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/s1/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 53875,
+      "at": "2026-11-28T15:34:29.640Z"
+    },
+    {
+      "id": "step-19",
+      "name": "generate-clip:s2#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222ca-5276-70b2-a828-cdc88241bb63",
+      "inputs": {
+        "sceneId": "s2",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "Warm light slides slowly across the stitched leather handle and Monogram canvas of the Louis Vuitton Keepall as the camera tracks along the seam, ending on the brass rivet, a single continuous take, no cuts. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "Warm light slides slowly across the stitched leather handle and Monogram canvas of the Louis Vuitton Keepall as the camera tracks along the seam, ending on the brass rivet, a single continuous take, no cuts. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44b9d/-_lzAOIMLmj9MQK2uUu66_kd5LH3v5.png"
+          },
+          "result": {
+            "requestId": "01a222ca-5276-70b2-a828-cdc88241bb63",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba7/6KqAG2eU5Ca8YpOQAQAeb_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 58.223999977111816
+            },
+            "error": null,
+            "duration_ms": 60443
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s2/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/s2/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 60443,
+      "at": "2026-11-28T15:34:36.734Z"
+    },
+    {
+      "id": "step-20",
+      "name": "generate-clip:s3#1",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/image-to-video/turbo",
+      "requestId": "01a222ca-5279-7692-930e-04e4056f49a8",
+      "inputs": {
+        "sceneId": "s3",
+        "attempt": 1,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 5,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "The Louis Vuitton Monogram Keepall sits centred on the oak bench, the leather name tag swings gently and settles, camera makes a slow 20-degree orbit and holds on the full front view, a single continuous take, no cuts. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/vidu/q3/image-to-video/turbo",
+          "arguments": {
+            "prompt": "The Louis Vuitton Monogram Keepall sits centred on the oak bench, the leather name tag swings gently and settles, camera makes a slow 20-degree orbit and holds on the full front view, a single continuous take, no cuts. Style: Warm tungsten raking light, oak workbench, honey/brown/brass palette, 100mm macro, shallow depth of field, fine film grain; palette honey,Monogram brown,brass gold; camera macro push-in to slow 20-degree orbit; pacing three 5s macro takes, soft hard cuts. Continuity: Hook: brass padlock clicks shut in second one. Bag visible and centred from frame 1 in every scene; Monogram pattern readable. Warm tungsten raking light, oak bench, no people's faces. Avoid floating products, invented text, other brands. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "duration": 5,
+            "resolution": "720p",
+            "audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab44b9e/Qj85f4xOLt1EMyIsjxGer_ceKmNOJi.png"
+          },
+          "result": {
+            "requestId": "01a222ca-5279-7692-930e-04e4056f49a8",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44ba9/8zGNLaTnZFftIhrpQ_8IZ_output.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 49.486000061035156
+            },
+            "error": null,
+            "duration_ms": 80713
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s3/1.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/s3/1.keyframe.png",
+        "keyframeReused": true,
+        "error": null,
+        "durationSeconds": 5.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 80713,
+      "at": "2026-11-28T15:34:57.171Z"
+    },
+    {
+      "id": "step-21",
+      "name": "generate-clips:summary",
+      "stage": "clips",
+      "model": "fal-ai/vidu/q3/text-to-video/turbo",
+      "requestId": null,
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "fal-ai/vidu/q3/text-to-video/turbo",
+        "imageModel": "fal-ai/nano-banana/edit",
+        "productImages": [
+          "references/brand/1.webp"
+        ],
+        "keyframesOnly": false,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 132.0853554667,
+        "balanceAfter": 128.4053554667,
+        "floor": 100,
+        "spent": 3.68,
+        "seconds": 86,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 86269,
+      "at": "2026-11-28T15:34:58.742Z"
+    },
+    {
+      "id": "step-22",
+      "name": "clip validation (orchestrator)",
+      "stage": "clip_validation",
+      "model": "claude-opus-5-5",
+      "requestId": null,
+      "inputs": {
+        "clips": [
+          "s1/1",
+          "s2/1",
+          "s3/1"
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        "ffmpeg contact frames"
+      ],
+      "outputs": {
+        "s1": 80,
+        "s2": 64,
+        "s3": 84
+      },
+      "duration_ms": 30000,
+      "at": "2026-11-28T15:35:22.425Z",
+      "decision": "All pass at 60; no retries",
+      "rationale": "Degradation step 1 (skip retries) under 11-minute deadline"
+    },
+    {
+      "id": "step-23",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "s1",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 82,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 80,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "s2",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 72,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 64,
+            "passed": true,
+            "attempts": 1
+          },
+          {
+            "sceneId": "s3",
+            "acceptedKeyframe": 1,
+            "keyframeScore": 86,
+            "keyframePassed": true,
+            "acceptedAttempt": 1,
+            "score": 84,
+            "passed": true,
+            "attempts": 1
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:35:22.857Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-24",
+      "name": "compose:comp-1",
+      "stage": "composition",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "clips": [
+          {
+            "sceneId": "s1",
+            "attempt": 1,
+            "file": "clips/s1/1.mp4"
+          },
+          {
+            "sceneId": "s2",
+            "attempt": 1,
+            "file": "clips/s2/1.mp4"
+          },
+          {
+            "sceneId": "s3",
+            "attempt": 1,
+            "file": "clips/s3/1.mp4"
+          }
+        ],
+        "aspectRatio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "transitions": "cut",
+        "endCardDissolve": 0.4,
+        "onScreenText": [
+          "Paris, since 1854",
+          "Hand-finished leather trim",
+          "",
+          ""
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "ffmpeg",
+          "arguments": {
+            "command": "ffmpeg -i /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/work/seg_0.mp4 -i /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/work/seg_1.mp4 -i /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/work/seg_2.mp4 -i /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/work/seg_3.mp4 -i /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/bed.wav -filter_complex [0:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s0];[1:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s1];[2:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s2];[3:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s3];[s0][s1]concat=n=2:v=1:a=0,settb=1/30000,fps=30[x1];[x1][s2]concat=n=2:v=1:a=0,settb=1/30000,fps=30[x2];[x2][s3]xfade=transition=fade:duration=0.4:offset=14.607,settb=1/30000,fps=30[x3];[x3]fade=in:st=0:d=0.25,fade=out:st=16.540:d=0.5,format=yuv420p[v];[4:a]atrim=0:17.040,apad=whole_dur=17.040,aresample=48000[a] -map [v] -map [a] -c:a aac -b:a 192k -ar 48000 -ac 2 -c:v libx264 -preset medium -crf 19 -profile:v high -level 4.1 -pix_fmt yuv420p -r 30 -movflags +faststart -t 17.040 /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/final.mp4"
+          },
+          "result": {
+            "file": "compositions/1/final.mp4"
+          }
+        }
+      ],
+      "outputs": {
+        "file": "compositions/1/final.mp4",
+        "thumbnail": "compositions/1/thumb.jpg",
+        "durationSeconds": 17.04,
+        "compositor": "ffmpeg",
+        "endCard": {
+          "headline": "Louis Vuitton",
+          "subline": "Trunk maker since 1854",
+          "seconds": 2
+        },
+        "audio": {
+          "present": true,
+          "bed": "compositions/1/bed.wav",
+          "lufs": -14.6,
+          "truePeak": -3.3,
+          "audible": true
+        },
+        "notes": [],
+        "audio_ms": 1097
+      },
+      "duration_ms": 29078,
+      "at": "2026-11-28T15:35:52.440Z"
+    },
+    {
+      "id": "step-25",
+      "name": "validate-output:comp-1",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "file": "compositions/1/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "/Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-01-louis-vuitton.md",
+        "targetDurationSeconds": 15
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1 --video /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/final.mp4 --write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/validation_report.json --repair-write /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/repair_plan.json --contact-sheet /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/runs/20261128-153126-hidden-01-louis-vuitton/compositions/1/contact-sheet.png --video-only --source-brief /Users/hcjmartin/.flocker-runner/coordinator/coordinator-creative-system-loop-lead/briefs/staging-wt/briefs/hidden-01-louis-vuitton.md --duration-min 13.5 --duration-max 18.5"
+          },
+          "result": {
+            "ok": true,
+            "status": "pass"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "pass",
+        "validationReport": "compositions/1/validation_report.json",
+        "repairPlan": "compositions/1/repair_plan.json",
+        "contactSheet": "compositions/1/contact-sheet.png",
+        "counts": {
+          "blockers": 0,
+          "major": 0,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 3463,
+      "at": "2026-11-28T15:36:03.227Z"
+    },
+    {
+      "id": "step-26",
+      "name": "final validation (orchestrator)",
+      "stage": "final_validation",
+      "model": "claude-opus-5-5",
+      "requestId": null,
+      "inputs": {
+        "result": "comp-1",
+        "contactSheet": "compositions/1/contact-sheet.png"
+      },
+      "prompt": null,
+      "tool_calls": [
+        "validate-output"
+      ],
+      "outputs": {
+        "score": 72,
+        "passed": true,
+        "technical": "pass"
+      },
+      "duration_ms": 30000,
+      "at": "2026-11-28T15:36:19.374Z",
+      "decision": "Pass at 72; finalRetries=0",
+      "rationale": "Validated inline from the contact sheet to meet deadline",
+      "falSkills": [
+        {
+          "name": "video-compositing",
+          "source": "condensed"
+        }
+      ]
+    },
+    {
+      "id": "step-27",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "comp-1",
+        "score": 72,
+        "passed": true,
+        "ranking": [
+          [
+            "comp-1",
+            72
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:36:19.792Z",
+      "decision": "selected comp-1",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-28",
+      "name": "output",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selected": "comp-1",
+        "score": 72
+      },
+      "duration_ms": 1000,
+      "at": "2026-11-28T15:36:20.167Z",
+      "decision": "Export comp-1 (goal-1 The Workbench Keepall)",
+      "rationale": "Only result; passed creative and technical validation",
+      "degradations": [
+        "no clip retries",
+        "2 references, one angle, orchestrator-run",
+        "ffmpeg compositor instead of Blender",
+        "validations/scoring done inline by orchestrator, no sub-agents"
+      ]
+    },
+    {
+      "id": "step-29",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "selectedId": "comp-1",
+        "file": "compositions/1/final.mp4",
+        "score": 72
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/1/final.mp4",
+            "to": "outputs/hidden-01-louis-vuitton/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/hidden-01-louis-vuitton/final.mp4",
+        "traces": "outputs/hidden-01-louis-vuitton/traces.json",
+        "creativeRationale": "outputs/hidden-01-louis-vuitton/creative_rationale.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:36:20.877Z"
+    },
+    {
+      "id": "step-30",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/hidden-01-louis-vuitton/final.mp4",
+        "finished_at": "2026-11-28T15:36:20.893Z",
+        "run_seconds": 295
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T15:36:21.050Z"
+    }
+  ],
+  "run_id": "20261128-153126-hidden-01-louis-vuitton",
+  "selected_result": {
+    "id": "comp-1",
+    "file": "compositions/1/final.mp4",
+    "compositor": "ffmpeg",
+    "validation": {
+      "score": 72,
+      "passed": true,
+      "reason": "Coherent warm tactile macro piece: the Monogram Keepall is readable and centred in every scene from frame 1, ending on a strong front-on hero. Biggest problem: the padlock in scene 2 shows garbled generated engraving, and the opening padlock motion is subtle rather than a crisp click.",
+      "breakdown": {
+        "hook": 62,
+        "briefFit": 82,
+        "craft": 72,
+        "originality": 66,
+        "slop": 74
+      },
+      "slopHits": [
+        {
+          "item": "generated pseudo-text",
+          "frame": "s2 mid",
+          "note": "padlock face shows garbled engraving"
+        }
+      ],
+      "biggestProblem": "Garbled engraving on the scene-2 padlock."
+    },
+    "technicalValidation": {
+      "status": "pass",
+      "report": "compositions/1/validation_report.json",
+      "repairPlan": "compositions/1/repair_plan.json",
+      "contactSheet": "compositions/1/contact-sheet.png",
+      "blockerCount": 0,
+      "majorCount": 0,
+      "minorCount": 0,
+      "wallTimeMs": 3115,
+      "mode": "video-only"
+    }
+  }
+}
