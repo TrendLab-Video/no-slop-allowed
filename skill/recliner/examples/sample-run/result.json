@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "id": "c2",
+      "attempt": 2,
+      "file": "compositions/2/final.mp4",
+      "thumbnail": "compositions/2/thumb.jpg",
+      "compositor": "ffmpeg",
+      "durationSeconds": 12,
+      "validation": {
+        "score": 84,
+        "passed": true,
+        "reason": "Sound-first hook lands in the first second; pads are the hero; pacing matches the POV reference.",
+        "breakdown": {
+          "hook": 88,
+          "briefFit": 86,
+          "craft": 80,
+          "originality": 82,
+          "slop": 85
+        }
+      }
+    },
+    {
+      "id": "c1",
+      "attempt": 1,
+      "file": "compositions/1/final.mp4",
+      "thumbnail": "compositions/1/thumb.jpg",
+      "compositor": "ffmpeg",
+      "durationSeconds": 12,
+      "validation": {
+        "score": 68,
+        "passed": false,
+        "reason": "Opening clip is weak and the device changes shape in the last scene.",
+        "breakdown": {
+          "hook": 60,
+          "briefFit": 74,
+          "craft": 62,
+          "originality": 70,
+          "slop": 58
+        }
+      }
+    }
+  ],
+  "selectedId": "c2"
+}

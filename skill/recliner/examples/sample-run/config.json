@@ -1,0 +1,19 @@
+{
+  "effort": 2,
+  "scenes": 3,
+  "clipSeconds": 5,
+  "parallelism": 3,
+  "videoModel": "bytedance/seedance-2.0/fast/text-to-video",
+  "imageModel": "fal-ai/flux/schnell",
+  "resolution": "720p",
+  "referencesCount": 3,
+  "goalsCount": 5,
+  "clipRetries": 1,
+  "finalRetries": 0,
+  "passScore": 60,
+  "timeBudgetMinutes": 10,
+  "scorer": "haiku",
+  "compositor": "blender",
+  "audio": true,
+  "keyframes": true
+}

@@ -1,0 +1,52 @@
+{
+  "artifact_type": "validation_standards",
+  "version": "0.1.0",
+  "domain": "3d-visualisation",
+  "standards": [
+    {
+      "id": "visual.subject_legibility",
+      "severity": "blocker",
+      "description": "The hero subject or central transformation is legible when it matters."
+    },
+    {
+      "id": "visual.text_safe_area",
+      "severity": "blocker",
+      "description": "Critical text is inside the safe area and not occluded."
+    },
+    {
+      "id": "scene.camera_clips_geometry",
+      "severity": "major",
+      "description": "Camera paths do not clip through geometry."
+    },
+    {
+      "id": "scene.required_object_visible",
+      "severity": "major",
+      "description": "Objects marked required in the scene plan are present and visible in the intended shots."
+    },
+    {
+      "id": "hook.speed",
+      "severity": "major",
+      "description": "The subject, tension or central question is visible within the first two seconds."
+    },
+    {
+      "id": "scene.camera_present",
+      "severity": "major",
+      "description": "At least one camera is exported in scene metadata."
+    },
+    {
+      "id": "scene.lighting_present",
+      "severity": "major",
+      "description": "At least one light is exported in scene metadata."
+    },
+    {
+      "id": "scene.object_bounds_valid",
+      "severity": "minor",
+      "description": "Object bounds are present and numerically valid."
+    },
+    {
+      "id": "scene.warning",
+      "severity": "minor",
+      "description": "Blender exported a scene warning that should be reviewed."
+    }
+  ]
+}

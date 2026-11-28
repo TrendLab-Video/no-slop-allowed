@@ -1,0 +1,75 @@
+{
+  "references": [
+    {
+      "id": "ref-1",
+      "title": "(Illustrative) Synth macro: 'every button, one take'",
+      "url": "https://example.com/reels/synth-macro",
+      "platform": "instagram",
+      "metrics": { "views": 4200000, "likes": 310000, "comments": 2900, "shares": 18000 },
+      "why": "Product truth as spectacle: extreme macro of real materials with diegetic clicks made the object feel expensive. Transferable: sound-led macro cut on each physical action. Figures illustrative (a real entry cites the post page).",
+      "structure": {
+        "durationSeconds": 14,
+        "scenes": ["0-1s: hook, finger presses a key in extreme macro, loud click", "1-8s: eight 1s macro cuts, each on a new control, each with its own sound", "8-12s: pull back to reveal the whole device on a desk", "12-14s: product name, plain type, silence"],
+        "pacing": "1s cuts locked to the device's own sounds, one 4s hold on the reveal",
+        "music": "None: diegetic sound only, building into a beat made from the clicks",
+        "hook": "An unexpectedly loud, satisfying physical click in the first frame"
+      },
+      "screenshots": []
+    },
+    {
+      "id": "ref-2",
+      "title": "(Illustrative) Creator POV: 'day 1 vs day 100 of running at 6am'",
+      "url": "https://example.com/tiktok/day1-day100",
+      "platform": "tiktok",
+      "metrics": { "views": 9800000, "likes": 1200000, "comments": 14000, "shares": 52000 },
+      "why": "A transformation format with a built-in payoff; the product (shoes) is the constant across both halves. Transferable: split structure with a hard match cut. Figures illustrative.",
+      "structure": {
+        "durationSeconds": 12,
+        "scenes": ["0-1s: on-screen text 'day 1', alarm, groan", "1-5s: shaky handheld, struggling run", "5-6s: match cut on the shoe hitting the ground", "6-12s: 'day 100', same route, smooth, faster, sunrise"],
+        "pacing": "Slow, messy first half; match cut; fast, clean second half",
+        "music": "Trending audio with a beat drop placed exactly on the match cut",
+        "hook": "Relatable text overlay plus a sound everyone knows (alarm)"
+      },
+      "screenshots": []
+    },
+    {
+      "id": "ref-3",
+      "title": "(Illustrative) Kinetic type launch: 'three words, three seconds each'",
+      "url": "https://example.com/shorts/kinetic-launch",
+      "platform": "youtube",
+      "metrics": { "views": 2100000, "likes": 64000, "comments": null, "shares": null },
+      "why": "Bold typography carries the message while footage stays secondary, so it reads with sound off. Transferable: oversized type cut-outs revealing footage through the letters. Comments and shares not public (null).",
+      "structure": {
+        "durationSeconds": 10,
+        "scenes": ["0-1s: one giant word fills the frame", "1-7s: footage revealed through letterforms, word changes every 2s", "7-10s: product and line"],
+        "pacing": "Hard cuts every 2s, type animates on the beat",
+        "music": "Percussive track, 120 bpm",
+        "hook": "A single oversized word that the viewer reads before they can scroll"
+      },
+      "screenshots": []
+    },
+    {
+      "id": "ref-4",
+      "title": "(Illustrative) Deadpan mockumentary: 'the office that banned meetings'",
+      "url": "https://example.com/reels/mockumentary",
+      "platform": "instagram",
+      "metrics": { "views": 3300000, "likes": 205000, "comments": 7800, "shares": 61000 },
+      "why": "Comedy sells a workflow product without a feature list; very high share ratio. Transferable: one absurd premise, a talking head, and the product as the punchline. Figures illustrative.",
+      "structure": {
+        "durationSeconds": 20,
+        "scenes": ["0-2s: talking head, deadpan line that states the absurd premise", "2-14s: three quick cutaways proving the premise", "14-20s: product UI on a laptop is the reveal and punchline"],
+        "pacing": "Talking head holds, cutaways snap; the comedic pause is kept",
+        "music": "Library documentary underscore, played straight",
+        "hook": "A deadpan first line that makes no sense yet"
+      },
+      "screenshots": []
+    }
+  ],
+  "takeaways": [
+    "Lead with a physical or audible action in frame 1, not a logo (ref-1, ref-2)",
+    "Build the structure around one cut that pays off: a match cut or a reveal (ref-2, ref-4)",
+    "Let type carry the message so it works with sound off (ref-3)",
+    "Use the product's own sounds or a straight-faced score rather than generic hype music (ref-1, ref-4)"
+  ],
+  "diversityNote": "Four formats (macro product, creator POV, kinetic type, mockumentary), four platforms of origin, three music approaches. Excluded the obvious picks: the brand's own most famous hero ad and any 'cinematic slow-motion athlete' montage, because every competitor copies them."
+}

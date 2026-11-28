@@ -1,0 +1,17 @@
+{
+  "artifact_type": "validation_standards",
+  "version": "0.1.0",
+  "domain": "reference",
+  "standards": [
+    {
+      "id": "reference.alignment",
+      "severity": "minor",
+      "description": "The output uses the reference-derived creative grammar where appropriate."
+    },
+    {
+      "id": "reference.novelty",
+      "severity": "major",
+      "description": "The output transforms references rather than copying recognisable sequences, layouts or assets."
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "goals": [
+    {
+      "id": "g1",
+      "title": "Pocket studio, one take",
+      "description": "A single continuous-feeling POV: hands find the device, tap, and a beat builds as the city moves past.",
+      "creativeGuidance": "Warm practical light, macro on pads, no faces.",
+      "durationSeconds": 9,
+      "style": "Cinematic macro, film grain",
+      "referenceIds": [
+        "r2",
+        "r1"
+      ],
+      "audio": {
+        "musicPrompt": "Lo-fi hip hop beat built from found sounds, 90 bpm",
+        "voiceover": ""
+      },
+      "scenes": [
+        {
+          "id": "s1",
+          "index": 0,
+          "durationSeconds": 3,
+          "description": "Macro: fingertip presses a glowing orange pad",
+          "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light",
+          "onScreenText": "tap."
+        },
+        {
+          "id": "s2",
+          "index": 1,
+          "durationSeconds": 3,
+          "description": "POV on a moving train, device on knee",
+          "prompt": "first-person view on a train, small grey hardware sampler resting on knee, city lights streaking past window",
+          "onScreenText": "record."
+        },
+        {
+          "id": "s3",
+          "index": 2,
+          "durationSeconds": 3,
+          "description": "Pull back: the beat drops, headphones on",
+          "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections",
+          "onScreenText": "make the beat."
+        }
+      ],
+      "aspectRatio": "9:16"
+    },
+    {
+      "id": "g2",
+      "title": "Kitchen sampler",
+      "description": "Found sounds from a kitchen become a track.",
+      "creativeGuidance": "Bright, playful, fast cuts.",
+      "durationSeconds": 12,
+      "style": "Bright flat-lay",
+      "referenceIds": [
+        "r1"
+      ],
+      "audio": {
+        "musicPrompt": "Percussive beat from kitchen sounds",
+        "voiceover": ""
+      },
+      "scenes": [
+        {
+          "id": "s1",
+          "index": 0,
+          "durationSeconds": 4,
+          "description": "Spoon hits a glass",
+          "prompt": "spoon hits glass, macro",
+          "onScreenText": ""
+        },
+        {
+          "id": "s2",
+          "index": 1,
+          "durationSeconds": 4,
+          "description": "Pads light up",
+          "prompt": "sampler pads light up",
+          "onScreenText": ""
+        },
+        {
+          "id": "s3",
+          "index": 2,
+          "durationSeconds": 4,
+          "description": "Dance in kitchen",
+          "prompt": "person dances in kitchen",
+          "onScreenText": ""
+        }
+      ],
+      "aspectRatio": "9:16"
+    },
+    {
+      "id": "g3",
+      "title": "60 second speedrun",
+      "description": "Box to beat with a timer.",
+      "creativeGuidance": "Timer overlay, accelerating cuts.",
+      "durationSeconds": 15,
+      "style": "Top-down desk",
+      "referenceIds": [
+        "r3"
+      ],
+      "audio": {
+        "musicPrompt": "Accelerating electronic loop",
+        "voiceover": ""
+      },
+      "scenes": [
+        {
+          "id": "s1",
+          "index": 0,
+          "durationSeconds": 5,
+          "description": "Unboxing",
+          "prompt": "top-down unboxing",
+          "onScreenText": "00:00"
+        },
+        {
+          "id": "s2",
+          "index": 1,
+          "durationSeconds": 5,
+          "description": "Building",
+          "prompt": "hands on pads",
+          "onScreenText": "00:30"
+        },
+        {
+          "id": "s3",
+          "index": 2,
+          "durationSeconds": 5,
+          "description": "Finished",
+          "prompt": "device on desk glowing",
+          "onScreenText": "01:00"
+        }
+      ],
+      "aspectRatio": "9:16"
+    },
+    {
+      "id": "g4",
+      "title": "Calculator or instrument?",
+      "description": "A playful misdirect: it looks like a calculator.",
+      "creativeGuidance": "Deadpan office setting.",
+      "durationSeconds": 10,
+      "style": "Office deadpan",
+      "referenceIds": [
+        "r1"
+      ],
+      "audio": {
+        "musicPrompt": "Minimal beep beat",
+        "voiceover": ""
+      },
+      "scenes": [
+        {
+          "id": "s1",
+          "index": 0,
+          "durationSeconds": 5,
+          "description": "Office desk",
+          "prompt": "office desk with sampler",
+          "onScreenText": ""
+        },
+        {
+          "id": "s2",
+          "index": 1,
+          "durationSeconds": 5,
+          "description": "Beat drop",
+          "prompt": "office workers nod",
+          "onScreenText": ""
+        }
+      ],
+      "aspectRatio": "9:16"
+    },
+    {
+      "id": "g5",
+      "title": "Night walk loop",
+      "description": "A loop made walking home.",
+      "creativeGuidance": "Moody street light.",
+      "durationSeconds": 10,
+      "style": "Night street",
+      "referenceIds": [
+        "r2"
+      ],
+      "audio": {
+        "musicPrompt": "Ambient night loop",
+        "voiceover": ""
+      },
+      "scenes": [
+        {
+          "id": "s1",
+          "index": 0,
+          "durationSeconds": 5,
+          "description": "Streetlight",
+          "prompt": "person walking under streetlight",
+          "onScreenText": ""
+        },
+        {
+          "id": "s2",
+          "index": 1,
+          "durationSeconds": 5,
+          "description": "Close on device",
+          "prompt": "close on device in hand",
+          "onScreenText": ""
+        }
+      ],
+      "aspectRatio": "9:16"
+    }
+  ]
+}

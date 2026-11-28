@@ -1,0 +1,78 @@
+{
+  "artifact_type": "validation_standards",
+  "version": "0.1.0",
+  "domain": "global",
+  "standards": [
+    {
+      "id": "video.exists",
+      "severity": "blocker",
+      "description": "A target video file exists and can be probed."
+    },
+    {
+      "id": "video.playable",
+      "severity": "blocker",
+      "description": "The video has a readable video stream and positive duration."
+    },
+    {
+      "id": "duration.in_range",
+      "severity": "blocker",
+      "description": "The video duration is within the hackathon target range.",
+      "min_seconds": 15,
+      "max_seconds": 30
+    },
+    {
+      "id": "resolution.minimum",
+      "severity": "major",
+      "description": "The shortest rendered edge is at least 720 pixels.",
+      "min_short_edge": 720
+    },
+    {
+      "id": "frame_rate.valid",
+      "severity": "major",
+      "description": "The video uses a normal promotional-video frame rate.",
+      "min_fps": 23,
+      "max_fps": 61
+    },
+    {
+      "id": "video.black_segments",
+      "severity": "major",
+      "description": "The video does not contain unintended black sections longer than the threshold.",
+      "black_detect_seconds": 0.5,
+      "max_black_seconds": 1.0
+    },
+    {
+      "id": "video.frozen_segments",
+      "severity": "major",
+      "description": "The video does not freeze unintentionally.",
+      "freeze_detect_seconds": 2.0,
+      "max_frozen_seconds": 2.5
+    },
+    {
+      "id": "audio.present",
+      "severity": "major",
+      "description": "The video includes an audio stream unless intentionally silent by design."
+    },
+    {
+      "id": "audio.not_silent",
+      "severity": "major",
+      "description": "Audio is not effectively silent.",
+      "silence_threshold_db": -45
+    },
+    {
+      "id": "audio.not_clipping",
+      "severity": "minor",
+      "description": "Audio does not appear to hit full-scale clipping.",
+      "clipping_threshold_db": -0.1
+    },
+    {
+      "id": "artifacts.scene_metadata",
+      "severity": "major",
+      "description": "Blender scene metadata exists so structural validation is possible."
+    },
+    {
+      "id": "artifacts.scene_plan",
+      "severity": "major",
+      "description": "A scene plan exists so production intent can be compared with scene state."
+    }
+  ]
+}

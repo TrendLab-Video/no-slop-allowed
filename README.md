@@ -68,5 +68,21 @@ Schedule, judging criteria, prizes, team setup and fal credits are on the hackat
 
 ## Team design notes
 
-- [Recliner: Blender-native creative harness vision](docs/skill-based-harness.md)
-- [Harness artifact contracts](docs/harness-contracts.md)
+- [Recliner: skill-based creative harness proposal](docs/skill-based-harness.md)
+
+## Recliner
+
+Our entry is one agent skill, `/recliner`. It turns a brief into a finished, validated video with no questions after the brief: references, goals, scoring, fal clips, clip validation with retries, composition, final validation, then export. See [SUBMISSION.md](SUBMISSION.md) for how it works and how to run it, [docs/PLAN.md](docs/PLAN.md) for the delivery outline and [docs/CONTRACTS.md](docs/CONTRACTS.md) for the run files, CLI commands and stage ids.
+
+
+## Development checks
+
+The repository uses pre-commit to catch secrets and basic Python lint/format problems before they are pushed. One-time setup:
+
+```bash
+python3 -m pip install --user pre-commit
+brew install gitleaks  # or install the gitleaks binary another way
+pre-commit install
+```
+
+The hooks run Gitleaks plus custom checks for common API-key shapes, Ruff, whitespace/end-of-file checks, JSON/YAML validation and a large-file guard. `.env` is gitignored; do not commit fal, Tavily or model-provider keys.

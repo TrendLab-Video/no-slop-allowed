@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recliner · 36 Labs x fal</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect width='22' height='22' rx='2' fill='%230a0a0a'/%3E%3Cpath d='M5 15.5 L11 5.5 L17 15.5' stroke='%23adff00' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<main>
+  <div id="flow"></div>
+  <div id="view"></div>
+</main>
+<footer>Recliner · local only · runs/<span id="fr"></span></footer>
+<script type="module">
+import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage, withKeyframeValidations, metrics, refImages, isBrand, refBadge, verdictHead } from '/app.js';
+
+header(runId ? 'brief' : 'runs');
+$('#fr').textContent = runId || '';
+
+const BRIEF_FIELDS = ['promote', 'objective', 'url', 'platform', 'videoType', 'domain', 'aspectRatio', 'notes'];
+// Config fields shown under the slider, and those under Advanced.
+const MAIN_CFG = [
+  ['scenes', 'Scenes', 'number'], ['clipSeconds', 'Clip seconds', 'number'], ['parallelism', 'Parallelism', 'number'],
+  ['timeBudgetMinutes', 'Time budget (min)', 'number'], ['referencesCount', 'References', 'number'], ['goalsCount', 'Goals', 'number'],
+  ['resolution', 'Resolution', ['480p', '720p', '1080p']], ['audio', 'Audio', ['true', 'false']],
+  ['videoModel', 'Video model', 'videoModels', 'wide'], ['imageModel', 'Image model', 'text', 'wide'],
+];
+const ADV_CFG = [
+  ['clipRetries', 'Clip retries', 'number'], ['finalRetries', 'Final retries', 'number'], ['passScore', 'Pass score (0–100)', 'number'],
+  ['scorer', 'Scorer', ['jev', 'haiku']], ['compositor', 'Compositor', ['blender', 'ffmpeg']], ['keyframes', 'Keyframes (still per scene first)', ['true', 'false']],
+];
+const ALL_CFG = [...MAIN_CFG, ...ADV_CFG];
+const PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts', 'YouTube', 'LinkedIn', 'X'];
+
+// ---------- No run: list runs ----------
+if (!runId) {
+  $('#flow').remove();
+  const view = $('#view');
+  view.innerHTML = `<div class="head"><div><span class="eyebrow">Recliner</span><h1>Runs</h1><p>One brief in, one finished promo video out. Each run is a folder in <code>runs/</code>.</p></div>
+    <button class="btn" id="new">New run <span class="arrow">→</span></button></div><div class="runs-list" id="list"><div class="empty">Loading…</div></div>`;
+  $('#new').onclick = async () => { const { runId } = await api('/api/runs', {}); location.href = `/?run=${encodeURIComponent(runId)}`; };
+  const { runs } = await api('/api/runs');
+  $('#list').innerHTML = runs.length ? runs.map((r) => `<a href="/?run=${encodeURIComponent(r.runId)}">
+      ${statusTag(r.state?.status)}<span>${esc(r.brief?.promote || r.brief?.objective?.slice(0, 80) || 'Untitled brief')}</span>
+      <span class="small muted">${esc(r.state?.stages?.find((s) => s.id === r.state.currentStage)?.label || '')}</span>
+      <span class="rid">${esc(r.runId)}</span></a>`).join('') : '<div class="empty">No runs yet. Click New run, or run <code>recliner new-run --sample</code>.</div>';
+} else {
+  start();
+}
+
+async function start() {
+  const diagram = flow($('#flow'));
+  const view = $('#view');
+  const first = await getRun(['state.json', 'brief.json', 'prefill.json']);
+  if (!first['state.json']) { view.innerHTML = `<div class="empty">No run <code>${esc(runId)}</code>. <a href="/">See all runs</a>.</div>`; return; }
+  diagram.render(first['state.json']);
+  let briefDone = !!first['brief.json'];
+  // One loop: diagram every second from the start, live detail once a brief exists.
+  // If the brief lands from elsewhere (headless, another tab), the form gives way to the live view.
+  poll(async () => {
+    const state = await getJson('state.json');
+    if (state) diagram.render(state);
+    if (!briefDone && state?.stages?.[0]?.status === 'done') briefDone = true;
+    if (briefDone) await live(view, state);
+  }, 1000);
+  if (!briefDone) briefForm(view, first['prefill.json'] || {}, () => { briefDone = true; }, () => briefDone);
+}
+
+// ---------- Brief form ----------
+async function briefForm(view, prefill, onStarted, isDone) {
+  const [{ presets, videoModels = [] }, keys] = await Promise.all([api('/api/effort'), api('/api/keys').catch(() => ({}))]);
+  if (isDone()) return;
+  const edited = new Set(ALL_CFG.map(([k]) => k).filter((k) => prefill[k] !== undefined));
+  let effort = Number(prefill.effort) || 1;
+  let ar = prefill.aspectRatio || '9:16';
+
+  const cfgField = ([k, label, type0, wide]) => { const type = type0 === 'videoModels' ? [...new Set([...videoModels, prefill.videoModel].filter(Boolean))] : type0; return `<div class="field ${wide || ''}" data-k="${k}"><label for="c-${k}">${esc(label)}<button type="button" class="reset" hidden>reset</button></label>
+    ${Array.isArray(type) ? `<select id="c-${k}">${type.map((o) => `<option>${o}</option>`).join('')}</select>` : `<input id="c-${k}" type="${type}" ${type === 'number' ? 'min="0" step="1"' : ''}>`}</div>`; };
+
+  view.innerHTML = `
+  <div class="head"><div><span class="eyebrow">Step 0 · Brief</span><h1>What are we promoting?</h1>
+    <p>Fill in the brief, choose how much effort to spend, then start. After Start the brief is locked and this page becomes the live run view.</p></div></div>
+  <form class="form" id="f" autocomplete="off">
+    <div class="card">
+      <div class="field"><label for="promote">What to promote</label><input id="promote" type="text" placeholder="Product, brand, event or idea"></div>
+      <div class="field"><label for="objective">Objective</label><textarea id="objective" placeholder="What should the video achieve? Who is it for?"></textarea></div>
+      <div class="field"><label for="url">Link</label><input id="url" type="url" placeholder="https://"></div>
+      <div class="row2">
+        <div class="field"><label for="platform">Platform</label><select id="platform">${PLATFORMS.map((p) => `<option>${p}</option>`).join('')}</select></div>
+        <div class="field"><label for="videoType">Video type</label><input id="videoType" type="text" list="vt" placeholder="Product teaser, explainer…">
+          <datalist id="vt"><option>Product teaser</option><option>Brand film</option><option>Explainer</option><option>Launch announcement</option><option>UGC-style ad</option><option>Event promo</option></datalist></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="domain">Domain</label><input id="domain" type="text" placeholder="Music hardware, sportswear…"></div>
+        <div class="field"><label>Aspect ratio</label><div class="seg" id="ar">${['9:16', '16:9', '1:1'].map((a) => `<button type="button" data-v="${a}">${a}</button>`).join('')}</div></div>
+      </div>
+      <div class="field"><label for="notes">Notes, assets, links</label><textarea id="notes" style="min-height:70px" placeholder="Anything else the system should know"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="effort">
+        <div class="effort-top"><span class="lbl">Effort</span><span class="effort-val" id="ev"></span></div>
+        <input type="range" id="effort" min="1" max="5" step="1">
+        <div class="ticks" id="ticks">${[1, 2, 3, 4, 5].map((i) => `<span data-v="${i}">${esc(presets[i].label)}</span>`).join('')}</div>
+      </div>
+      <div class="cfg">${MAIN_CFG.map(cfgField).join('')}</div>
+      <details class="adv" id="adv">
+        <summary>Advanced</summary>
+        <div class="cfg">${ADV_CFG.map(cfgField).join('')}
+          <div class="field wide"><label for="k-fal">fal API key ${keys.fal ? '<span class="tag ok">set</span>' : '<span class="tag bad">missing</span>'}</label><input id="k-fal" type="password" placeholder="${keys.fal ? 'Leave blank to keep the saved key' : 'FAL_KEY'}"></div>
+          <div class="field wide"><label for="k-jev">Jev API key ${keys.jev ? '<span class="tag ok">set</span>' : '<span class="tag">optional</span>'}</label><input id="k-jev" type="password" placeholder="${keys.jev ? 'Leave blank to keep the saved key' : 'JEV_API_KEY (falls back to Haiku scoring)'}"></div>
+          <div class="small muted wide" style="grid-column:1/-1">Keys are written to the local <code>.env</code> by the server and never shown again or stored in the run folder.</div>
+        </div>
+      </details>
+      <div class="start"><button class="btn big" id="go" type="submit">Start <span class="arrow">→</span></button><span class="falst" id="falst"><span class="tag">fal · checking…</span></span><span class="err" id="err"></span></div>
+    </div>
+  </form>`;
+
+  for (const k of BRIEF_FIELDS) if (k !== 'aspectRatio' && prefill[k] != null && $(`#${k}`)) $(`#${k}`).value = prefill[k];
+  if (prefill.platform && !PLATFORMS.includes(prefill.platform)) $('#platform').insertAdjacentHTML('afterbegin', `<option selected>${esc(prefill.platform)}</option>`);
+
+  const setAr = (v) => { ar = v; view.querySelectorAll('#ar button').forEach((b) => b.classList.toggle('on', b.dataset.v === v)); };
+  view.querySelectorAll('#ar button').forEach((b) => (b.onclick = () => setAr(b.dataset.v)));
+  setAr(ar);
+
+  const setVal = (k, v) => { const el = $(`#c-${k}`); if (el) el.value = String(v); };
+  const markEdited = (k) => {
+    const f = view.querySelector(`.field[data-k="${k}"]`);
+    f.classList.toggle('edited', edited.has(k));
+    f.querySelector('.reset').hidden = !edited.has(k);
+  };
+  const applyEffort = (e) => {
+    effort = e;
+    $('#effort').value = e;
+    $('#ev').innerHTML = `${esc(presets[e].label)}<small>${e} / 5 · ~${presets[e].timeBudgetMinutes} min</small>`;
+    view.querySelectorAll('#ticks span').forEach((s) => s.classList.toggle('on', Number(s.dataset.v) === e));
+    for (const [k] of ALL_CFG) if (!edited.has(k)) setVal(k, presets[e][k]);
+  };
+  for (const [k] of ALL_CFG) {
+    if (prefill[k] !== undefined) setVal(k, prefill[k]);
+    const el = $(`#c-${k}`);
+    el.addEventListener('input', () => { edited.add(k); markEdited(k); });
+    view.querySelector(`.field[data-k="${k}"] .reset`).onclick = () => { edited.delete(k); markEdited(k); setVal(k, presets[effort][k]); };
+    markEdited(k);
+  }
+  if (ADV_CFG.some(([k]) => edited.has(k))) $('#adv').open = true;
+  $('#effort').addEventListener('input', (e) => applyEffort(Number(e.target.value)));
+  view.querySelectorAll('#ticks span').forEach((s) => (s.onclick = () => applyEffort(Number(s.dataset.v))));
+  applyEffort(effort);
+  falStatus();
+
+  return new Promise((resolve) => {
+    $('#f').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const brief = Object.fromEntries(BRIEF_FIELDS.filter((k) => k !== 'aspectRatio').map((k) => [k, $(`#${k}`).value]));
+      brief.aspectRatio = ar;
+      if (!brief.promote.trim() && !brief.objective.trim()) { $('#err').textContent = 'Say what to promote or the objective first.'; return; }
+      const config = { effort };
+      for (const [k] of ALL_CFG) config[k] = $(`#c-${k}`).value;
+      const keysBody = { fal: $('#k-fal').value, jev: $('#k-jev').value };
+      $('#go').disabled = true; $('#err').textContent = '';
+      view.querySelectorAll('input, select, textarea, .seg button, .reset').forEach((el) => (el.disabled = true));
+      try {
+        await api(`/api/runs/${encodeURIComponent(runId)}/brief`, { brief, config, keys: keysBody });
+        $('#k-fal').value = ''; $('#k-jev').value = '';
+        onStarted();
+        resolve();
+      } catch (e) {
+        $('#err').textContent = e.message;
+        if (/already/.test(e.message)) { onStarted(); resolve(); return; } // someone else started it: show the live view
+        $('#go').disabled = false;
+        view.querySelectorAll('input, select, textarea, .seg button, .reset').forEach((el) => (el.disabled = false));
+      }
+    });
+  });
+}
+
+// fal status before Start: key present / accepted / rejected (reason). Never shows the key.
+async function falStatus(fresh) {
+  const el = $('#falst');
+  if (!el) return;
+  try {
+    const r = await api(`/api/preflight${fresh ? '?fresh=1' : ''}`);
+    const cls = r.low ? 'bad' : { accepted: 'ok', present: 'info', missing: 'bad', rejected: 'bad' }[r.status] || '';
+    let label = { accepted: 'fal · ready', present: 'fal · key present', missing: 'fal · no key', rejected: 'fal · rejected' }[r.status] || `fal · ${r.status}`;
+    if (r.balance != null) label += ` · $${r.balance.toFixed(2)}`;
+    // At or below the floor (RECLINER_MIN_BALANCE, enforced in lib/fal.mjs) every paid fal call is refused.
+    if (r.low) { r.status = 'low'; r.reason = `${r.reason || `Balance is at or below the $${r.floor} floor`}: generation will be refused. Top up at fal.ai or lower RECLINER_MIN_BALANCE`; }
+    el.innerHTML = `<span class="tag ${cls}" title="${esc(r.reason || '')}">${esc(label)}</span>${r.status === 'accepted' || r.status === 'present' ? '' : `<span class="small" style="color:#ff6b85">${esc(r.reason || '')}${r.status === 'missing' ? ' · add it under Advanced' : ''}</span>`}`;
+  } catch (e) {
+    el.innerHTML = `<span class="tag">fal · status unknown</span>`;
+  }
+}
+
+// ---------- Live run view ----------
+const LIVE_FILES = ['brief.json', 'config.json', 'references.json', 'goals.json', 'scores.json', 'plan.json', 'clips.json', 'result.json'];
+let liveData = null;
+let stage = null;
+async function live(view, state) {
+  // Every run file each second; the media stage patches in place, the text detail re-renders on change.
+  if (!stage) {
+    view.innerHTML = '<div id="stage"></div><div id="detail"></div>';
+    stage = mediaStage($('#stage'));
+  }
+  liveData = await getRun(LIVE_FILES);
+  await withKeyframeValidations(liveData['clips.json']);
+  const d = { ...liveData, state };
+  stage.render(d);
+  if (changed('live', { ...liveData, status: state?.status, cur: state?.currentStage })) $('#detail').innerHTML = renderLive(d);
+}
+
+function renderLive(d) {
+  const b = d['brief.json'] || {}, c = d['config.json'] || {}, refs = d['references.json'], goals = d['goals.json'], scores = d['scores.json'], plan = d['plan.json'], clips = d['clips.json'], result = d['result.json'];
+  const q = `?run=${encodeURIComponent(runId)}`;
+  const ar = plan?.aspectRatio || b.aspectRatio || '9:16';
+  const selGoal = plan || goals?.goals?.find((g) => g.id === scores?.selectedGoalId);
+  const conf = (id) => scores?.scores?.find((s) => s.goalId === id)?.confidence;
+  const sel = result?.results?.find((r) => r.id === result.selectedId);
+  const allAttempts = (clips?.scenes || []).flatMap((s) => s.attempts.map((a) => ({ ...a, sceneId: s.sceneId, accepted: s.acceptedAttempt === a.attempt })));
+
+  return `
+  <div class="live">
+    <div class="grid">
+      <div class="card"><div class="sh" style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><h2>Brief</h2><span class="tag">${esc(b.source || '')}</span><span class="tag" style="margin-left:auto">locked</span></div>
+        <dl class="kv">${[['Platform', b.platform], ['Type', b.videoType], ['Domain', b.domain], ['Aspect', b.aspectRatio], ['Link', b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.url)}</a>` : ''], ['Notes', esc(b.notes)]]
+          .filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${k === 'Link' || k === 'Notes' ? v : esc(v)}</dd>`).join('')}</dl></div>
+      <div class="card"><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><h2>Config</h2><span class="tag info">effort ${esc(c.effort ?? '–')}</span></div>
+        <div class="chips">${Object.entries(c).filter(([k]) => k !== 'effort').map(([k, v]) => `<span class="chip"><b>${esc(k)}</b>${esc(v)}</span>`).join('')}</div></div>
+      <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>References</h2><span class="eyebrow" style="margin-left:auto">${refs ? `${refs.references.length} found` : 'pending'}</span></div>
+        ${refs ? `<div class="refcards">${refs.references.map((r) => { const imgs = refImages(r); return `<div class="refcard ${isBrand(r) ? 'isbrand' : ''}">
+            <div class="rc-img">${imgs[0] ? `<img src="${fileUrl(imgs[0])}" alt="" loading="lazy">` : `<div class="rc-none">${esc(r.platform || 'no image')}</div>`}<span class="badge">${refBadge(r)}</span>${imgs.length > 1 ? `<span class="badge2"><span class="tag">${imgs.length} frames</span></span>` : ''}</div>
+            <div class="rc-body"><div class="rc-t">${esc(r.title)}</div><div class="metrics">${r.platform ? `<span>${esc(r.platform)}</span>` : ''}${metrics(r.metrics, ['views', 'likes'])}</div></div></div>`; }).join('')}</div>`
+          : '<div class="empty">Searching for proven references…</div>'}</div>
+    </div>
+    <div class="grid">
+      <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Selected goal</h2><span class="eyebrow" style="margin-left:auto">${goals ? `${goals.goals.length} goals${scores ? ` · scored by ${esc(scores.scorer)}` : ''}` : 'pending'}</span></div>
+        ${selGoal ? `<h3>${esc(selGoal.title)}</h3><p class="small" style="margin:6px 0 10px">${esc(selGoal.description)}</p>
+          <div class="score"><span>confidence</span>${scoreBar((conf(selGoal.id) ?? plan?.confidence ?? 0) * 100, 100, true)}<span>${Math.round((conf(selGoal.id) ?? plan?.confidence ?? 0) * 100)}%</span></div>
+          <ol class="scenes">${(selGoal.scenes || []).map((s) => `<li><span>${esc(s.description)}</span><span class="d">${esc(s.durationSeconds)}s</span></li>`).join('')}</ol>`
+          : goals ? `<div class="chips">${goals.goals.map((g) => `<span class="chip">${esc(g.title)}${conf(g.id) != null ? ` · ${Math.round(conf(g.id) * 100)}%` : ''}</span>`).join('')}</div><div class="empty" style="margin-top:10px">Scoring goals against the brief…</div>`
+          : '<div class="empty">Writing candidate goals…</div>'}</div>
+      <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Result</h2><span class="eyebrow" style="margin-left:auto">${result ? `${result.results.length} composition${result.results.length === 1 ? '' : 's'}` : 'pending'}</span></div>
+        ${sel ? `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${video(fileUrl(sel.file), { ar, controls: false, autoplay: true, poster: sel.thumbnail ? fileUrl(sel.thumbnail) : '' })}
+            <div>${verdictHead(sel.validation, c.passScore)}${sel.validation?.reason ? `<p class="small vquote"><span class="vlabel">Validator saw</span>${esc(sel.validation.reason)}</p>` : ''}<a class="btn" href="/result.html${q}">Watch the result <span class="arrow">→</span></a></div></div>`
+          : '<div class="empty">The composed video appears here.</div>'}</div>
+    </div>
+  </div>`;
+}
+</script>
+</body>
+</html>

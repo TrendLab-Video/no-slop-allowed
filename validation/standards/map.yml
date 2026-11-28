@@ -1,0 +1,22 @@
+{
+  "artifact_type": "validation_standards",
+  "version": "0.1.0",
+  "domain": "map",
+  "standards": [
+    {
+      "id": "map.spatial_logic_clear",
+      "severity": "major",
+      "description": "The spatial map has legible zones, paths or transformations that support the narrative."
+    },
+    {
+      "id": "map.labels_legible",
+      "severity": "major",
+      "description": "Map labels or explanatory text are readable, unobstructed and inside safe areas."
+    },
+    {
+      "id": "map.metaphor_brief_fit",
+      "severity": "major",
+      "description": "The map or spatial metaphor helps explain the brief rather than acting as decoration."
+    }
+  ]
+}
