@@ -13,6 +13,12 @@ You are the orchestrator. You run the stages below in order, hand each stage's s
 
 **After the brief, never ask the user anything.** No questions, no confirmations, no "should I". When something is unclear, pick the sensible default, note it in the trace, and continue. A run always ends with a video and `recliner export`, unless fal cannot be used (missing `FAL_KEY`, or fal answers 401/403: bad key, locked account, exhausted balance); then fail the stage with fal's message and stop.
 
+## Prerequisites
+
+- Node 22 and ffmpeg/ffprobe on PATH. Keys in `.env` at the repo root: `FAL_KEY` (required), `JEV_API_KEY` (optional).
+- > **Recommendation:** `yt-dlp` on PATH. With it, `fetch-ref` captures real frames, duration and cut counts from reference videos; without it, each reference gets one image.
+- > **Recommendation:** Blender, the preferred compositor (ffmpeg is the fallback).
+
 ## fal skills
 
 fal publishes agent skills for video craft (built into the fal Agent; https://fal.ai/docs/documentation/agent/skills). **If a fal skill below is available in your environment, load and follow it for that stage, and tell the stage's sub-agent to load it too; otherwise the step file's condensed guidance applies.** Name any fal skill you used in the stage's trace step.
