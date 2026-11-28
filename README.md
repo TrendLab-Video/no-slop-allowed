@@ -60,4 +60,8 @@ See [`traces.example.json`](traces.example.json) for a minimal shape. Add any ex
 
 If a video file is too large for GitHub (>100 MB), keep `traces.json` in the repo and link the video in `SUBMISSION.md`.
 
+## Finalist presentations
+
+The top eight teams will be invited to present their work. Please prepare a two-minute presentation in advance so you are ready if your team is selected.
+
 Schedule, judging criteria, prizes, team setup and fal credits are on the hackathon portal.
