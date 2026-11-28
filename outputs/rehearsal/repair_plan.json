@@ -1,0 +1,59 @@
+{
+  "artifact_type": "repair_plan",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T14:36:14Z",
+  "source_brief": "runs/20261128-142247-rehearsal/brief.json",
+  "based_on_validation_report": "runs/20261128-142247-rehearsal/compositions/2/validation_report.json",
+  "actions": [
+    {
+      "id": "repair-001",
+      "finding_id": "finding-duration-out-of-range",
+      "owner_skill": "scene-planner",
+      "action_type": "adjust_timing",
+      "target": "scene_plan.duration_seconds",
+      "parameters": {
+        "recommendation": "Adjust scene timing or edit length so the final piece fits the required duration range.",
+        "evidence": [
+          "runs/20261128-142247-rehearsal/compositions/2/final.mp4"
+        ]
+      },
+      "priority": 1,
+      "expected_effect": "Adjust shot timing or edit length."
+    },
+    {
+      "id": "repair-002",
+      "finding_id": "finding-audio-silent",
+      "owner_skill": "blender-render-orchestrator",
+      "action_type": "adjust_audio",
+      "target": "audio.mix",
+      "parameters": {
+        "recommendation": "Raise the music/voiceover level or verify the correct audio mix was included.",
+        "evidence": [
+          "runs/20261128-142247-rehearsal/compositions/2/final.mp4"
+        ]
+      },
+      "priority": 2,
+      "expected_effect": "Raise or repair the audio mix."
+    },
+    {
+      "id": "repair-003",
+      "finding_id": "finding-resolution-too-low",
+      "owner_skill": "validation-controller",
+      "action_type": "replace_asset",
+      "target": "render.profile",
+      "parameters": {
+        "recommendation": "Render at a higher resolution or verify the intended output format.",
+        "evidence": [
+          "runs/20261128-142247-rehearsal/compositions/2/final.mp4"
+        ]
+      },
+      "priority": 3,
+      "expected_effect": "Resolve the validation finding."
+    }
+  ],
+  "max_actions": 3,
+  "budget": {
+    "max_additional_render_seconds": 120,
+    "max_iterations": 1
+  }
+}

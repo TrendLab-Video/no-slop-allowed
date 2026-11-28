@@ -1,0 +1,1333 @@
+{
+  "brief": "runs/20261128-142247-rehearsal/brief.json",
+  "output_video": "outputs/rehearsal/final.mp4",
+  "started_at": "2026-11-28T14:02:00.000Z",
+  "finished_at": "2026-11-28T14:39:07.434Z",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "brief",
+      "stage": "brief",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "Brief page · effort 2"
+      },
+      "duration_ms": 8000,
+      "at": "2026-11-28T14:02:08.000Z"
+    },
+    {
+      "id": "step-2",
+      "name": "references",
+      "stage": "references",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "3 references, 6 screenshots"
+      },
+      "duration_ms": 32000,
+      "at": "2026-11-28T14:02:40.000Z"
+    },
+    {
+      "id": "step-3",
+      "name": "goals",
+      "stage": "goals",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "5 goals written"
+      },
+      "duration_ms": 22000,
+      "at": "2026-11-28T14:03:02.000Z"
+    },
+    {
+      "id": "step-4",
+      "name": "scoring",
+      "stage": "scoring",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "Selected \"Pocket studio, one take\" (0.86)"
+      },
+      "duration_ms": 8000,
+      "at": "2026-11-28T14:03:10.000Z"
+    },
+    {
+      "id": "step-5",
+      "name": "clips",
+      "stage": "clips",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "3 scenes, 5 attempts"
+      },
+      "duration_ms": 70000,
+      "at": "2026-11-28T14:04:20.000Z"
+    },
+    {
+      "id": "step-6",
+      "name": "clip_validation",
+      "stage": "clip_validation",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "2 retries with steering, all scenes accepted"
+      },
+      "duration_ms": 55000,
+      "at": "2026-11-28T14:04:30.000Z"
+    },
+    {
+      "id": "step-7",
+      "name": "composition",
+      "stage": "composition",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "2 compositions (ffmpeg)"
+      },
+      "duration_ms": 25000,
+      "at": "2026-11-28T14:04:55.000Z"
+    },
+    {
+      "id": "step-8",
+      "name": "final_validation",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "Best: composition 2, score 84"
+      },
+      "duration_ms": 20000,
+      "at": "2026-11-28T14:05:15.000Z"
+    },
+    {
+      "id": "step-9",
+      "name": "output",
+      "stage": "output",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "note": "Exported to outputs/01-ep-133/"
+      },
+      "duration_ms": 3000,
+      "at": "2026-11-28T14:05:18.000Z"
+    },
+    {
+      "id": "step-10",
+      "name": "keyframe:s1#3",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "inputs": {
+        "sceneId": "s1",
+        "attempt": 3,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 3,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light. Style: Cinematic macro, film grain. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light. Style: Cinematic macro, film grain. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a22289-c167-77e0-86c9-0faca06b8ba5",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab449fa/b5v5fSJZ2-H7Apyr8AvAQ.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.7989997863769531
+            },
+            "error": null,
+            "duration_ms": 3134
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s1/3.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3134,
+      "at": "2026-11-28T14:23:06.847Z"
+    },
+    {
+      "id": "step-11",
+      "name": "keyframe:s3#3",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "inputs": {
+        "sceneId": "s3",
+        "attempt": 3,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 3,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections. Style: Cinematic macro, film grain. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections. Style: Cinematic macro, film grain. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a22289-c167-77e0-86c9-0fbd21820ede",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab449fa/0MXSAHivUYgMmpgU_Tvbm.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.6789999008178711
+            },
+            "error": null,
+            "duration_ms": 3024
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s3/3.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3024,
+      "at": "2026-11-28T14:23:07.017Z"
+    },
+    {
+      "id": "step-12",
+      "name": "keyframe:s2#2",
+      "stage": "clips",
+      "model": "fal-ai/flux/schnell",
+      "inputs": {
+        "sceneId": "s2",
+        "attempt": 2,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 3,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "first-person view on a train, small grey hardware sampler resting on knee, city lights streaking past window. Style: Cinematic macro, film grain. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/flux/schnell",
+          "arguments": {
+            "prompt": "first-person view on a train, small grey hardware sampler resting on knee, city lights streaking past window. Style: Cinematic macro, film grain. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. No captions, no garbled or fake text, no watermarks.",
+            "image_size": "portrait_16_9",
+            "num_images": 1,
+            "output_format": "png",
+            "enable_safety_checker": true
+          },
+          "result": {
+            "requestId": "01a22289-c166-7f12-b44b-15541e47864c",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab449fa/iiGgmbavuYC3aucqSrffh.png",
+            "cost": null,
+            "metrics": {
+              "inference_time": 0.7850000858306885
+            },
+            "error": null,
+            "duration_ms": 3131
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s2/2.keyframe.png",
+        "productImages": null,
+        "error": null,
+        "cost": null
+      },
+      "duration_ms": 3131,
+      "at": "2026-11-28T14:23:07.169Z"
+    },
+    {
+      "id": "step-13",
+      "name": "audio:music",
+      "stage": "composition",
+      "model": "fal-ai/stable-audio-25/text-to-audio",
+      "inputs": {
+        "prompt": "Lo-fi hip hop beat built from found sounds, 90 bpm",
+        "seconds_total": 11
+      },
+      "prompt": "Lo-fi hip hop beat built from found sounds, 90 bpm",
+      "tool_calls": [
+        {
+          "tool": "fal:fal-ai/stable-audio-25/text-to-audio",
+          "arguments": {
+            "prompt": "Lo-fi hip hop beat built from found sounds, 90 bpm",
+            "seconds_total": 11
+          },
+          "result": {
+            "requestId": "01a22289-c104-7d30-9dc3-0842b7266044",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab449fa/0NMGcsf2osq1C17_kUwZB_e9xaaJ8B.wav",
+            "cost": null,
+            "metrics": {
+              "inference_time": 3.6059999465942383
+            },
+            "error": null,
+            "duration_ms": 5441
+          }
+        }
+      ],
+      "outputs": {
+        "status": "ok",
+        "url": "https://v3b.fal.media/files/b/0ab449fa/0NMGcsf2osq1C17_kUwZB_e9xaaJ8B.wav",
+        "error": null
+      },
+      "duration_ms": 5441,
+      "at": "2026-11-28T14:23:09.304Z"
+    },
+    {
+      "id": "step-14",
+      "name": "generate-clip:s3#3",
+      "stage": "clips",
+      "model": "bytedance/seedance-2.0/fast/image-to-video",
+      "inputs": {
+        "sceneId": "s3",
+        "attempt": 3,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 3,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:bytedance/seedance-2.0/fast/image-to-video",
+          "arguments": {
+            "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "aspect_ratio": "9:16",
+            "duration": "4",
+            "resolution": "720p",
+            "generate_audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab449fa/0MXSAHivUYgMmpgU_Tvbm.png"
+          },
+          "result": {
+            "requestId": "01a22289-d188-76c1-868e-df62f0090780",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44a0b/DuzInRgb5DyasWYkYsfL4_video.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 173.7039999961853
+            },
+            "error": null,
+            "duration_ms": 174883
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s3/3.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/s3/3.keyframe.png",
+        "keyframeReused": false,
+        "error": null,
+        "durationSeconds": 4.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 174883,
+      "at": "2026-11-28T14:26:03.844Z"
+    },
+    {
+      "id": "step-15",
+      "name": "generate-clip:s2#2",
+      "stage": "clips",
+      "model": "bytedance/seedance-2.0/fast/image-to-video",
+      "inputs": {
+        "sceneId": "s2",
+        "attempt": 2,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 3,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "first-person view on a train, small grey hardware sampler resting on knee, city lights streaking past window. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:bytedance/seedance-2.0/fast/image-to-video",
+          "arguments": {
+            "prompt": "first-person view on a train, small grey hardware sampler resting on knee, city lights streaking past window. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "aspect_ratio": "9:16",
+            "duration": "4",
+            "resolution": "720p",
+            "generate_audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab449fa/iiGgmbavuYC3aucqSrffh.png"
+          },
+          "result": {
+            "requestId": "01a22289-d21d-7de2-87e3-ec2b79c23294",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44a0d/ja3HaTapsx--IBxHRWfHg_video.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 192.3439998626709
+            },
+            "error": null,
+            "duration_ms": 194134
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s2/2.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/s2/2.keyframe.png",
+        "keyframeReused": false,
+        "error": null,
+        "durationSeconds": 4.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 194134,
+      "at": "2026-11-28T14:26:23.292Z"
+    },
+    {
+      "id": "step-16",
+      "name": "generate-clip:s1#3",
+      "stage": "clips",
+      "model": "bytedance/seedance-2.0/fast/image-to-video",
+      "inputs": {
+        "sceneId": "s1",
+        "attempt": 3,
+        "steering": null,
+        "aspectRatio": "9:16",
+        "seconds": 3,
+        "resolution": "720p",
+        "keyframesOnly": false
+      },
+      "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+      "tool_calls": [
+        {
+          "tool": "fal:bytedance/seedance-2.0/fast/image-to-video",
+          "arguments": {
+            "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light. Keep the subject, framing and look of the start frame; smooth, natural motion. Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.",
+            "aspect_ratio": "9:16",
+            "duration": "4",
+            "resolution": "720p",
+            "generate_audio": false,
+            "image_url": "https://v3b.fal.media/files/b/0ab449fa/b5v5fSJZ2-H7Apyr8AvAQ.png"
+          },
+          "result": {
+            "requestId": "01a22289-d188-7403-aaf2-ff4c8bc04757",
+            "status": "ok",
+            "url": "https://v3b.fal.media/files/b/0ab44a0f/FyDnPIscWVf9CCbPc4K3S_video.mp4",
+            "cost": null,
+            "metrics": {
+              "inference_time": 205.55599999427795
+            },
+            "error": null,
+            "duration_ms": 206414
+          }
+        }
+      ],
+      "outputs": {
+        "file": "clips/s1/3.mp4",
+        "status": "generated",
+        "mode": "image-to-video",
+        "keyframe": "clips/s1/3.keyframe.png",
+        "keyframeReused": false,
+        "error": null,
+        "durationSeconds": 4.04,
+        "cost": null,
+        "notes": []
+      },
+      "duration_ms": 206414,
+      "at": "2026-11-28T14:26:35.564Z"
+    },
+    {
+      "id": "step-17",
+      "name": "generate-clips:summary",
+      "stage": "clips",
+      "model": "bytedance/seedance-2.0/fast/text-to-video",
+      "inputs": {
+        "scene": null,
+        "steering": null,
+        "parallelism": 3,
+        "keyframes": true
+      },
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "model": "bytedance/seedance-2.0/fast/text-to-video",
+        "imageModel": "fal-ai/flux/schnell",
+        "productImages": [],
+        "keyframesOnly": false,
+        "scenes": 3,
+        "produced": 3,
+        "failed": 0,
+        "stopped": null,
+        "clipTimeoutSeconds": 240,
+        "balanceBefore": 141.0891304667,
+        "balanceAfter": 139.9023704667,
+        "floor": 100,
+        "spent": 1.1868,
+        "seconds": 216,
+        "note": "spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account"
+      },
+      "duration_ms": 215918,
+      "at": "2026-11-28T14:26:36.840Z"
+    },
+    {
+      "id": "step-18",
+      "name": "validate-output:c2",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {
+        "file": "compositions/2/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "runs/20261128-142247-rehearsal/brief.json",
+        "targetDurationSeconds": 9
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2 --video /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/final.mp4 --write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/validation_report.json --repair-write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/repair_plan.json --contact-sheet /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/contact-sheet.png --video-only --source-brief runs/20261128-142247-rehearsal/brief.json --duration-min 8 --duration-max 10"
+          },
+          "result": {
+            "ok": true,
+            "status": "fail"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "fail",
+        "validationReport": "compositions/2/validation_report.json",
+        "repairPlan": "compositions/2/repair_plan.json",
+        "contactSheet": "compositions/2/contact-sheet.png",
+        "counts": {
+          "blockers": 1,
+          "major": 2,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 1425,
+      "at": "2026-11-28T14:27:03.364Z"
+    },
+    {
+      "id": "step-19",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "c2",
+        "score": 84,
+        "passed": true,
+        "ranking": [
+          [
+            "c2",
+            84
+          ],
+          [
+            "c1",
+            68
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:27:03.732Z",
+      "decision": "selected c2",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-20",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "inputs": {
+        "selectedId": "c2",
+        "file": "compositions/2/final.mp4",
+        "score": 84
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/2/final.mp4",
+            "to": "outputs/rehearsal/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/rehearsal/final.mp4",
+        "traces": "outputs/rehearsal/traces.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:27:04.264Z"
+    },
+    {
+      "id": "step-21",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/rehearsal/final.mp4",
+        "finished_at": "2026-11-28T14:27:04.302Z",
+        "run_seconds": 1504
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:27:04.467Z"
+    },
+    {
+      "id": "step-22",
+      "name": "accept-clips",
+      "stage": "clip_validation",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "scenes": [
+          {
+            "sceneId": "s1",
+            "acceptedKeyframe": 2,
+            "keyframeScore": 78,
+            "keyframePassed": true,
+            "acceptedAttempt": 2,
+            "score": 81,
+            "passed": true,
+            "attempts": 3
+          },
+          {
+            "sceneId": "s2",
+            "acceptedKeyframe": 2,
+            "keyframeScore": null,
+            "keyframePassed": false,
+            "acceptedAttempt": 1,
+            "score": 76,
+            "passed": true,
+            "attempts": 2
+          },
+          {
+            "sceneId": "s3",
+            "acceptedKeyframe": 3,
+            "keyframeScore": null,
+            "keyframePassed": false,
+            "acceptedAttempt": 2,
+            "score": 72,
+            "passed": true,
+            "attempts": 3
+          }
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:30:03.058Z",
+      "decision": "best-scoring attempt per scene"
+    },
+    {
+      "id": "step-23",
+      "name": "validate-output:c2",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {
+        "file": "compositions/2/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "runs/20261128-142247-rehearsal/brief.json",
+        "targetDurationSeconds": 9
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2 --video /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/final.mp4 --write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/validation_report.json --repair-write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/repair_plan.json --contact-sheet /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/contact-sheet.png --video-only --source-brief runs/20261128-142247-rehearsal/brief.json --duration-min 8 --duration-max 10"
+          },
+          "result": {
+            "ok": true,
+            "status": "fail"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "fail",
+        "validationReport": "compositions/2/validation_report.json",
+        "repairPlan": "compositions/2/repair_plan.json",
+        "contactSheet": "compositions/2/contact-sheet.png",
+        "counts": {
+          "blockers": 1,
+          "major": 2,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 4610,
+      "at": "2026-11-28T14:30:58.087Z"
+    },
+    {
+      "id": "step-24",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "c2",
+        "score": 84,
+        "passed": true,
+        "ranking": [
+          [
+            "c2",
+            84
+          ],
+          [
+            "c1",
+            68
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:30:58.663Z",
+      "decision": "selected c2",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-25",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "inputs": {
+        "selectedId": "c2",
+        "file": "compositions/2/final.mp4",
+        "score": 84
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/2/final.mp4",
+            "to": "outputs/rehearsal/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/rehearsal/final.mp4",
+        "traces": "outputs/rehearsal/traces.json",
+        "creativeRationale": "outputs/rehearsal/creative_rationale.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:30:59.154Z"
+    },
+    {
+      "id": "step-26",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/rehearsal/final.mp4",
+        "finished_at": "2026-11-28T14:30:59.174Z",
+        "run_seconds": 1739
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:30:59.265Z"
+    },
+    {
+      "id": "step-27",
+      "name": "validate-output:c2",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {
+        "file": "compositions/2/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "runs/20261128-142247-rehearsal/brief.json",
+        "targetDurationSeconds": 9
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2 --video /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/final.mp4 --write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/validation_report.json --repair-write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/repair_plan.json --contact-sheet /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/contact-sheet.png --video-only --source-brief runs/20261128-142247-rehearsal/brief.json --duration-min 8 --duration-max 10"
+          },
+          "result": {
+            "ok": true,
+            "status": "fail"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "fail",
+        "validationReport": "compositions/2/validation_report.json",
+        "repairPlan": "compositions/2/repair_plan.json",
+        "contactSheet": "compositions/2/contact-sheet.png",
+        "counts": {
+          "blockers": 1,
+          "major": 2,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 1055,
+      "at": "2026-11-28T14:33:43.250Z"
+    },
+    {
+      "id": "step-28",
+      "name": "validate-output:c2",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {
+        "file": "compositions/2/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "runs/20261128-142247-rehearsal/brief.json",
+        "targetDurationSeconds": 9
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2 --video /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/final.mp4 --write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/validation_report.json --repair-write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/repair_plan.json --contact-sheet /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/contact-sheet.png --video-only --source-brief runs/20261128-142247-rehearsal/brief.json --duration-min 8 --duration-max 10"
+          },
+          "result": {
+            "ok": true,
+            "status": "fail"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "fail",
+        "validationReport": "compositions/2/validation_report.json",
+        "repairPlan": "compositions/2/repair_plan.json",
+        "contactSheet": "compositions/2/contact-sheet.png",
+        "counts": {
+          "blockers": 1,
+          "major": 2,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 903,
+      "at": "2026-11-28T14:35:58.619Z"
+    },
+    {
+      "id": "step-29",
+      "name": "validate-output:c2",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {
+        "file": "compositions/2/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "runs/20261128-142247-rehearsal/brief.json",
+        "targetDurationSeconds": 9
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2 --video /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/final.mp4 --write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/validation_report.json --repair-write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/repair_plan.json --contact-sheet /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/2/contact-sheet.png --video-only --source-brief runs/20261128-142247-rehearsal/brief.json --duration-min 8 --duration-max 10"
+          },
+          "result": {
+            "ok": true,
+            "status": "fail"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "fail",
+        "validationReport": "compositions/2/validation_report.json",
+        "repairPlan": "compositions/2/repair_plan.json",
+        "contactSheet": "compositions/2/contact-sheet.png",
+        "counts": {
+          "blockers": 1,
+          "major": 2,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 758,
+      "at": "2026-11-28T14:36:14.161Z"
+    },
+    {
+      "id": "step-30",
+      "name": "compose:comp-3",
+      "stage": "composition",
+      "model": null,
+      "inputs": {
+        "clips": [
+          {
+            "sceneId": "s1",
+            "attempt": 2,
+            "file": "clips/s1/2.mp4"
+          },
+          {
+            "sceneId": "s2",
+            "attempt": 1,
+            "file": "clips/s2/1.mp4"
+          },
+          {
+            "sceneId": "s3",
+            "attempt": 2,
+            "file": "clips/s3/2.mp4"
+          }
+        ],
+        "aspectRatio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "transitions": "cut",
+        "endCardDissolve": 0.4,
+        "onScreenText": [
+          "tap.",
+          "record.",
+          "make the beat.",
+          ""
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "ffmpeg",
+          "arguments": {
+            "command": "ffmpeg -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/work/seg_0.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/work/seg_1.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/work/seg_2.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/work/seg_3.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/bed.wav -filter_complex [0:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s0];[1:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s1];[2:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s2];[3:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s3];[s0][s1]concat=n=2:v=1:a=0,settb=1/30000,fps=30[x1];[x1][s2]concat=n=2:v=1:a=0,settb=1/30000,fps=30[x2];[x2][s3]xfade=transition=fade:duration=0.4:offset=8.567,settb=1/30000,fps=30[x3];[x3]fade=in:st=0:d=0.25,fade=out:st=10.000:d=0.5,format=yuv420p[v];[4:a]atrim=0:10.500,apad=whole_dur=10.500,aresample=48000[a] -map [v] -map [a] -c:a aac -b:a 192k -ar 48000 -ac 2 -c:v libx264 -preset medium -crf 19 -profile:v high -level 4.1 -pix_fmt yuv420p -r 30 -movflags +faststart -t 10.500 /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/final.mp4"
+          },
+          "result": {
+            "file": "compositions/3/final.mp4"
+          }
+        }
+      ],
+      "outputs": {
+        "file": "compositions/3/final.mp4",
+        "thumbnail": "compositions/3/thumb.jpg",
+        "durationSeconds": 10.5,
+        "compositor": "ffmpeg",
+        "endCard": {
+          "headline": "EP-133 K.O",
+          "subline": "II Make the beat.",
+          "seconds": 1.5
+        },
+        "audio": {
+          "present": true,
+          "bed": "compositions/3/bed.wav",
+          "lufs": -14.7,
+          "truePeak": -3.5,
+          "audible": true
+        },
+        "notes": [
+          "blender failed, fell back to ffmpeg: Blender not found locally or remotely"
+        ],
+        "audio_ms": 601
+      },
+      "duration_ms": 7754,
+      "at": "2026-11-28T14:37:50.061Z"
+    },
+    {
+      "id": "step-31",
+      "name": "validate-output:comp-3",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {
+        "file": "compositions/3/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "runs/20261128-142247-rehearsal/brief.json",
+        "targetDurationSeconds": 9
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3 --video /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/final.mp4 --write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/validation_report.json --repair-write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/repair_plan.json --contact-sheet /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/3/contact-sheet.png --video-only --source-brief runs/20261128-142247-rehearsal/brief.json --duration-min 8 --duration-max 10"
+          },
+          "result": {
+            "ok": true,
+            "status": "fail"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "fail",
+        "validationReport": "compositions/3/validation_report.json",
+        "repairPlan": "compositions/3/repair_plan.json",
+        "contactSheet": "compositions/3/contact-sheet.png",
+        "counts": {
+          "blockers": 1,
+          "major": 0,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 1110,
+      "at": "2026-11-28T14:37:55.615Z"
+    },
+    {
+      "id": "step-32",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "c2",
+        "score": 84,
+        "passed": true,
+        "ranking": [
+          [
+            "c2",
+            84
+          ],
+          [
+            "c1",
+            68
+          ],
+          [
+            "comp-3",
+            null
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:37:55.833Z",
+      "decision": "selected c2",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-33",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "inputs": {
+        "selectedId": "c2",
+        "file": "compositions/2/final.mp4",
+        "score": 84
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/2/final.mp4",
+            "to": "outputs/rehearsal/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/rehearsal/final.mp4",
+        "traces": "outputs/rehearsal/traces.json",
+        "creativeRationale": "outputs/rehearsal/creative_rationale.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:37:56.171Z"
+    },
+    {
+      "id": "step-34",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/rehearsal/final.mp4",
+        "finished_at": "2026-11-28T14:37:56.183Z",
+        "run_seconds": 2156
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:37:56.244Z"
+    },
+    {
+      "id": "step-35",
+      "name": "compose:comp-4",
+      "stage": "composition",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "clips": [
+          {
+            "sceneId": "s1",
+            "attempt": 2,
+            "file": "clips/s1/2.mp4"
+          },
+          {
+            "sceneId": "s2",
+            "attempt": 1,
+            "file": "clips/s2/1.mp4"
+          },
+          {
+            "sceneId": "s3",
+            "attempt": 2,
+            "file": "clips/s3/2.mp4"
+          }
+        ],
+        "aspectRatio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "transitions": "cut",
+        "endCardDissolve": 0.4,
+        "onScreenText": [
+          "tap.",
+          "record.",
+          "make the beat.",
+          ""
+        ]
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "ffmpeg",
+          "arguments": {
+            "command": "ffmpeg -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/work/seg_0.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/work/seg_1.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/work/seg_2.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/work/seg_3.mp4 -i /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/bed.wav -filter_complex [0:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s0];[1:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s1];[2:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s2];[3:v]settb=1/30000,setpts=PTS-STARTPTS,fps=30[s3];[s0][s1]concat=n=2:v=1:a=0,settb=1/30000,fps=30[x1];[x1][s2]concat=n=2:v=1:a=0,settb=1/30000,fps=30[x2];[x2][s3]xfade=transition=fade:duration=0.4:offset=8.567,settb=1/30000,fps=30[x3];[x3]fade=in:st=0:d=0.25,fade=out:st=9.500:d=0.5,format=yuv420p[v];[4:a]atrim=0:10.000,apad=whole_dur=10.000,aresample=48000[a] -map [v] -map [a] -c:a aac -b:a 192k -ar 48000 -ac 2 -c:v libx264 -preset medium -crf 19 -profile:v high -level 4.1 -pix_fmt yuv420p -r 30 -movflags +faststart -t 10.000 /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/final.mp4"
+          },
+          "result": {
+            "file": "compositions/4/final.mp4"
+          }
+        }
+      ],
+      "outputs": {
+        "file": "compositions/4/final.mp4",
+        "thumbnail": "compositions/4/thumb.jpg",
+        "durationSeconds": 10,
+        "compositor": "ffmpeg",
+        "endCard": {
+          "headline": "EP-133 K.O",
+          "subline": "II Make the beat.",
+          "seconds": 1.5
+        },
+        "audio": {
+          "present": true,
+          "bed": "compositions/4/bed.wav",
+          "lufs": -14.4,
+          "truePeak": -3.5,
+          "audible": true
+        },
+        "notes": [
+          "blender failed, fell back to ffmpeg: Blender not found locally or remotely"
+        ],
+        "audio_ms": 671
+      },
+      "duration_ms": 8777,
+      "at": "2026-11-28T14:39:05.257Z"
+    },
+    {
+      "id": "step-36",
+      "name": "validate-output:comp-4",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "file": "compositions/4/final.mp4",
+        "mode": "video-only",
+        "sourceBrief": "runs/20261128-142247-rehearsal/brief.json",
+        "targetDurationSeconds": 9
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "validation.run",
+          "arguments": {
+            "command": "python3 -m validation.run /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4 --video /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/final.mp4 --write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/validation_report.json --repair-write /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/repair_plan.json --contact-sheet /Users/udingethe/Dev/recliner-integration/runs/20261128-142247-rehearsal/compositions/4/contact-sheet.png --video-only --source-brief runs/20261128-142247-rehearsal/brief.json --duration-min 8 --duration-max 10"
+          },
+          "result": {
+            "ok": true,
+            "status": "pass"
+          }
+        }
+      ],
+      "outputs": {
+        "status": "pass",
+        "validationReport": "compositions/4/validation_report.json",
+        "repairPlan": "compositions/4/repair_plan.json",
+        "contactSheet": "compositions/4/contact-sheet.png",
+        "counts": {
+          "blockers": 0,
+          "major": 0,
+          "minor": 0
+        },
+        "warnings": [
+          "scene validation skipped: video-only mode"
+        ]
+      },
+      "duration_ms": 1223,
+      "at": "2026-11-28T14:39:06.794Z"
+    },
+    {
+      "id": "step-37",
+      "name": "rank",
+      "stage": "final_validation",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "selectedId": "c2",
+        "score": 84,
+        "passed": true,
+        "ranking": [
+          [
+            "c2",
+            84
+          ],
+          [
+            "c1",
+            68
+          ],
+          [
+            "comp-3",
+            null
+          ],
+          [
+            "comp-4",
+            null
+          ]
+        ]
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:39:07.068Z",
+      "decision": "selected c2",
+      "rationale": "highest final validation score"
+    },
+    {
+      "id": "step-38",
+      "name": "export",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {
+        "selectedId": "c2",
+        "file": "compositions/2/final.mp4",
+        "score": 84
+      },
+      "prompt": null,
+      "tool_calls": [
+        {
+          "tool": "copy",
+          "arguments": {
+            "from": "compositions/2/final.mp4",
+            "to": "outputs/rehearsal/final.mp4"
+          },
+          "result": {
+            "ok": true
+          }
+        }
+      ],
+      "outputs": {
+        "video": "outputs/rehearsal/final.mp4",
+        "traces": "outputs/rehearsal/traces.json",
+        "creativeRationale": "outputs/rehearsal/creative_rationale.json"
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:39:07.422Z"
+    },
+    {
+      "id": "step-39",
+      "name": "run:finished",
+      "stage": "output",
+      "model": null,
+      "requestId": null,
+      "inputs": {},
+      "prompt": null,
+      "tool_calls": [],
+      "outputs": {
+        "status": "done",
+        "output_video": "outputs/rehearsal/final.mp4",
+        "finished_at": "2026-11-28T14:39:07.434Z",
+        "run_seconds": 2227
+      },
+      "duration_ms": null,
+      "at": "2026-11-28T14:39:07.506Z"
+    }
+  ],
+  "run_id": "20261128-142247-rehearsal",
+  "selected_result": {
+    "id": "c2",
+    "file": "compositions/2/final.mp4",
+    "compositor": "ffmpeg",
+    "validation": {
+      "score": 84,
+      "passed": true,
+      "reason": "Sound-first hook lands in the first second; pads are the hero; pacing matches the POV reference.",
+      "breakdown": {
+        "hook": 88,
+        "briefFit": 86,
+        "craft": 80,
+        "originality": 82,
+        "slop": 85
+      }
+    },
+    "technicalValidation": {
+      "status": "fail",
+      "report": "compositions/2/validation_report.json",
+      "repairPlan": "compositions/2/repair_plan.json",
+      "contactSheet": "compositions/2/contact-sheet.png",
+      "blockerCount": 1,
+      "majorCount": 2,
+      "minorCount": 0,
+      "wallTimeMs": 607,
+      "mode": "video-only"
+    }
+  }
+}
