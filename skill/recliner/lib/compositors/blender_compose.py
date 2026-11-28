@@ -9,6 +9,15 @@ import sys
 import bpy
 
 job = json.load(open(sys.argv[sys.argv.index("--") + 1]))
+
+
+def new_effect(strips, name, kind, channel, start, length, **inputs):
+    """Blender 5.x takes `length`; 4.x takes `frame_end`. Try the newer keyword first."""
+    try:
+        return strips.new_effect(name, kind, channel, start, length=length, **inputs)
+    except TypeError:
+        return strips.new_effect(name, kind, channel, start, frame_end=start + length, **inputs)
+
 W, H, FPS = job["width"], job["height"], job["fps"]
 
 scene = bpy.context.scene
@@ -58,7 +67,7 @@ for i, seg in enumerate(job["segments"]):
     m.frame_final_duration = min(length, m.frame_final_duration)
     length = m.frame_final_duration
     if prev is not None and Ti > 0:
-        strips.new_effect(f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, frame_end=start + Ti, input1=prev, input2=m)
+        new_effect(strips, f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, Ti, input1=prev, input2=m)
     movies.append(m)
 
     text = (seg.get("text") or "").strip()
@@ -67,7 +76,7 @@ for i, seg in enumerate(job["segments"]):
         # Caption window from compose.mjs (seconds into the segment): after the cross-fade in, before the one out.
         tstart = start + int(round(seg.get("textIn", 0.3) * FPS))
         tend = start + min(length, int(round(seg.get("textOut", seg["seconds"] - 0.5) * FPS)))
-        t = strips.new_effect(f"text{i}", "TEXT", 6, tstart, frame_end=max(tstart + 1, tend))
+        t = new_effect(strips, f"text{i}", "TEXT", 6, tstart, max(1, tend - tstart))
         t.text = "\n".join(L["lines"])
         t.font_size = L["fontSize"]
         if font:
