@@ -25,6 +25,14 @@ Each input describes what is being promoted and the objective, without creative 
 - **Open format**: think across different video modalities and what frontier capabilities can actually do (images, AI-generated video, code-driven visuals and anything else)
 - **Open stack**: any language, framework, skill setup or agent architecture is fair game
 
+## What makes a strong harness
+
+- **Reusable**: it should run multiple times and produce fresh, creative results rather than the same output with minor variations
+- **Adaptable**: it should respond effectively to different inputs, including the hidden briefs used during judging
+- **High quality**: each output should be polished, engaging and clearly tailored to the brief
+- **Creatively diverse**: it should demonstrate range by producing visually distinct content across different briefs and runs
+- **Reliable but flexible**: the process should work consistently while leaving room for varied and original results
+
 ## Repo layout
 
 ```text
