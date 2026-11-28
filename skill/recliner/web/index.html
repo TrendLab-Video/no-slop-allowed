@@ -14,7 +14,7 @@
 </main>
 <footer>Recliner · local only · runs/<span id="fr"></span></footer>
 <script type="module">
-import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage, withKeyframeValidations, metrics, refImages, isBrand, refBadge } from '/app.js';
+import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage, withKeyframeValidations, metrics, refImages, isBrand, refBadge, verdictHead } from '/app.js';
 
 header(runId ? 'brief' : 'runs');
 $('#fr').textContent = runId || '';
@@ -182,10 +182,11 @@ async function falStatus(fresh) {
   if (!el) return;
   try {
     const r = await api(`/api/preflight${fresh ? '?fresh=1' : ''}`);
-    const cls = r.low ? 'retry' : { accepted: 'ok', present: 'info', missing: 'bad', rejected: 'bad' }[r.status] || '';
+    const cls = r.low ? 'bad' : { accepted: 'ok', present: 'info', missing: 'bad', rejected: 'bad' }[r.status] || '';
     let label = { accepted: 'fal · ready', present: 'fal · key present', missing: 'fal · no key', rejected: 'fal · rejected' }[r.status] || `fal · ${r.status}`;
     if (r.balance != null) label += ` · $${r.balance.toFixed(2)}`;
-    if (r.low) { r.status = 'low'; r.reason = `Balance is below the $${r.floor} floor: top up at fal.ai before starting`; }
+    // At or below the floor (RECLINER_MIN_BALANCE, enforced in lib/fal.mjs) every paid fal call is refused.
+    if (r.low) { r.status = 'low'; r.reason = `${r.reason || `Balance is at or below the $${r.floor} floor`}: generation will be refused. Top up at fal.ai or lower RECLINER_MIN_BALANCE`; }
     el.innerHTML = `<span class="tag ${cls}" title="${esc(r.reason || '')}">${esc(label)}</span>${r.status === 'accepted' || r.status === 'present' ? '' : `<span class="small" style="color:#ff6b85">${esc(r.reason || '')}${r.status === 'missing' ? ' · add it under Advanced' : ''}</span>`}`;
   } catch (e) {
     el.innerHTML = `<span class="tag">fal · status unknown</span>`;
@@ -241,7 +242,7 @@ function renderLive(d) {
           : '<div class="empty">Writing candidate goals…</div>'}</div>
       <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Result</h2><span class="eyebrow" style="margin-left:auto">${result ? `${result.results.length} composition${result.results.length === 1 ? '' : 's'}` : 'pending'}</span></div>
         ${sel ? `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${video(fileUrl(sel.file), { ar, controls: false, autoplay: true, poster: sel.thumbnail ? fileUrl(sel.thumbnail) : '' })}
-            <div><div class="bignum" style="font-size:44px">${esc(sel.validation?.score ?? '–')}<small>/100</small></div><p class="small">${esc(sel.validation?.reason || '')}</p><a class="btn" href="/result.html${q}">Watch the result <span class="arrow">→</span></a></div></div>`
+            <div>${verdictHead(sel.validation, c.passScore)}${sel.validation?.reason ? `<p class="small vquote"><span class="vlabel">Validator saw</span>${esc(sel.validation.reason)}</p>` : ''}<a class="btn" href="/result.html${q}">Watch the result <span class="arrow">→</span></a></div></div>`
           : '<div class="empty">The composed video appears here.</div>'}</div>
     </div>
   </div>`;

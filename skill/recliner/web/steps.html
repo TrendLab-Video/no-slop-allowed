@@ -15,7 +15,7 @@
   <div id="view"></div>
 </main>
 <script type="module">
-import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, fmtNum, fmtMs, scoreBar, needRun, withKeyframeValidations, kfBadge, metrics, refImages, isBrand, refBadge } from '/app.js';
+import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, fmtNum, fmtMs, scoreBar, needRun, withKeyframeValidations, kfBadge, metrics, refImages, isBrand, refBadge, productImagesOf, musicBlock, verdictHead, belowPassBanner, intendedVsSaw } from '/app.js';
 
 header('steps');
 if (!needRun()) {
@@ -77,22 +77,30 @@ function render(d) {
     }).join('')}</div>` : empty('No goals yet.')));
 
   const planScenes = Object.fromEntries((plan?.scenes || []).map((s) => [s.id, s]));
-  html.push(section('clips', 'Clips', clips ? `${clips.scenes.length} scenes · ${clips.scenes.reduce((n, s) => n + s.attempts.length, 0)} attempts` : 'pending', clips ? clips.scenes.map((sc, i) => `
+  const prods = productImagesOf(plan);
+  const prodStrip = prods.length ? `<div class="prodstrip">${prods.map((p) => `<a class="prodtile" href="${fileUrl(p.src)}" target="_blank"><img src="${fileUrl(p.src)}" alt=""><span class="tag prodb">Product reference</span>${p.label ? `<span class="pl">${esc(p.label)}</span>` : ''}</a>`).join('')}
+    <p class="note">Real product photos given to the image model as references. Compare them with each keyframe below.</p></div>` : '';
+  html.push(section('clips', 'Clips', clips ? `${clips.scenes.length} scenes · ${clips.scenes.reduce((n, s) => n + s.attempts.length, 0)} attempts` : 'pending', clips ? prodStrip + clips.scenes.map((sc, i) => `
     <div class="scene-block"><div class="sh2"><h3>Scene ${i + 1} · ${esc(sc.sceneId)}</h3><span class="small muted">${esc(planScenes[sc.sceneId]?.description || '')}</span>
       <span class="eyebrow" style="margin-left:auto">${sc.acceptedAttempt != null ? `accepted attempt ${esc(sc.acceptedAttempt)}` : 'no attempt accepted yet'}</span></div>
       <div class="attempts rows">${sc.attempts.map((a) => {
         const acc = sc.acceptedAttempt === a.attempt; const v = a.validation;
-        const tag = acc ? '<span class="tag ok">accepted</span>' : v ? '<span class="tag bad">rejected</span>' : a.status === 'failed' ? '<span class="tag bad">failed</span>' : `<span class="tag ${a.status === 'generating' ? 'run' : ''}">${esc(a.status)}</span>`;
+        const kfv = a.keyframeValidation; const hasVideo = a.status === 'generated' && a.file;
+        const kfRejected = !hasVideo && kfv?.passed === false;
+        const tag = acc ? '<span class="tag ok">accepted</span>' : v ? '<span class="tag bad">rejected</span>' : a.status === 'failed' ? '<span class="tag bad">failed</span>' : kfRejected ? '<span class="tag retry">keyframe rejected</span>' : `<span class="tag ${a.status === 'generating' ? 'run' : ''}">${esc(a.status)}</span>`;
         return `<div class="attempt row ${ar === '16:9' ? 'wide-media' : ''} ${acc ? 'acc' : ''}">
           ${a.status === 'generated' && a.file ? video(fileUrl(a.file), { ar, poster: a.keyframe ? fileUrl(a.keyframe) : '', badge: tag, badge2: `<span class="tag">#${esc(a.attempt)}</span>` })
             : a.keyframe ? `<div class="media ar-${ar.replace(':', '-')}"><img src="${fileUrl(a.keyframe)}" alt=""><span class="badge"><span class="tag kfb">Keyframe</span></span><span class="badge2">${tag}</span></div>` : `<div class="media ar-${ar.replace(':', '-')}"><div class="ph ${a.status === 'failed' ? 'fail' : ''}"><div class="phl">${a.status === 'failed' ? 'No video' : esc(a.status || 'pending')}</div></div><span class="badge">${tag}</span></div>`}
           <div class="body">
             <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${a.status === 'generated' ? '<span class="tag genb">Generated</span>' : ''}<span class="tag">attempt ${esc(a.attempt)}</span>${a.keyframe ? `<span class="tag kfb">keyframe</span>${kfBadge(a.keyframeValidation)}` : ''}</div>
-            ${a.keyframeValidation?.reason ? `<p class="small muted">Keyframe: ${esc(a.keyframeValidation.reason)}</p>` : ''}
+            ${a.keyframe ? `<div class="kfrow">${hasVideo ? `<a href="${fileUrl(a.keyframe)}" target="_blank"><img class="kfthumb" src="${fileUrl(a.keyframe)}" alt=""></a>` : ''}
+              <div>${kfv ? verdictHead(kfv, null, 'Keyframe validator') : ''}
+              ${kfv?.reason ? `<p class="small vquote">${esc(kfv.reason)}</p>` : ''}${kfv?.steering && kfv.passed === false ? `<div class="steer">↻ ${esc(kfv.steering)}</div>` : ''}</div></div>` : ''}
             ${a.status === 'failed' && a.error ? `<p class="errtxt">${esc(a.error)}</p>` : ''}
-            ${v ? `<div class="score"><span>${esc(v.score)}</span>${scoreBar(v.score, 100, v.passed)}<span>${v.passed ? 'pass' : 'fail'}</span></div><p>${esc(v.reason)}</p>${v.steering ? `<div class="steer">↻ ${esc(v.steering)}</div>` : ''}` : a.status === 'failed' ? '' : '<p class="muted">Not validated yet.</p>'}
+            ${v ? `${verdictHead(v, c?.passScore, 'Clip validator')}<p class="vquote">${esc(v.reason)}</p>${v.steering ? `<div class="steer">↻ ${esc(v.steering)}</div>` : ''}` : a.status === 'failed' ? '' : kfRejected ? '<p class="muted small">No clip: the keyframe was rejected and the scene was retried with a new keyframe.</p>' : '<p class="muted">Not validated yet.</p>'}
             ${a.steering ? `<div class="steer alt-steer">steered: ${esc(a.steering)}</div>` : ''}
-            <details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">prompt · ${esc(a.model || '')}</summary><p class="small mono">${esc(a.prompt)}</p></details>
+            ${a.keyframeInfo?.prompt ? `<details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">keyframe prompt · ${esc(a.keyframeInfo.model || '')}${a.keyframeInfo.reference ? ' · from previous keyframe' : ''}</summary><p class="small mono">${esc(a.keyframeInfo.prompt)}</p></details>` : ''}
+            ${a.prompt ? `<details style="margin-top:6px"><summary class="small muted" style="cursor:pointer">clip prompt · ${esc(a.model || '')}</summary><p class="small mono">${esc(a.prompt)}</p></details>` : ''}
           </div></div>`;
       }).join('')}</div></div>`).join('') : empty('No clips yet.')));
 
@@ -100,9 +108,12 @@ function render(d) {
     <div class="attempts rows">${[...result.results].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1)).map((r) => {
       const sel = result.selectedId === r.id; const v = r.validation;
       return `<div class="attempt row ${ar === '16:9' ? 'wide-media' : ''} ${sel ? 'acc' : ''}">${video(fileUrl(r.file), { ar, poster: r.thumbnail ? fileUrl(r.thumbnail) : '', badge: sel ? '<span class="tag ok">selected</span>' : '', badge2: `<span class="tag">${esc(r.compositor)}</span>` })}
-        <div class="body">${v ? `<div class="score"><span>${esc(v.score)}</span>${scoreBar(v.score, 100, v.passed)}<span>${v.passed ? 'pass' : 'fail'}</span></div><p>${esc(v.reason)}</p>` : '<p class="muted">Not validated yet.</p>'}
+        <div class="body">${verdictHead(v, c?.passScore, 'Final validator')}${v?.reason ? `<p class="vquote">${esc(v.reason)}</p>` : ''}
+        ${musicBlock(r, plan)}
         <p class="small muted">${esc(r.id)} · attempt ${esc(r.attempt)} · ${esc(r.durationSeconds)}s</p></div></div>`;
-    }).join('')}</div>` : empty('No compositions yet.')));
+    }).join('')}</div>
+    ${belowPassBanner(result, c)}
+    ${(() => { const sel = result.results.find((r) => r.id === result.selectedId); return sel ? `<div style="margin-top:16px">${intendedVsSaw(plan, sel.validation, c?.passScore)}</div>` : ''; })()}` : empty('No compositions yet.')));
 
   html.push(section('trace', 'Trace', traces ? `${traces.steps.length} steps · <a href="${fileUrl('traces.json')}" target="_blank">traces.json</a>` : 'pending', traces?.steps?.length ? `
     <div class="card" style="padding:0"><table style="width:100%;border-collapse:collapse;font-size:13px">${traces.steps.map((s) => `<tr style="border-top:1px solid var(--line-soft)">

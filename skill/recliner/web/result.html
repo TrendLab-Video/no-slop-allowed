@@ -13,7 +13,7 @@
   <div id="view"></div>
 </main>
 <script type="module">
-import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, scoreBar, needRun } from '/app.js';
+import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, scoreBar, needRun, endCardOf, musicBlock, verdictHead, belowPassBanner, intendedVsSaw } from '/app.js';
 
 header('result');
 let shown = null; // id of the result in the hero; null follows selectedId
@@ -26,7 +26,7 @@ if (!needRun()) {
     const state = await getJson('state.json');
     if (state) diagram.render(state);
     if (tick++ % 2) return;
-    const d = await getRun(['brief.json', 'plan.json', 'result.json', 'scores.json']);
+    const d = await getRun(['brief.json', 'plan.json', 'result.json', 'scores.json', 'config.json']);
     if (changed('result', d)) { data = d; render(); }
   }, 1000);
 }
@@ -47,27 +47,31 @@ function render() {
   const bd = v.breakdown || {};
   const LABELS = { hook: 'Hook', briefFit: 'Brief fit', craft: 'Craft', originality: 'Originality', slop: 'No slop' };
 
+  const config = data['config.json'];
   view.innerHTML = `
+  ${belowPassBanner(result, config)}
   <div class="hero ${ar === '16:9' ? 'wide' : ''}">
     <div id="hero-video">${video(fileUrl(hero.file), { ar, poster: hero.thumbnail ? fileUrl(hero.thumbnail) : '' })}</div>
     <div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tag genb">Generated</span>${isSel ? '<span class="tag ok">selected</span>' : `<span class="tag">alternate · rank ${rank} of ${ranked.length}</span>`}<span class="tag ${v.passed ? 'ok' : 'bad'}">${v.passed ? 'passed' : 'below pass score'}</span></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tag genb">Generated</span>${isSel ? '<span class="tag ok">selected</span>' : `<span class="tag">alternate · rank ${rank} of ${ranked.length}</span>`}</div>
       <h1>${esc(b.promote || 'Result')}</h1>
-      ${plan ? `<p class="muted" style="margin:0 0 18px">${esc(plan.title)} · ${esc(plan.description || '')}</p>` : ''}
+      ${verdictHead(v, config?.passScore)}
       <div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score ?? '–')}<small>/100</small></div>
-      <p style="margin:12px 0 0">${esc(v.reason || '')}</p>
-      <div class="breakdown">${Object.keys(bd).length ? Object.entries(bd).map(([k, n]) => `<div class="score"><span>${esc(LABELS[k] || k)}</span>${scoreBar(n)}<span>${esc(n)}</span></div>`).join('') : '<span class="small muted">No breakdown.</span>'}</div>
+      <p class="small muted" style="margin:10px 0 0">The validator's full verdict is below, beside the plan it was checked against.</p>
       <div class="links" style="margin-top:22px"><a class="btn ghost" href="${fileUrl(hero.file)}" download>Download mp4</a><a class="btn ghost" href="${fileUrl('traces.json')}" target="_blank">traces.json</a><a class="btn" href="/steps.html?run=${encodeURIComponent(runId)}">Steps <span class="arrow">→</span></a></div>
       <dl class="kv" style="margin-top:22px">
         <dt>Result</dt><dd class="mono small">${esc(hero.id)} · attempt ${esc(hero.attempt)}</dd>
         <dt>Duration</dt><dd>${esc(hero.durationSeconds ?? '–')}s</dd>
         <dt>Compositor</dt><dd>${esc(hero.compositor || '–')}</dd>
+        ${endCardOf(plan) ? `<dt>End card</dt><dd>${esc(endCardOf(plan).headline)}${endCardOf(plan).subline ? ` · ${esc(endCardOf(plan).subline)}` : ''}</dd>` : ''}
+        ${hero.audio || plan?.audio?.musicPrompt ? `<dt>Music</dt><dd>${musicBlock(hero, plan)}</dd>` : ''}
         <dt>Format</dt><dd>${esc(ar)}${b.platform ? ` · ${esc(b.platform)}` : ''}</dd>
         ${plan ? `<dt>Goal</dt><dd>${esc(plan.title)}${plan.confidence != null ? ` <span class="muted mono small">(${Math.round(plan.confidence * 100)}% fit)</span>` : ''}</dd><dt>Scenes</dt><dd>${esc(plan.scenes?.length ?? '–')}</dd>` : ''}
         <dt>File</dt><dd class="mono small">${esc(hero.file)}</dd>
       </dl>
     </div>
   </div>
+  <section class="section"><div class="sh"><h2>Intended vs what the validator saw</h2><span class="eyebrow">${esc(hero.id)}</span></div>${intendedVsSaw(plan, v, config?.passScore)}</section>
   ${ranked.length > 1 ? `<section class="section"><div class="sh"><h2>All results</h2><span class="eyebrow">ranked by final validation · click to view</span></div>
     <div class="alts">${ranked.map((r, i) => `<button class="alt ${r.id === hero.id ? 'on' : ''}" data-id="${esc(r.id)}">
       <div class="media ${'ar-' + ar.replace(':', '-')}">${r.thumbnail ? `<img src="${fileUrl(r.thumbnail)}" alt="">` : `<video src="${fileUrl(r.file)}#t=0.5" preload="metadata" muted playsinline></video>`}
