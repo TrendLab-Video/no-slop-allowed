@@ -6,7 +6,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { runPath, readJson } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 import { extractFrames, probeDuration } from '../../lib/compositors/ffmpeg.mjs';
-import { searchProvider, pageImages, imageSearch } from '../../lib/search.mjs';
+import { searchProvider, pageImages, imageSearch, VIDEO_POST, tiktokPostFromImage } from '../../lib/search.mjs';
 
 // "<brand> <product> product photo", product cut to its first clause, brand not repeated.
 function brandImageQuery(brand, product) {
@@ -16,7 +16,6 @@ function brandImageQuery(brand, product) {
   return `${both.trim()} product photo`.replace(/\s+/g, ' ');
 }
 
-const VIDEO_POST = /(tiktok\.com\/@[^/]+\/video\/|vm\.tiktok\.com\/|youtube\.com\/(watch\?|shorts\/)|youtu\.be\/|instagram\.com\/(reel|reels|p)\/|(x|twitter)\.com\/[^/]+\/status\/)/i;
 const onPath = (bin) => spawnSync(process.platform === 'win32' ? 'where' : 'which', [bin], { stdio: 'ignore' }).status === 0;
 
 // Run a command with a hard timeout; resolves { code, out, err } and never rejects.
@@ -44,7 +43,7 @@ async function captureVideo(url, dir, tried) {
     // Frames only need picture: a video-only h264 stream at <=480p is small and avoids merge failures.
     '-f', 'bv*[height<=480][vcodec^=avc1]/b[height<=480][ext=mp4]/bv*[height<=480]/b[height<=480]/w',
     '--max-filesize', '20M', '--match-filter', 'duration <= 600',
-    '--socket-timeout', '10', '--merge-output-format', 'mp4', '-o', target, url,
+    '--socket-timeout', '10', '--merge-output-format', 'mp4', '--write-info-json', '-o', target, url,
   ], 20000);
   tried.push({ tool: 'yt-dlp', url, result: dl.code === 0 ? 'ok' : `exit ${dl.code}: ${dl.err.trim().split('\n').pop()?.slice(0, 160)}` });
   if (dl.code !== 0 || !fs.existsSync(target) || fs.statSync(target).size < 10000) {
@@ -69,7 +68,16 @@ async function captureVideo(url, dir, tried) {
     fs.rmSync(tmp, { recursive: true, force: true });
     const sc = await run('ffmpeg', ['-hide_banner', '-i', target, '-vf', "select='gt(scene,0.3)',showinfo", '-an', '-f', 'null', '-'], 20000);
     const cuts = (sc.err.match(/pts_time:/g) || []).length;
-    return { frames, durationSeconds, cuts, secondsPerShot: durationSeconds ? +(durationSeconds / (cuts + 1)).toFixed(2) : null };
+    // Platform metrics from yt-dlp's info JSON (real numbers at capture time), kept small.
+    let info = null;
+    const infoFile = path.join(dir, 'video.info.json');
+    try {
+      const j = JSON.parse(fs.readFileSync(infoFile, 'utf8'));
+      const n = (v) => (Number.isFinite(v) ? v : null);
+      info = { title: j.title || null, uploader: j.uploader || j.channel || null, uploadDate: j.upload_date ? `${j.upload_date.slice(0, 4)}-${j.upload_date.slice(4, 6)}-${j.upload_date.slice(6, 8)}` : null, webpageUrl: j.webpage_url || null, originalDurationSeconds: n(j.duration), metrics: { views: n(j.view_count), likes: n(j.like_count), comments: n(j.comment_count), shares: n(j.repost_count) } };
+    } catch {}
+    fs.rmSync(infoFile, { force: true });
+    return { frames, durationSeconds, cuts, secondsPerShot: durationSeconds ? +(durationSeconds / (cuts + 1)).toFixed(2) : null, info };
   } catch (err) {
     tried.push({ tool: 'ffmpeg', url: target, result: err.message.slice(0, 160) });
     return null;
@@ -156,7 +164,9 @@ function targetFile(runId, refId, flagFile) {
   return files.find((f) => (readJson(runId, f, {}).references || []).some((r) => r.id === refId)) || 'references.json';
 }
 
-export default async function ([runId, refId, url], flags) {
+export default async function ([runId, refId, rawUrl], flags) {
+  // A TikTok image URL from search stands for its video post.
+  const url = tiktokPostFromImage(rawUrl) || rawUrl;
   if (!runId || !refId || !url) throw new Error('Usage: fetch-ref <runId> <referenceId> <url> [--kind brand] [--title t] [--file f]');
   if (!readJson(runId, 'state.json')) throw new Error(`No run ${runId}`);
   const t0 = Date.now();
@@ -203,6 +213,9 @@ export default async function ([runId, refId, url], flags) {
     for (const img of found) {
       if (extra.length >= 2) break;
       try {
+        // tiktok.com/api/img answers 403 to direct fetches: use that video's oEmbed thumbnail instead.
+        const post = tiktokPostFromImage(img.url);
+        if (post) img.url = (await oembedThumb(post))[0] || img.url;
         const d = await download(img.url, dir, n);
         const r = `references/${refId}/${path.basename(d.file)}`;
         extra.push(r);
@@ -228,11 +241,19 @@ export default async function ([runId, refId, url], flags) {
     if (video) {
       ref.structure = { ...(ref.structure || {}), durationSeconds: video.durationSeconds, measuredCuts: video.cuts, measuredSecondsPerShot: video.secondsPerShot, measured: true };
       ref.video = `references/${refId}/video.mp4`;
+      if (video.info) {
+        // Measured metrics fill gaps only; numbers the agent sourced are kept.
+        ref.metrics = { ...(ref.metrics || {}) };
+        for (const [k, v] of Object.entries(video.info.metrics)) if (v != null && ref.metrics[k] == null) ref.metrics[k] = v;
+        ref.metricsSource = ref.metricsSource || `yt-dlp at capture time (${new Date().toISOString().slice(0, 10)})`;
+        ref.postInfo = video.info;
+        if (!ref.title || ref.title === refId) ref.title = video.info.title || ref.title;
+      }
     }
     return doc;
   });
   const out = video
-    ? { ok: true, referenceId: refId, mode: 'video', frames: rels, durationSeconds: video.durationSeconds, cuts: video.cuts, secondsPerShot: video.secondsPerShot, recordedIn: file }
+    ? { ok: true, referenceId: refId, mode: 'video', frames: rels, durationSeconds: video.durationSeconds, cuts: video.cuts, secondsPerShot: video.secondsPerShot, metrics: video.info?.metrics ?? null, uploader: video.info?.uploader ?? null, recordedIn: file }
     : rels.length
       ? { ok: true, referenceId: refId, mode: saved ? 'image' : 'search', files: rels, sources, recordedIn: file }
       : { ok: false, referenceId: refId, reason: 'no image found', recordedIn: file, tried: tried.slice(-6) };
