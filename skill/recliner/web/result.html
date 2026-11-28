@@ -54,7 +54,7 @@ function render() {
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tag genb">Generated</span>${isSel ? '<span class="tag ok">selected</span>' : `<span class="tag">alternate · rank ${rank} of ${ranked.length}</span>`}<span class="tag ${v.passed ? 'ok' : 'bad'}">${v.passed ? 'passed' : 'below pass score'}</span></div>
       <h1>${esc(b.promote || 'Result')}</h1>
       ${plan ? `<p class="muted" style="margin:0 0 18px">${esc(plan.title)} · ${esc(plan.description || '')}</p>` : ''}
-      <div class="bignum">${esc(v.score ?? '–')}<small>/100</small></div>
+      <div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score ?? '–')}<small>/100</small></div>
       <p style="margin:12px 0 0">${esc(v.reason || '')}</p>
       <div class="breakdown">${Object.keys(bd).length ? Object.entries(bd).map(([k, n]) => `<div class="score"><span>${esc(LABELS[k] || k)}</span>${scoreBar(n)}<span>${esc(n)}</span></div>`).join('') : '<span class="small muted">No breakdown.</span>'}</div>
       <div class="links" style="margin-top:22px"><a class="btn ghost" href="${fileUrl(hero.file)}" download>Download mp4</a><a class="btn ghost" href="${fileUrl('traces.json')}" target="_blank">traces.json</a><a class="btn" href="/steps.html?run=${encodeURIComponent(runId)}">Steps <span class="arrow">→</span></a></div>
