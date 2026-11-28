@@ -23,6 +23,8 @@ Never ask the user anything. Hard cap: 4 minutes. A good file in 3 minutes beats
 
 Pick something different from your usual first instinct: before searching, list three obvious picks and exclude at least one of them. Record that in `diversityNote`.
 
+If the fal skill **cinematography** is available in your environment, load and follow it to describe each reference's `structure` (shot sizes, camera moves, light); otherwise use the plain terms in the shape below.
+
 ## How
 
 - Search the web for the platform plus the domain plus terms like "most viewed", "top performing", "case study", "campaign results", "Cannes Lions", "ad of the year", the creator or brand name. Brand newsrooms, Ads of the World, The Drum, Campaign, Think with Google, TikTok Creative Center and the post pages themselves are good sources.

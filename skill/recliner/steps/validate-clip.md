@@ -11,6 +11,8 @@ Never ask the user anything. Hard cap: 90 seconds.
 - `$RUN/clips.json`: the attempt (`file`, `prompt`, `steering`)
 - `$RUN/references.json`: the referenced entries' `structure` and `why` (quality markers)
 
+If the fal skills **fal-shot-craft** and **cinematography** are available in your environment, load and follow them to judge the shot and word the steering; otherwise apply the condensed guidance here.
+
 ## How
 
 1. `recliner frames $RUN/clips/<sceneId>/<attempt>.mp4 $RUN/clips/<sceneId>/<attempt>-frames --count 6`
@@ -41,7 +43,7 @@ Scene 1 also carries the hook: if nothing in the first frame would stop a scroll
 }
 ```
 
-`steering` is a positive description of the fix (models ignore negatives), and is empty when the score is 90 or more. The orchestrator runs `recliner accept-clips <runId>`, which merges this file into `clips.json`.
+`steering` is a positive description of the fix (models ignore negatives), worded as a shot: framing, camera, one settled action, light; it is empty when the score is 90 or more. The orchestrator runs `recliner accept-clips <runId>`, which merges this file into `clips.json`.
 
 If the video file is missing or frames fail, write `score: 0, passed: false, reason: "<error>"` and a steering that restates the scene prompt's core.
 

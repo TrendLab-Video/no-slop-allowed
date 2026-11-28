@@ -13,6 +13,20 @@ You are the orchestrator. You run the stages below in order, hand each stage's s
 
 **After the brief, never ask the user anything.** No questions, no confirmations, no "should I". When something is unclear, pick the sensible default, note it in the trace, and continue. A run always ends with a video and `recliner export`, unless a required key is missing (then fail the stage with a clear message and stop).
 
+## fal skills
+
+fal publishes agent skills for video craft (built into the fal Agent; https://fal.ai/docs/documentation/agent/skills). **If a fal skill below is available in your environment, load and follow it for that stage, and tell the stage's sub-agent to load it too; otherwise the step file's condensed guidance applies.** Name any fal skill you used in the stage's trace step.
+
+| Stage | fal skill |
+|---|---|
+| whole run | fal-video-production (brief → script → shots → clips → audio → text) |
+| references | cinematography |
+| goals | fal-script-writer; ugc for creator formats; fal-shot-craft, cinematography (h3-cinematic-prompter for Hailuo H3) for scene prompts |
+| clips, clip retries | fal-video-generation |
+| clip validation | fal-shot-craft, cinematography (steering) |
+| composition | video-compositing, fal-motion-graphics (text, end card), fal-audio-generation (music, voiceover) |
+| final validation | fal-video-production, video-compositing |
+
 ## 0. Brief (stage `brief`)
 
 Two invocations:
@@ -64,7 +78,7 @@ Question for every goal: **"Does this goal match the intended brief?"** confiden
 
 ## 4. Clips (stage `clips`)
 
-fal is the generation path (instructed, not optional). `recliner generate-clips <runId>` generates every scene of `plan.json` in parallel and writes `clips.json`. If `FAL_KEY` is missing it fails with a clear message: fail the stage and stop. If one scene fails, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
+fal is the generation path (instructed, not optional). `recliner generate-clips <runId>` generates every scene of `plan.json` in parallel and writes `clips.json`. If fal-video-generation is available, follow it when choosing a model override or wording `--steering`. If `FAL_KEY` is missing it fails with a clear message: fail the stage and stop. If one scene fails, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
 
 ## 5. Clip validation (stage `clip_validation`)
 
@@ -86,7 +100,7 @@ recliner accept-clips <runId>
 
 ## 6. Composition (stage `composition`)
 
-`recliner compose <runId>`. It uses `config.compositor` (Blender recommended, ffmpeg fallback, handled inside the command), adds audio when `config.audio` is true and adds an entry to `result.json`. If it fails with Blender, retry once; the command falls back to ffmpeg.
+`recliner compose <runId>`. If video-compositing, fal-motion-graphics or fal-audio-generation is available, follow it for anything you add beyond the command (text, end card, music, voiceover); `plan.json` carries `onScreenText`, `endCard` and `audio`. It uses `config.compositor` (Blender recommended, ffmpeg fallback, handled inside the command), adds audio when `config.audio` is true and adds an entry to `result.json`. If it fails with Blender, retry once; the command falls back to ffmpeg.
 
 ## 7. Final validation (stage `final_validation`)
 
