@@ -40,7 +40,18 @@ If the fal skill **cinematography** is available in your environment, load and f
   **Then look at every candidate image.** Candidates are often wrong: the back of the product, a lifestyle crop, or a different product from the same brand. On the brand entry, set `"productImages": [...]` to the 2–3 paths that clearly show **the front or hero view of the actual product**, and `"rejectedImages": [{ "path": "...", "reason": "back of the device" }]` for the rest. `score` copies `productImages` into `plan.productImages`; keyframe generation uses them as image references. If none shows the product's front, run once more with a sharper `--image-query` (the exact product name plus "front view").
 - `structure.scenes` may be reconstructed from coverage when you cannot watch the video; say so in `why`.
 
-> **Recommendation:** Tavily (`TAVILY_API_KEY`) or Parallel (`PARALLEL_API_KEY`) via `recliner search <runId> "<query>" [--max 8] [--recency month]` for fast, current results. It prints `{ provider, query, results: [{ title, url, snippet, publishedAt, image }], images }` and logs the search to the trace. Without a key, or if it errors, use your host's built-in web search instead; the output you write is the same either way. Do not log in anywhere.
+> **Recommendation:** Tavily (`TAVILY_API_KEY`) or Parallel (`PARALLEL_API_KEY`) via `recliner search`, for fast, current results. Without a key, or if it errors, use your host's built-in web search instead; the output you write is the same either way. Do not log in anywhere.
+
+**Search recipes, two kinds of query per angle** (run them in parallel):
+
+1. **Posts** (these feed `fetch-ref` and yt-dlp frames):
+   `recliner search <runId> "<brand or category> <format words, e.g. ad / launch / commercial>" --domains video --days 365 --max 8`
+   `--domains video` means tiktok.com, youtube.com and instagram.com; use `--domains tiktok.com` or `--domains youtube.com` to focus. Take URLs from the output's **`posts`** list: direct post URLs, including TikTok posts recovered from image ids as `https://www.tiktok.com/@_/video/<id>` (yt-dlp accepts these). YouTube Shorts and short YouTube ads are fine; skip long reviews and explainers (over about 90 s) unless the angle needs one.
+2. **Proof and context** (metrics, why it worked):
+   `recliner search <runId> "<campaign or post title> views results" --days 730 --max 5`
+   Use these for `why` and to source `metrics`. `fetch-ref` also records the platform's own views, likes, comments and shares from yt-dlp where it can.
+
+The output is `{ provider, query, results: [{ title, url, snippet, publishedAt, image, isVideoPost }], images, posts }`, and the search is logged to the trace.
 
 With `TAVILY_API_KEY` set, `fetch-ref` also falls back to Tavily for images when a page blocks plain fetches (common on TikTok and Instagram). It tries the page's images first, then an image search on the reference's title and platform. For the brand it always adds up to two "`<brand> <product>` product photo" images, so goals see the real product. Each image's origin is recorded in `screenshotSources`.
 
@@ -80,4 +91,4 @@ Ids are `ref-1`, `ref-2`, and so on (with an angle: `ref-<angle>-1`).
 
 ## Return
 
-Two lines: how many references, and the biggest takeaway.
+Two lines: how many references (ids and titles), and the biggest takeaway. **Re-read your file before you answer:** the summary must match what the file actually contains (count, ids, titles, images). The orchestrator trusts the file, not the summary.
