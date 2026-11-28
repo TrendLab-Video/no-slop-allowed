@@ -62,6 +62,31 @@ function listRuns() {
   return ids.sort().reverse().map((id) => ({ runId: id, state: readJson(id, 'state.json'), brief: readJson(id, 'brief.json') }));
 }
 
+// fal status for the Brief page: uses the production preflight (lib/fal.mjs `preflight`) when it exists,
+// otherwise reports whether a key is present. Cached for 60 s. Never returns the key.
+let preflightCache = null;
+async function preflight(fresh) {
+  if (!fresh && preflightCache && Date.now() - preflightCache.at < 60000) return preflightCache.value;
+  loadEnv();
+  const present = !!process.env.FAL_KEY;
+  let value = { key: present ? 'present' : 'missing', status: present ? 'present' : 'missing', reason: present ? 'Key present (not checked with fal yet)' : 'FAL_KEY is not set' };
+  if (present) {
+    try {
+      const fal = await import('../../lib/fal.mjs');
+      if (typeof fal.preflight === 'function') {
+        const r = await Promise.race([fal.preflight(), new Promise((_, rej) => setTimeout(() => rej(new Error('fal did not answer in 15 s')), 15000))]);
+        const ok = r === true || r?.ok === true;
+        value = { key: 'present', status: ok ? 'accepted' : 'rejected', reason: ok ? (r?.reason || r?.message || 'fal accepted the key') : String(r?.reason || r?.error || r?.message || 'fal rejected the key') };
+      }
+    } catch (err) {
+      value = { key: 'present', status: 'rejected', reason: String(err.message || err) };
+    }
+  }
+  value.reason = value.reason.replace(process.env.FAL_KEY || '\u0000', '[key]');
+  preflightCache = { at: Date.now(), value };
+  return value;
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, 'http://127.0.0.1');
   const p = url.pathname;
@@ -79,12 +104,14 @@ async function handle(req, res) {
       loadEnv();
       return send(res, 200, { fal: !!process.env.FAL_KEY, jev: !!process.env.JEV_API_KEY });
     }
+    if (p === '/api/preflight' && req.method === 'GET') return send(res, 200, await preflight(url.searchParams.has('fresh')));
     let m = p.match(/^\/api\/runs\/([^/]+)\/brief$/);
     if (m && req.method === 'POST') {
       if (!RUN_ID.test(m[1])) return send(res, 400, { error: 'Bad run id' });
       const body = await readBody(req);
       const out = submitBrief(m[1], body, 'page');
       const saved = writeKeys(body.keys);
+      if (saved.length) preflightCache = null;
       return send(res, 200, { ...out, keysSaved: saved });
     }
     m = p.match(/^\/runs\/([^/]+)\/(.+)$/);
