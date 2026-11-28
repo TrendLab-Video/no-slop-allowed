@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>36 Labs · Design System &amp; Style Book</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 74 74'%3E%3Crect width='74' height='74' rx='16' fill='%230a0a0a'/%3E%3Cg transform='translate(1 47) scale(.034 -.034)' fill='%23f2f2ee'%3E%3Cpath d='M582 171 580 176Q676 176 756.5 172Q837 168 896 154Q955 140 987.5 110Q1020 80 1020 27Q1020 -39 959.5 -83Q899 -127 787 -149Q675 -171 521 -171Q365 -171 256.5 -142.5Q148 -114 91.5 -59Q35 -4 35 77H286Q288 55 319.5 42.5Q351 30 404 24.5Q457 19 521 19Q640 19 697.5 28.5Q755 38 755 77Q755 115 685 124Q615 133 480 133H331V203H480Q579 203 636 208.5Q693 214 716.5 227.5Q740 241 740 263Q740 295 688.5 307.5Q637 320 526 320Q420 320 355.5 302.5Q291 285 287 252H38Q38 319 76 368Q114 417 181.5 448.5Q249 480 337.5 495Q426 510 526 510Q678 510 783.5 490.5Q889 471 944.5 432Q1000 393 1000 333Q1000 284 969 253Q938 222 882 204.5Q826 187 749.5 180Q673 173 582 171Z'/%3E%3Cg transform='translate(1015 0)'%3E%3Cpath d='M692 440Q826 440 916.5 411Q1007 382 1052.5 331Q1098 280 1098 214Q1098 148 1047 95Q996 42 888 11Q780 -20 610 -20Q420 -20 291 4Q162 28 96 77Q30 126 30 202Q30 226 41.5 258Q53 290 92 325Q97 330 120.5 349.5Q144 369 179 397.5Q214 426 254 459Q294 492 333 524Q372 556 404.5 582Q437 608 456.5 624Q476 640 476 640H814L180 202L117 152Q195 222 260.5 276Q326 330 390.5 366.5Q455 403 527.5 421.5Q600 440 692 440ZM588 151Q714 151 781 167Q848 183 848 219Q848 252 781 271Q714 290 588 290Q446 290 363 271Q280 252 280 219Q280 183 363 167Q446 151 588 151Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/design-system.css" />
+  <style>
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 5rem; display: flex; flex-direction: column; gap: 3.5rem; }
+    .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 0.85rem; }
+    .swatch { border: 1px solid var(--hairline); border-radius: var(--radius-md); overflow: hidden; background: var(--surface-1); }
+    .swatch-chip { height: 64px; }
+    .swatch-meta { padding: 0.65rem 0.75rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .swatch-name { font: 500 0.8125rem/1.2 var(--font-sans); color: var(--ink-strong); }
+    .swatch-hex { font: 400 0.6875rem/1.3 var(--font-mono); color: var(--muted); text-transform: uppercase; }
+    .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+    .type-row { display: grid; grid-template-columns: 180px 1fr; gap: 1.5rem; align-items: baseline; padding: 1.25rem 0; border-top: 1px solid var(--hairline); }
+    .cv-demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .cv-card-media { height: 220px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .cv-meta-under { margin-top: 0.45rem; font: 400 0.6875rem/1.45 var(--font-mono); letter-spacing: 0.04em; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: center; }
+    @media (max-width: 720px) { .type-row { grid-template-columns: 1fr; gap: 0.4rem; } }
+  </style>
+</head>
+<body>
+  <header class="ds-topbar">
+    <a href="/" style="display:inline-flex;align-items:center;gap:0.75rem;text-decoration:none;color:inherit">
+      <svg class="ds-logo" viewBox="1 0 72 28" role="img" aria-label="36 Labs" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(0 21.76) scale(.034 -.034)">
+          <path d="M582 171 580 176Q676 176 756.5 172.0Q837 168 896.0 154.0Q955 140 987.5 110.0Q1020 80 1020 27Q1020 -39 959.5 -83.0Q899 -127 787.0 -149.0Q675 -171 521 -171Q365 -171 256.5 -142.5Q148 -114 91.5 -59.0Q35 -4 35 77H286Q288 55 319.5 42.5Q351 30 404.0 24.5Q457 19 521 19Q640 19 697.5 28.5Q755 38 755 77Q755 115 685.0 124.0Q615 133 480 133H331V203H480Q579 203 636.0 208.5Q693 214 716.5 227.5Q740 241 740 263Q740 295 688.5 307.5Q637 320 526 320Q420 320 355.5 302.5Q291 285 287 252H38Q38 319 76.0 368.0Q114 417 181.5 448.5Q249 480 337.5 495.0Q426 510 526 510Q678 510 783.5 490.5Q889 471 944.5 432.0Q1000 393 1000 333Q1000 284 969.0 253.0Q938 222 882.0 204.5Q826 187 749.5 180.0Q673 173 582 171Z"></path>
+          <g transform="translate(1015 0)"><path d="M692 440Q826 440 916.5 411.0Q1007 382 1052.5 331.0Q1098 280 1098 214Q1098 148 1047.0 95.0Q996 42 888.0 11.0Q780 -20 610 -20Q420 -20 291.0 4.0Q162 28 96.0 77.0Q30 126 30 202Q30 226 41.5 258.0Q53 290 92 325Q97 330 120.5 349.5Q144 369 179.0 397.5Q214 426 254.0 459.0Q294 492 333.0 524.0Q372 556 404.5 582.0Q437 608 456.5 624.0Q476 640 476 640H814L180 202L117 152Q195 222 260.5 276.0Q326 330 390.5 366.5Q455 403 527.5 421.5Q600 440 692 440ZM588 151Q714 151 781.0 167.0Q848 183 848 219Q848 252 781.0 271.0Q714 290 588 290Q446 290 363.0 271.0Q280 252 280 219Q280 183 363.0 167.0Q446 151 588 151Z"></path></g>
+        </g>
+      </svg>
+      <span class="t-eyebrow" style="border-left:1px solid var(--hairline);padding-left:0.75rem;color:var(--ink)">Design System</span>
+    </a>
+    <nav class="ds-tabs" style="margin-left:auto">
+      <a href="#colours" class="ds-tab is-active" style="text-decoration:none">Tokens</a>
+      <a href="#typography" class="ds-tab" style="text-decoration:none">Type</a>
+      <a href="#cv-primitives" class="ds-tab" style="text-decoration:none">CV Primitives</a>
+      <a href="#components" class="ds-tab" style="text-decoration:none">Components</a>
+    </nav>
+    <a href="/" class="ds-btn ds-btn--subtle">
+      Harness UI
+      <svg class="ic" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h11M9 3.5 13.5 8 9 12.5"/></svg>
+    </a>
+    <div class="ds-topbar-progress" style="width: 36%"></div>
+  </header>
+
+  <main class="wrap">
+    <!-- Hero Specimen -->
+    <section class="ds-panel ds-panel--spotlight ds-dither-fade" id="hero-panel" style="padding: 3rem 2.5rem">
+      <p class="t-eyebrow" style="margin-bottom: 1rem">36 Labs × No Slop Allowed · Style Book v1.0</p>
+      <h1 class="t-hero" style="max-width: 17ch">Teaching machines what wins human attention</h1>
+      <p class="t-muted" style="max-width: 42rem; font-size: 1.05rem; margin: 1.25rem 0 2rem">
+        Warm obsidian monochrome surfaces, editorial grotesque display type, ordered Bayer-4 stipple textures, and computer-vision attention telemetry.
+      </p>
+      <dl class="ds-facts" style="margin: 0 -2.5rem -3rem">
+        <div><dt>Primary Display</dt><dd>IBM Plex Sans</dd></div>
+        <div><dt>Editorial &amp; UI</dt><dd>Inter</dd></div>
+        <div><dt>Telemetry Mono</dt><dd>IBM Plex Mono</dd></div>
+        <div><dt>Root Canvas</dt><dd>#0A0A0A</dd></div>
+      </dl>
+    </section>
+
+    <!-- 01. Colours -->
+    <section id="colours">
+      <p class="t-eyebrow" style="margin-bottom: 0.5rem">01 / Colour Architecture</p>
+      <h2 class="t-headline" style="margin-bottom: 1.5rem">Warm monochrome + CV signal accents</h2>
+      <div class="swatch-grid">
+        <div class="swatch"><div class="swatch-chip" style="background:#0a0a0a;border-bottom:1px solid var(--hairline)"></div><div class="swatch-meta"><span class="swatch-name">Root Void</span><span class="swatch-hex">--bg · #0a0a0a</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#111110"></div><div class="swatch-meta"><span class="swatch-name">Panel Surface 1</span><span class="swatch-hex">--surface-1 · #111110</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#161615"></div><div class="swatch-meta"><span class="swatch-name">Popover Surface 2</span><span class="swatch-hex">--surface-2 · #161615</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#f2f2ee"></div><div class="swatch-meta"><span class="swatch-name">Chalk Strong</span><span class="swatch-hex">--ink-strong · #f2f2ee</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#8b8b85"></div><div class="swatch-meta"><span class="swatch-name">Stone Muted</span><span class="swatch-hex">--muted · #8b8b85</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#3ddc84"></div><div class="swatch-meta"><span class="swatch-name">CV Emerald (Ship)</span><span class="swatch-hex">--cv-green · #3ddc84</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#ff6b5e"></div><div class="swatch-meta"><span class="swatch-name">CV Coral (Slop)</span><span class="swatch-hex">--cv-coral · #ff6b5e</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#f2b33d"></div><div class="swatch-meta"><span class="swatch-name">CV Amber (Revise)</span><span class="swatch-hex">--cv-amber · #f2b33d</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#5b8cff"></div><div class="swatch-meta"><span class="swatch-name">CV Cobalt (Active)</span><span class="swatch-hex">--cv-blue · #5b8cff</span></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#a98bff"></div><div class="swatch-meta"><span class="swatch-name">CV Violet (Reticle)</span><span class="swatch-hex">--cv-violet · #a98bff</span></div></div>
+      </div>
+    </section>
+
+    <!-- 02. Typography -->
+    <section id="typography">
+      <p class="t-eyebrow" style="margin-bottom: 0.5rem">02 / Typographic Hierarchy</p>
+      <h2 class="t-headline" style="margin-bottom: 1.5rem">Tight display, crisp mono telemetry</h2>
+      <div style="border-bottom: 1px solid var(--hairline)">
+        <div class="type-row">
+          <span class="t-eyebrow">Display · -0.065em</span>
+          <div class="t-hero" style="font-size: 3rem">Teaching machines attention</div>
+        </div>
+        <div class="type-row">
+          <span class="t-eyebrow">Headline · -0.03em</span>
+          <div class="t-headline" style="font-size: 2.1rem">Harness Research Engineer, Agents</div>
+        </div>
+        <div class="type-row">
+          <span class="t-eyebrow">Statement · 1.38lh</span>
+          <div class="t-statement">36 Labs researches how people respond to media and uses that response as training signal.</div>
+        </div>
+        <div class="type-row">
+          <span class="t-eyebrow">Telemetry · +0.10em</span>
+          <div class="t-eyebrow" style="color: var(--ink)">STAGE 04 · CRITIQUE · 14.2S · ~$0.048 · 9 CALLS</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03. CV Primitives -->
+    <section id="cv-primitives">
+      <p class="t-eyebrow" style="margin-bottom: 0.5rem">03 / Signature Motifs</p>
+      <h2 class="t-headline" style="margin-bottom: 1.5rem">Attention bounding boxes &amp; scanning reticles</h2>
+      <div class="cv-demo-grid">
+        <div>
+          <div class="cv-box cv-box--green">
+            <span class="cv-plate">WINNER · 9.2/10</span>
+            <div class="cv-card-media ds-dither"><span class="t-mono" style="color:var(--cv-green)">[ 9:16 RENDER LOCKED ]</span></div>
+          </div>
+          <div class="cv-meta-under" style="color:var(--cv-green)">C2 · V3 SHIP<br><span style="opacity:0.75">no slop flags · consistent A/B</span></div>
+        </div>
+
+        <div>
+          <div class="cv-box cv-box--coral">
+            <span class="cv-plate">SLOP BLOCKED · 6.4</span>
+            <div class="cv-card-media ds-dither"><span class="t-mono" style="color:var(--cv-coral)">[ STOCK COMPOSITION ]</span></div>
+          </div>
+          <div class="cv-meta-under" style="color:var(--cv-coral)">C1 · V1 REVISE<br><span style="opacity:0.75">centred subject, bokeh cliché</span></div>
+        </div>
+
+        <div>
+          <div class="cv-box cv-box--amber">
+            <span class="cv-plate">FINALIST · 7.8</span>
+            <div class="cv-card-media ds-dither"><span class="t-mono" style="color:var(--cv-amber)">[ REVISION V2 ]</span></div>
+          </div>
+          <div class="cv-meta-under" style="color:var(--cv-amber)">C4 · DEVELOPING<br><span style="opacity:0.75">tightening first-second hook</span></div>
+        </div>
+
+        <div>
+          <div class="cv-reticle" style="height: 244px; display:flex; align-items:center; justify-content:center;">
+            <span class="t-eyebrow" style="color:var(--cv-violet)">SCANNING / JUDGING…</span>
+          </div>
+          <div class="cv-meta-under" style="color:var(--cv-violet)">PAIRWISE A/B SWAP<br><span style="opacity:0.75">checking order bias</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04. Interactive Components -->
+    <section id="components">
+      <p class="t-eyebrow" style="margin-bottom: 0.5rem">04 / Controls, Pills &amp; Rows</p>
+      <h2 class="t-headline" style="margin-bottom: 1.5rem">Product UI primitives</h2>
+
+      <div class="spec-grid">
+        <div class="ds-panel" style="display:flex;flex-direction:column;gap:1.1rem">
+          <p class="t-eyebrow">Buttons &amp; Badges</p>
+          <div class="btn-row">
+            <button class="ds-btn ds-btn--primary">Run harness <svg class="ic" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h11M9 3.5 13.5 8 9 12.5"/></svg></button>
+            <button class="ds-btn ds-btn--subtle">Load preset</button>
+            <button class="ds-btn ds-btn--outline">Re-critique</button>
+          </div>
+          <div class="btn-row">
+            <span class="ds-badge ds-badge--live">live fal</span>
+            <span class="ds-badge ds-badge--mock">mock</span>
+            <span class="ds-badge ds-badge--running">running</span>
+            <span class="ds-badge ds-badge--error">error</span>
+          </div>
+          <div class="btn-row">
+            <span class="ds-chip ds-chip--ok">no slop</span>
+            <span class="ds-chip ds-chip--slop">stock-photo</span>
+            <span class="ds-chip ds-chip--warn">order-biased</span>
+          </div>
+        </div>
+
+        <div class="ds-panel" style="display:flex;flex-direction:column;gap:0.9rem">
+          <p class="t-eyebrow">Dark Form Fields</p>
+          <div class="ds-field">
+            <label>Load Starter Brief</label>
+            <select class="ds-select">
+              <option>02-nike.md · Nike Running</option>
+              <option>03-minor-figures.md · Minor Figures Oat</option>
+            </select>
+          </div>
+          <div class="ds-field">
+            <label>Creative Brief *</label>
+            <input class="ds-input" value="Promote Granola to back-to-back meeting founders." />
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem">
+        <p class="t-eyebrow" style="margin-bottom: 0.75rem">Architectural Hairline List</p>
+        <div class="ds-row-list">
+          <a href="/" class="ds-row-item">
+            <span class="t-title" style="font-size:1rem">run_01J9X · Minor Figures Barista Oat</span>
+            <span class="t-eyebrow">WINNER 9.1 · 4 CONCEPTS · ~$0.064</span>
+            <svg class="ic" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h11M9 3.5 13.5 8 9 12.5"/></svg>
+          </a>
+          <a href="/" class="ds-row-item">
+            <span class="t-title" style="font-size:1rem">run_01J9W · Nike Vomero 18 Night Run</span>
+            <span class="t-eyebrow">WINNER 8.6 · 6 CONCEPTS · ~$0.112</span>
+            <svg class="ic" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h11M9 3.5 13.5 8 9 12.5"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Track cursor on spotlight panels just like 36labs.ai
+    document.querySelectorAll('.ds-panel--spotlight').forEach((el) => {
+      el.addEventListener('pointermove', (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ export function briefSlug(path: string): string {
 /** The hackathon repo root when the harness runs from harness/, else the harness itself. */
 const repoRoot = () => (existsSync(resolve('..', 'briefs')) && existsSync(resolve('..', 'outputs')) ? resolve('..') : resolve('.'))
 /** Paths in traces.json are relative to the repo root, as in traces.example.json (never absolute home paths). */
-const fromRepoRoot = (p: string) => relative(repoRoot(), resolve(p))
+const fromRepoRoot = (p: string) => relative(repoRoot(), resolve(p)).replaceAll('\\', '/')
 
 const DOWNLOAD_TIMEOUT_MS = 120_000
 
