@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+runs/*.json
+.DS_Store
+.test-runs/
+.test-outputs/
+# Standalone runs write here; inside the hackathon repo outputs go to ../outputs instead.
+/outputs/
