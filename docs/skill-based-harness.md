@@ -1,7 +1,7 @@
 # Recliner: Blender-native creative harness
 
-Status: aligned working vision  
-Date: 28 November 2026  
+Status: aligned working vision
+Date: 28 November 2026
 Time horizon: built for the same-day hackathon deadline
 
 ## Thesis
@@ -22,28 +22,28 @@ This is deliberately narrower than a generic generative-video pipeline. The cons
 
 ## Design principles
 
-1. **Deterministic spine, bounded autonomy**  
+1. **Deterministic spine, bounded autonomy**
    A fixed state machine owns the pipeline. Agents make decisions inside defined phases rather than roaming freely.
 
-2. **Blender is the production substrate**  
+2. **Blender is the production substrate**
    Use Blender Python/headless rendering as the canonical way scenes are built and rendered. Generative media can support textures, references, voice or selected assets, but should not replace scene control.
 
-3. **Artifacts over conversation**  
+3. **Artifacts over conversation**
    Every major decision becomes a structured artifact that other skills, agents and validators can consume.
 
-4. **References become creative grammar**  
+4. **References become creative grammar**
    External references are converted into reusable constraints: pacing, composition, camera language, motion principles, palette logic and narrative shape.
 
-5. **Validation is a control plane, not QA at the end**  
+5. **Validation is a control plane, not QA at the end**
    Validation agents inspect intermediate artifacts, Blender scene state, rendered frames and final video. Their findings drive bounded repair.
 
-6. **Critique must change the output**  
+6. **Critique must change the output**
    A decorative critic is worthless. Findings must map to concrete repair actions.
 
-7. **Reliable machinery, variable creative grammar**  
+7. **Reliable machinery, variable creative grammar**
    Reliability comes from stable scene-generation infrastructure. Flexibility comes from changing the creative constraints, spatial metaphors and reference-derived parameters.
 
-8. **Hidden-brief reliability beats ambition**  
+8. **Hidden-brief reliability beats ambition**
    Prefer a polished 15–30 second piece with 3–5 strong shots over an ambitious minute-long concept that cannot finish inside the hidden-brief window.
 
 ## Core competency interpretation

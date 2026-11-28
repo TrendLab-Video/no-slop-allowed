@@ -4,7 +4,13 @@ import subprocess
 from pathlib import Path
 
 
-def generate_contact_sheet(video_path: str | Path, output_path: str | Path, duration_seconds: float | None = None, tiles_x: int = 4, tiles_y: int = 3) -> tuple[bool, str | None]:
+def generate_contact_sheet(
+    video_path: str | Path,
+    output_path: str | Path,
+    duration_seconds: float | None = None,
+    tiles_x: int = 4,
+    tiles_y: int = 3,
+) -> tuple[bool, str | None]:
     """Generate a compact tiled contact sheet for visual reviewers.
 
     The frame rate is adapted to the video duration so short draft clips still

@@ -85,7 +85,9 @@ def build_validation_report(
     contact_sheet_path: Path | None = Path(contact_sheet) if contact_sheet else root / "contact-sheet.png"
     contact_sheet_generated = False
     if make_contact_sheet and video_path.exists() and contact_sheet_path:
-        ok, error = generate_contact_sheet(video_path, contact_sheet_path, video_result["probe"].get("duration_seconds"))
+        ok, error = generate_contact_sheet(
+            video_path, contact_sheet_path, video_result["probe"].get("duration_seconds")
+        )
         contact_sheet_generated = ok
         if not ok:
             warnings.append(f"contact sheet generation failed: {error}")
@@ -157,11 +159,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scene-plan", help="Path to scene_plan.json")
     parser.add_argument("--standards-dir", help="Override validation standards directory")
     parser.add_argument("--source-brief", help="Source brief path or identifier")
-    parser.add_argument("--write", help="Where to write validation_report.json; defaults to <artifact_root>/validation_report.json")
-    parser.add_argument("--repair-write", help="Where to write repair_plan.json; defaults to <artifact_root>/repair_plan.json")
+    parser.add_argument(
+        "--write", help="Where to write validation_report.json; defaults to <artifact_root>/validation_report.json"
+    )
+    parser.add_argument(
+        "--repair-write", help="Where to write repair_plan.json; defaults to <artifact_root>/repair_plan.json"
+    )
     parser.add_argument("--no-repair-plan", action="store_true", help="Do not write repair_plan.json")
-    parser.add_argument("--contact-sheet", help="Where to write contact-sheet.png; defaults to <artifact_root>/contact-sheet.png")
-    parser.add_argument("--review-result", action="append", default=[], help="Path to a critic review_result JSON file; may be passed multiple times")
+    parser.add_argument(
+        "--contact-sheet", help="Where to write contact-sheet.png; defaults to <artifact_root>/contact-sheet.png"
+    )
+    parser.add_argument(
+        "--review-result",
+        action="append",
+        default=[],
+        help="Path to a critic review_result JSON file; may be passed multiple times",
+    )
     parser.add_argument("--no-contact-sheet", action="store_true", help="Do not generate a contact sheet")
     parser.add_argument("--strict", action="store_true", help="Exit non-zero when validation fails or requires repair")
     args = parser.parse_args(argv)
@@ -191,9 +204,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         errors = validate_review_result(review_data)
         if errors:
-            report.setdefault("warnings", []).append(
-                f"invalid review result {review_path}: " + "; ".join(errors)
-            )
+            report.setdefault("warnings", []).append(f"invalid review result {review_path}: " + "; ".join(errors))
             continue
         review_results.append(review_data)
 
@@ -213,15 +224,20 @@ def main(argv: list[str] | None = None) -> int:
         )
         write_json(repair_path, repair_plan)
 
-    print(json.dumps({
-        "status": report["status"],
-        "validation_report": display_path(report_path),
-        "repair_plan": display_path(repair_path) if repair_path else None,
-        "blockers": sum(1 for item in report["findings"] if item.get("severity") == "blocker"),
-        "major_findings": sum(1 for item in report["findings"] if item.get("severity") == "major"),
-        "minor_findings": sum(1 for item in report["findings"] if item.get("severity") == "minor"),
-        "wall_time_ms": report["cost"]["wall_time_ms"],
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "status": report["status"],
+                "validation_report": display_path(report_path),
+                "repair_plan": display_path(repair_path) if repair_path else None,
+                "blockers": sum(1 for item in report["findings"] if item.get("severity") == "blocker"),
+                "major_findings": sum(1 for item in report["findings"] if item.get("severity") == "major"),
+                "minor_findings": sum(1 for item in report["findings"] if item.get("severity") == "minor"),
+                "wall_time_ms": report["cost"]["wall_time_ms"],
+            },
+            indent=2,
+        )
+    )
 
     if args.strict and report["status"] != "pass":
         return 1

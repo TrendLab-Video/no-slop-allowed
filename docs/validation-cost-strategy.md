@@ -1,6 +1,6 @@
 # Validation cost and orchestration strategy
 
-Status: working decision  
+Status: working decision
 Date: 28 November 2026
 
 ## Decision

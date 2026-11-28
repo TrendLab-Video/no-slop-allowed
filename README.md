@@ -66,6 +66,24 @@ The top eight teams will be invited to present their work. Please prepare a two-
 
 Schedule, judging criteria, prizes, team setup and fal credits are on the hackathon portal.
 
+## Development hygiene
+
+Secrets and Python linting are checked by pre-commit. Install and enable the hook once per clone:
+
+```bash
+python3 -m pip install --user pre-commit
+brew install gitleaks  # or install gitleaks another way
+pre-commit install
+```
+
+Run all checks manually with:
+
+```bash
+pre-commit run --all-files
+```
+
+API keys belong in `.env`, which is gitignored. Never commit live keys to the repository.
+
 ## Team design notes
 
 - [Recliner: Blender-native creative harness vision](docs/skill-based-harness.md)

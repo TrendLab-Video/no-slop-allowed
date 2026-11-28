@@ -1,6 +1,6 @@
 # Harness contracts
 
-Status: working baseline  
+Status: working baseline
 Date: 28 November 2026
 
 These contracts are the shared integration boundary between brief/reference interpretation, Blender production, validation and repair. Keep them small enough to implement today. Extend them only when a branch needs a concrete new field.
