@@ -2,6 +2,7 @@ node_modules/
 .env
 .env.local
 runs/*.json
+runs/*/
 .DS_Store
 .test-runs/
 .test-outputs/
