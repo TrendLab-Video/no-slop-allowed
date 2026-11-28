@@ -1,6 +1,6 @@
 ---
 name: recliner
-description: Turn a brief into a finished, validated promo video with no further input. Use when the user types /recliner followed by free text ("new content for <product>") or by the path of a brief file (headless, for hidden briefs). Finds proven reference videos, writes and scores distinct creative goals, generates clips on fal, validates and retries them, composes, validates and exports final.mp4 plus traces.json.
+description: Turn a brief into a finished, validated promo video with no further input. Use when the user types /recliner followed by free text ("new content for <product>") or by one or more brief files or a folder of briefs (headless; several briefs run in parallel, for hidden briefs). Finds proven reference videos, writes and scores distinct creative goals, generates clips on fal, validates and retries them, composes, validates and exports final.mp4 plus traces.json.
 ---
 
 # /recliner
@@ -43,6 +43,25 @@ Two invocations:
 Read `$RUN/brief.json` and `$RUN/config.json` now and keep them in mind. Note the start time: the time budget is measured from `brief.submittedAt`.
 
 **Preflight, immediately after the brief:** `recliner preflight <runId>` checks `FAL_KEY` and fal auth cheaply. If it fails, `recliner stage <runId> clips failed "<its message>"`, tell the user the message, and stop. Do not start references or goals.
+
+## Hidden-brief mode: several briefs at once
+
+`/recliner <brief1.md> <brief2.md> ... [--effort n]` or `/recliner <folder>` (every `*.md` in it). Default effort here is **2**.
+
+1. **Hard rule: every brief finishes, exported, inside 12 minutes** of the start. Note the start time.
+2. For each brief, in parallel: `recliner new-run --slug <file-name> --brief <path> --effort <n>`. Then run `recliner preflight` once (on the first run): if it fails, mark `clips` failed on every run and stop.
+3. Launch **one orchestrating sub-agent per brief, all in one message**. Hand each one this SKILL.md, its `runId`, and the brief's 12-minute deadline as a clock time. Each follows the single-brief pipeline from stage 1 to `export`, headless, with no questions. Each ends with `outputs/<brief-slug>/final.mp4` and `traces.json`.
+   > **Recommendation (Claude Code):** sub-agents cannot start their own sub-agents, so each brief's orchestrator follows the step files itself. It runs the per-clip validations as parallel shell or tool calls where it can, and otherwise one after another.
+4. **When time is short, degrade in this order**, per brief:
+   1. Skip all retries.
+   2. Gather fewer references: one angle, 2 references.
+   3. Use ffmpeg: `recliner compose <runId> --compositor ffmpeg`.
+   4. Skip final validation, then `rank` and `export`.
+
+   At 10 minutes, any brief without a result composes what it has and exports.
+5. When all are done, print one table: brief, runId, selected goal, final score, duration, output path, and any failed stage or degradation used.
+
+Runs share fal: with several briefs, keep effort at 2 unless told otherwise.
 
 ## Stage protocol (every stage, no exceptions)
 
