@@ -85,6 +85,14 @@ export async function jevScoreGoal(brief, goal, intent, key = jevKey()) {
   };
 }
 
+// plan.json always carries endCard { headline, subline, durationSeconds } (older shape { text, seconds } is converted).
+export function normaliseEndCard(card, brief = {}, intent = null) {
+  const c = card || {};
+  const headline = c.headline || (c.text ? String(c.text).split(/[\n:—–-]/)[0].trim() : '') || brief.promote || String(intent?.product || '').split(/[(,.;]/)[0].trim().split(/\s+/).slice(0, 5).join(' ');
+  const subline = c.subline ?? (c.text && c.text.trim() !== headline ? c.text.replace(headline, '').replace(/^[\s:—–-]+/, '').trim() : '');
+  return { headline, subline, durationSeconds: Number(c.durationSeconds ?? c.seconds) || 2 };
+}
+
 function checkGoals(goals) {
   const list = goals?.goals;
   if (!Array.isArray(list) || !list.length) throw new Error('goals.json has no goals. Run steps/goals.md first.');
@@ -139,7 +147,14 @@ export async function scoreRun(runId, { scorer } = {}) {
   writeJson(runId, 'scores.json', scores);
 
   const goal = goals.find((g) => g.id === best.goalId);
-  writeJson(runId, 'plan.json', { ...goal, goalId: goal.id, confidence: best.confidence, intent: goalsDoc.intent ?? null });
+  writeJson(runId, 'plan.json', {
+    ...goal,
+    goalId: goal.id,
+    confidence: best.confidence,
+    intent: goalsDoc.intent ?? null,
+    endCard: normaliseEndCard(goal.endCard, brief, goalsDoc.intent),
+    scenes: goal.scenes.map((sc) => ({ ...sc, keyframePrompt: sc.keyframePrompt || sc.prompt })),
+  });
   appendTraceLocked(runId, {
     name: 'score-goals',
     stage: 'scoring',
