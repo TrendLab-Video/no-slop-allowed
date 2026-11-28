@@ -237,14 +237,21 @@ function keywords(b) {
   return Object.entries(counts).sort((a, z) => z[1] - a[1]).slice(0, 10).map(([w]) => w);
 }
 
-function refTile(r, shot, i) {
+// All images for a reference: screenshots plus frame strips (references/<id>/frame-N.jpg), any of png/jpg/webp/svg.
+export const refImages = (r) => [...new Set([...(r?.screenshots || []), ...(r?.frames || [])].filter(Boolean))];
+export const isBrand = (r) => r?.kind === 'brand';
+export const refBadge = (r) => (isBrand(r) ? '<span class="tag brandb">Brand</span>' : '<span class="tag refb">Reference</span>');
+
+function refTile(r, i) {
   const m = r.metrics || {};
-  const proof = metrics(m, ['views', 'likes'], false) || '<span>metrics unavailable</span>';
-  const head = `<div class="tl"><span class="tag refb">Reference</span><span class="tag">${esc(r.platform || '')}</span></div>`;
-  if (shot) return `<div class="mt ref" style="animation-delay:${i * 60}ms"><img src="${esc(fileUrl(shot))}" alt="" loading="lazy">${head}
-    <div class="cap"><b>${esc(r.title || '')}</b><span class="proof">${proof}</span></div></div>`;
+  const proof = metrics(m, ['views', 'likes'], false) || (isBrand(r) ? '' : '<span>metrics unavailable</span>');
+  const imgs = refImages(r);
+  const head = `<div class="tl">${refBadge(r)}${r.platform ? `<span class="tag">${esc(r.platform)}</span>` : ''}</div>`;
+  if (imgs.length) return `<div class="mt ref ${isBrand(r) ? 'isbrand' : ''}" style="animation-delay:${i * 60}ms"><img src="${esc(fileUrl(imgs[0]))}" alt="" loading="lazy">${head}
+    <div class="cap"><b>${esc(r.title || '')}</b><span class="proof">${proof}</span>
+      ${imgs.length > 1 ? `<div class="fstrip">${imgs.slice(1, 6).map((f) => `<img src="${esc(fileUrl(f))}" alt="" loading="lazy">`).join('')}${imgs.length > 6 ? `<span>+${imgs.length - 6}</span>` : ''}</div>` : ''}</div></div>`;
   const s = r.structure || {};
-  return `<div class="mt ref card-ref" style="animation-delay:${i * 60}ms">${head}
+  return `<div class="mt ref card-ref ${isBrand(r) ? 'isbrand' : ''}" style="animation-delay:${i * 60}ms">${head}
     <div class="refbody"><div class="rt">${esc(r.title || 'Untitled reference')}</div>
       <div class="proof big">${proof}${m.shares ? `<span>${fmtNum(m.shares)} shares</span>` : ''}</div>
       ${s.hook ? `<div class="rk"><b>Hook</b>${esc(s.hook)}</div>` : ''}${s.pacing ? `<div class="rk"><b>Pacing</b>${esc(s.pacing)}</div>` : ''}
@@ -359,15 +366,18 @@ export function mediaStage(container) {
       }
 
       if (refs?.references?.length) {
-        const items = refs.references.flatMap((r) => (r.screenshots?.length ? r.screenshots.slice(0, 2).map((s, k) => ({ r, s, key: `${r.id}-${k}` })) : [{ r, s: null, key: r.id }])).slice(0, 12);
-        info.innerHTML = `${pill(`References · ${refs.references.length}`)}<h1>${esc(b.promote || '')}</h1>
-          <p>Proven, current examples for ${esc(b.platform || 'the platform')}. These are other people's videos, used only to learn what works.</p>
+        // One big tile per reference (brand last), its extra frames as a strip inside the tile.
+        const items = [...refs.references].sort((a, z) => isBrand(a) - isBrand(z)).slice(0, 8);
+        const nBrand = refs.references.filter(isBrand).length;
+        info.innerHTML = `${pill(`References · ${refs.references.length - nBrand}${nBrand ? ` + brand` : ''}`)}<h1>${esc(b.promote || '')}</h1>
+          <p>Proven, current examples for ${esc(b.platform || 'the platform')}. These are other people's videos, used only to learn what works${nBrand ? '; the brand card is the client’s own look' : ''}.</p>
           ${refs.takeaways?.length ? `<div class="sub">${refs.takeaways.slice(0, 3).map((t) => `· ${esc(t)}`).join('<br>')}</div>` : ''}${curNote}${links}`;
         setMode('refs', '<div class="mosaic"></div>');
         const m = media.firstElementChild;
         const n = items.length;
-        m.style.setProperty('--cols', n <= 3 ? n : n <= 6 ? 3 : 4);
-        patch(m, items.map((it, i) => ({ key: it.key, html: refTile(it.r, it.s, i) })));
+        m.style.setProperty('--cols', n <= 4 ? n : n <= 6 ? 3 : 4);
+        m.style.setProperty('--rows', n <= 4 ? 1 : 2);
+        patch(m, items.map((r, i) => ({ key: r.id, html: refTile(r, i) })));
         return;
       }
 

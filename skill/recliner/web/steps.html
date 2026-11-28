@@ -15,7 +15,7 @@
   <div id="view"></div>
 </main>
 <script type="module">
-import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, fmtNum, fmtMs, scoreBar, needRun, withKeyframeValidations, kfBadge, metrics } from '/app.js';
+import { runId, esc, $, getJson, getRun, poll, changed, flow, header, fileUrl, video, fmtNum, fmtMs, scoreBar, needRun, withKeyframeValidations, kfBadge, metrics, refImages, isBrand, refBadge } from '/app.js';
 
 header('steps');
 if (!needRun()) {
@@ -50,16 +50,16 @@ function render(d) {
   </div>` : empty('Waiting for the brief.')));
 
   html.push(section('references', 'References', refs ? `${refs.references.length} references` : 'pending', refs ? `
-    <div class="grid g2">${refs.references.map((r) => `<div class="item ref-item"><div class="ref-row">
-      ${r.screenshots?.length ? `<div class="shots">${r.screenshots.slice(0, 2).map((s) => `<a href="${fileUrl(s)}" target="_blank"><img src="${fileUrl(s)}" alt="" loading="lazy"></a>`).join('')}</div>` : `<div class="noshot"><span>${esc(r.platform || '')}</span><b>${fmtNum(r.metrics?.views)}</b><span>views</span></div>`}
+    <div class="grid g2">${refs.references.map((r) => { const imgs = refImages(r); return `<div class="item ref-item ${isBrand(r) ? 'isbrand' : ''}"><div class="ref-row">
+      ${imgs.length ? `<a class="ref-main" href="${fileUrl(imgs[0])}" target="_blank"><img src="${fileUrl(imgs[0])}" alt="" loading="lazy"></a>` : `<div class="noshot"><span>${esc(r.platform || '')}</span><b>${fmtNum(r.metrics?.views)}</b><span>views</span></div>`}
       <div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><span class="tag refb">Reference</span><span class="tag">${esc(r.platform)}</span><span class="tag">${esc(r.id)}</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">${refBadge(r)}${r.platform ? `<span class="tag">${esc(r.platform)}</span>` : ''}<span class="tag">${esc(r.id)}</span>${imgs.length > 1 ? `<span class="tag">${imgs.length} frames</span>` : ''}</div>
       <h3><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a></h3>
-      <div class="metrics">${metrics(r.metrics) || '<span>metrics unavailable</span>'}</div>
+      <div class="metrics">${metrics(r.metrics) || (isBrand(r) ? '' : '<span>metrics unavailable</span>')}</div>
       <p>${esc(r.why)}</p>
       ${r.structure ? `<dl class="kv small" style="margin-top:8px">${[['Length', r.structure.durationSeconds ? `${r.structure.durationSeconds}s` : ''], ['Hook', r.structure.hook], ['Pacing', r.structure.pacing], ['Music', r.structure.music], ['Scenes', (r.structure.scenes || []).join(' → ')]].filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}
       </div>
-    </div></div>`).join('')}</div>
+    </div>${imgs.length > 1 ? `<div class="fstrip big">${imgs.slice(1, 9).map((s) => `<a href="${fileUrl(s)}" target="_blank"><img src="${fileUrl(s)}" alt="" loading="lazy"></a>`).join('')}</div>` : ''}</div>`; }).join('')}</div>
     ${refs.takeaways?.length || refs.diversityNote ? `<div class="card" style="margin-top:12px"><span class="eyebrow">Takeaways</span><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">${(refs.takeaways || []).map((t) => `<li>${esc(t)}</li>`).join('')}</ul>${refs.diversityNote ? `<p class="small muted" style="margin:8px 0 0">${esc(refs.diversityNote)}</p>` : ''}</div>` : ''}` : empty('No references yet.')));
 
   const sortedGoals = goals ? [...goals.goals].sort((a, z) => (scoreOf(z.id)?.confidence ?? -1) - (scoreOf(a.id)?.confidence ?? -1)) : [];
