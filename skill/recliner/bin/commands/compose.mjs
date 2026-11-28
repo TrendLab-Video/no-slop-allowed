@@ -35,15 +35,18 @@ export default async function ([runId], flags) {
   const clips = readJson(runId, 'clips.json', { scenes: [] });
   const notes = [];
 
+  // Hard cuts between scenes by default (cross-dissolves between generated clips read as AI morphing);
+  // config.transitions "dissolve" restores them. The last scene always dissolves into the end card.
+  const sceneX = config.transitions === 'dissolve' ? TRANSITION : 0;
   const scenes = [...plan.scenes].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
   const segments = [];
   const used = [];
   for (const [i, scene] of scenes.entries()) {
     const a = pickAttempt(clips.scenes.find((s) => s.sceneId === scene.id), runId);
     if (!a || !fs.existsSync(runPath(runId, a.file))) { notes.push(`scene ${scene.id}: no usable clip, skipped`); continue; }
-    const want = (scene.durationSeconds || config.clipSeconds || 5) + (i < scenes.length - 1 ? TRANSITION : 0);
+    const want = (scene.durationSeconds || config.clipSeconds || 5) + (i < scenes.length - 1 ? sceneX : 0);
     const have = a.durationSeconds || (await ffmpeg.probeDuration(runPath(runId, a.file)));
-    segments.push({ file: runPath(runId, a.file), seconds: Math.round((have ? Math.min(want, have) : want) * 100) / 100, available: have, text: scene.onScreenText || '' });
+    segments.push({ file: runPath(runId, a.file), seconds: Math.round((have ? Math.min(want, have) : want) * 100) / 100, available: have, text: scene.onScreenText || '', xfadeIn: segments.length ? sceneX : 0 });
     used.push({ sceneId: scene.id, attempt: a.attempt, file: a.file });
   }
   if (!segments.length) throw new Error('No generated clips to compose');
@@ -66,20 +69,20 @@ export default async function ([runId], flags) {
         // The last scene now overlaps the card, so it gains the transition (as far as its clip allows).
         const last = segments[segments.length - 1];
         last.seconds = Math.round(Math.min(last.seconds + TRANSITION, last.available || last.seconds + TRANSITION) * 100) / 100;
-        segments.push({ file, seconds: card.seconds + TRANSITION, text: '', endCard: true });
+        segments.push({ file, seconds: card.seconds + TRANSITION, text: '', endCard: true, xfadeIn: TRANSITION });
       } else notes.push('end card skipped: rsvg-convert not found');
     } catch (err) { notes.push(`end card failed: ${err.message}`); }
   } else notes.push('no end card in plan');
 
   // Caption windows, in seconds into each segment: start once the scene is fully visible (after the incoming
-  // cross-fade), clear before the outgoing cross-fade or the final fade to black.
+  // dissolve or the opening fade), clear before the outgoing dissolve or the final fade to black.
   segments.forEach((s, i) => {
-    const fadeIn = i > 0 ? TRANSITION : 0.25;
-    const fadeOut = i < segments.length - 1 ? TRANSITION : 0.5;
+    const fadeIn = i > 0 ? s.xfadeIn : 0.25;
+    const fadeOut = i < segments.length - 1 ? segments[i + 1].xfadeIn : 0.5;
     s.textIn = Math.round((fadeIn + 0.15) * 100) / 100;
     s.textOut = Math.round(Math.max(s.textIn + 0.8, s.seconds - fadeOut - 0.1) * 100) / 100;
   });
-  const total = segments.reduce((a, s) => a + s.seconds, 0) - TRANSITION * (segments.length - 1);
+  const total = segments.reduce((a, s, i) => a + s.seconds - (i ? s.xfadeIn : 0), 0);
 
   // Audio bed: cached fal assets, mixed to the exact length and loudness-normalised. Without a bed the video
   // has no audio stream at all (never a silent track that claims to be audio).
@@ -129,7 +132,7 @@ export default async function ([runId], flags) {
   updateJson(runId, 'result.json', { results: [], selectedId: null }, (doc) => { doc.results.push(entry); });
   appendTraceLocked(runId, {
     name: `compose:${entry.id}`, stage: 'composition', model: null,
-    inputs: { clips: used, aspectRatio: aspect, width, height, fps, transition: TRANSITION, onScreenText: segments.map((s) => s.text) },
+    inputs: { clips: used, aspectRatio: aspect, width, height, fps, transitions: sceneX ? 'dissolve' : 'cut', endCardDissolve: TRANSITION, onScreenText: segments.map((s) => s.text) },
     tool_calls: (out.commands || []).map((c) => ({ tool: compositor, arguments: { command: c.length > 4000 ? c.slice(0, 4000) + '…' : c }, result: { file: entry.file } })),
     outputs: { file: entry.file, thumbnail: entry.thumbnail, durationSeconds: entry.durationSeconds, compositor, endCard: entry.endCard, audio, notes, audio_ms: audioMs },
     duration_ms: Date.now() - started,

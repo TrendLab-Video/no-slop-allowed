@@ -165,20 +165,25 @@ export async function compose({ segments, width, height, fps = 30, transition = 
   const norm = [];
   for (let i = 0; i < segments.length; i++) norm.push(await normalise(segments[i], i, { width, height, fps, workDir }));
 
-  // Join with xfade cross-dissolves; each transition overlaps adjacent segments by `transition` seconds.
-  const T = segments.length > 1 ? transition : 0;
+  // Join: each segment's `xfadeIn` (seconds of overlap with the previous one) is a cross-dissolve; 0 is a hard
+  // cut (concat). Without per-segment values every join uses `transition`.
+  const xf = (i) => (i === 0 ? 0 : segments[i].xfadeIn ?? transition);
   const args = [];
   norm.forEach((n) => args.push('-i', n.out));
-  let filter = '';
-  let last = '[0:v]';
-  let offset = 0;
+  // One timebase for every input, so xfade accepts the output of an earlier concat.
+  let filter = norm.map((_, i) => `[${i}:v]settb=1/${fps * 1000},setpts=PTS-STARTPTS[s${i}];`).join('');
+  let last = '[s0]';
+  let length = segments[0].seconds;
   for (let i = 1; i < norm.length; i++) {
-    offset += segments[i - 1].seconds - T;
+    const T = xf(i);
     const label = `[x${i}]`;
-    filter += `${last}[${i}:v]xfade=transition=fade:duration=${T}:offset=${offset.toFixed(3)}${label};`;
+    filter += T > 0
+      ? `${last}[s${i}]xfade=transition=fade:duration=${T}:offset=${(length - T).toFixed(3)}${label};`
+      : `${last}[s${i}]concat=n=2:v=1:a=0,settb=1/${fps * 1000}${label};`;
+    length += segments[i].seconds - T;
     last = label;
   }
-  const total = segments.reduce((a, s) => a + s.seconds, 0) - T * (segments.length - 1);
+  const total = length;
   const fadeOutStart = Math.max(0, total - 0.5);
   filter += `${last}fade=in:st=0:d=0.25,fade=out:st=${fadeOutStart.toFixed(3)}:d=0.5,format=yuv420p[v]`;
 

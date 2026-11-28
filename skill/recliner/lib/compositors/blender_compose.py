@@ -9,7 +9,6 @@ import sys
 
 job = json.load(open(sys.argv[sys.argv.index("--") + 1]))
 W, H, FPS = job["width"], job["height"], job["fps"]
-T = int(round(job.get("transition", 0.4) * FPS)) if len(job["segments"]) > 1 else 0
 
 scene = bpy.context.scene
 scene.render.resolution_x = W
@@ -44,18 +43,21 @@ def key_alpha(strip, frames_values):
         strip.keyframe_insert("blend_alpha", frame=f)
 
 
-start = 1
 prev = None
+prev_end = 1  # first frame after the previous segment
 movies = []
 for i, seg in enumerate(job["segments"]):
+    # Per-segment incoming overlap: 0 is a hard cut, > 0 a cross-dissolve of that many seconds.
+    Ti = 0 if i == 0 else int(round(seg.get("xfadeIn", job.get("transition", 0.4)) * FPS))
+    start = prev_end - Ti
     length = max(1, int(round(seg["seconds"] * FPS)))
     ch = 1 + (i % 2)
     m = strips.new_movie(f"clip{i}", seg["file"], ch, start, fit_method="FILL")
     # compose.mjs never asks for more than the clip holds, so this only trims.
     m.frame_final_duration = min(length, m.frame_final_duration)
     length = m.frame_final_duration
-    if prev is not None and T > 0:
-        strips.new_effect(f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, length=T, input1=prev, input2=m)
+    if prev is not None and Ti > 0:
+        strips.new_effect(f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, length=Ti, input1=prev, input2=m)
     movies.append(m)
 
     text = (seg.get("text") or "").strip()
@@ -97,9 +99,9 @@ for i, seg in enumerate(job["segments"]):
         key_alpha(t, [(tstart, 0.0), (tstart + fade, 1.0), (max(tstart + fade, tend - int(0.25 * FPS)), 1.0), (tend, 0.0)])
 
     prev = m
-    start += length - T
+    prev_end = start + length
 
-end = start + T - 1
+end = prev_end - 1
 scene.frame_start = 1
 scene.frame_end = end
 
