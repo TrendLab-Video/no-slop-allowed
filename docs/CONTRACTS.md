@@ -35,8 +35,9 @@ All JSON. Paths inside files are relative to the run folder.
 **`prefill.json`**: any subset of `brief.json` and `config.json` fields the agent pre-enters on the Brief page.
 
 **`brief.json`** (the only user input)
-`{ runId, source: page|file, promote, objective, url, platform, videoType, domain, aspectRatio: "9:16"|"16:9"|"1:1", notes, raw, submittedAt }`
+`{ runId, source: page|file, file, promote, objective, url, platform, videoType, domain, aspectRatio: "9:16"|"16:9"|"1:1", notes, raw, submittedAt }`
 `raw` is the original brief text when the brief came from a file.
+`file` is the brief's path relative to the repo root (for example `briefs/02-nike.md`) when it came from a file; `export` uses it for `traces.brief` and the `outputs/<brief-slug>/` folder name (falling back to `promote`, then the run slug).
 
 **`config.json`** (effort slider resolved, with user overrides applied)
 `{ effort: 1..5, scenes, clipSeconds, parallelism, videoModel, imageModel, resolution, referencesCount, goalsCount, clipRetries, finalRetries, passScore, timeBudgetMinutes, scorer: jev|haiku, compositor: blender|ffmpeg, audio: true|false }`
