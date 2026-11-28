@@ -113,7 +113,7 @@ async function briefForm(view, prefill, onStarted, isDone) {
           <div class="small muted wide" style="grid-column:1/-1">Keys are written to the local <code>.env</code> by the server and never shown again or stored in the run folder.</div>
         </div>
       </details>
-      <div class="start"><button class="btn big" id="go" type="submit">Start <span class="arrow">→</span></button><span class="err" id="err"></span></div>
+      <div class="start"><button class="btn big" id="go" type="submit">Start <span class="arrow">→</span></button><span class="falst" id="falst"><span class="tag">fal · checking…</span></span><span class="err" id="err"></span></div>
     </div>
   </form>`;
 
@@ -148,6 +148,7 @@ async function briefForm(view, prefill, onStarted, isDone) {
   $('#effort').addEventListener('input', (e) => applyEffort(Number(e.target.value)));
   view.querySelectorAll('#ticks span').forEach((s) => (s.onclick = () => applyEffort(Number(s.dataset.v))));
   applyEffort(effort);
+  falStatus();
 
   return new Promise((resolve) => {
     $('#f').addEventListener('submit', async (ev) => {
@@ -173,6 +174,20 @@ async function briefForm(view, prefill, onStarted, isDone) {
       }
     });
   });
+}
+
+// fal status before Start: key present / accepted / rejected (reason). Never shows the key.
+async function falStatus(fresh) {
+  const el = $('#falst');
+  if (!el) return;
+  try {
+    const r = await api(`/api/preflight${fresh ? '?fresh=1' : ''}`);
+    const cls = { accepted: 'ok', present: 'info', missing: 'bad', rejected: 'bad' }[r.status] || '';
+    const label = { accepted: 'fal · ready', present: 'fal · key present', missing: 'fal · no key', rejected: 'fal · rejected' }[r.status] || `fal · ${r.status}`;
+    el.innerHTML = `<span class="tag ${cls}" title="${esc(r.reason || '')}">${esc(label)}</span>${r.status === 'accepted' || r.status === 'present' ? '' : `<span class="small" style="color:#ff6b85">${esc(r.reason || '')}${r.status === 'missing' ? ' · add it under Advanced' : ''}</span>`}`;
+  } catch (e) {
+    el.innerHTML = `<span class="tag">fal · status unknown</span>`;
+  }
 }
 
 // ---------- Live run view ----------

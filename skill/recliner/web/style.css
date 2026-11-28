@@ -294,3 +294,96 @@ main > * { min-width: 0; }
 .toc { order: -1; }
 .hero { grid-template-columns: minmax(240px, 340px) 1fr; }
 .hero .media.ar-9-16 { max-height: 78vh; aspect-ratio: 9 / 16; }
+
+/* ---------- Visuals first ---------- */
+/* Compact workflow strip: header + strip + media stage fit a 900px viewport. */
+#flow { order: -3; }
+.head { order: -2; }
+.flow-wrap { margin: 4px 0 16px; }
+.flow-head { padding-bottom: 8px; margin-bottom: 10px; }
+.flow-head .ttl { font-size: 15px; }
+.flow { gap: 8px; }
+.st { min-height: 0; padding: 9px 11px 10px; gap: 3px; border-radius: 10px; }
+.st .top-row { font-size: 11px; }
+.st .nm { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st .note { font-size: 11.5px; -webkit-line-clamp: 1; }
+.flow-note { display: none !important; }
+
+/* Media stage: always the best visual so far. */
+.stage { --stage-h: clamp(380px, calc(100vh - 330px), 620px); position: relative; overflow: hidden; isolation: isolate; border-radius: var(--r); margin-bottom: 28px;
+  display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 28px; padding: 28px; background: #1b1440; }
+.stage::before { content: ""; position: absolute; inset: -30%; z-index: -1; filter: blur(70px); opacity: 0.85;
+  background:
+    radial-gradient(40% 55% at 10% 70%, #2b2fe6 0%, transparent 70%),
+    radial-gradient(30% 50% at 45% 35%, #c02ad6 0%, transparent 70%),
+    radial-gradient(40% 60% at 85% 30%, #ff1f48 0%, transparent 70%),
+    linear-gradient(100deg, #2221c9 0%, #3e25c8 30%, #c529c9 55%, #ff2a55 80%, #e225c8 100%);
+  animation: drift 24s ease-in-out infinite alternate; }
+.stage::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(8, 8, 20, 0.55) 0%, rgba(8, 8, 20, 0.25) 40%, rgba(8, 8, 20, 0.35) 100%); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+.stage-info { display: flex; flex-direction: column; gap: 14px; min-width: 0; color: #fff; align-self: stretch; }
+.stage-info .pillb { align-self: flex-start; font: 500 10.5px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: #fff; background: rgba(10, 10, 40, 0.55); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: var(--pill); padding: 7px 12px; display: inline-flex; gap: 8px; align-items: center; }
+.stage-info h1 { color: #fff; font-size: clamp(30px, 3.4vw, 48px); line-height: 1; letter-spacing: -0.04em; }
+.stage-info p { margin: 0; color: rgba(255, 255, 255, 0.88); font-size: 15px; line-height: 1.45; }
+.stage-info .sub { font: 12px var(--mono); color: rgba(255, 255, 255, 0.7); }
+.stage-info .bignum { color: #fff; font-size: 64px; }
+.stage-info .bignum small { color: rgba(255, 255, 255, 0.6); }
+.stage-info .links { margin-top: auto; }
+.stage-info .btn.ghost { background: rgba(10, 10, 40, 0.35); border-color: rgba(255, 255, 255, 0.35); color: #fff; }
+.stage-info .btn:not(.ghost) { background: var(--paper); color: var(--on-paper); }
+.stage-media { position: relative; height: var(--stage-h); min-width: 0; display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+/* Tiles: --n tiles share the row, each keeps its aspect ratio and fits the stage height. */
+.tiles { display: flex; gap: 12px; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.tile { --ar: 0.5625; position: relative; flex: 0 0 auto; width: min(calc(var(--stage-h) * var(--ar)), calc((100% - (var(--n) - 1) * 12px) / var(--n))); aspect-ratio: var(--ar); border-radius: 14px; overflow: hidden; background: #0b0b0b;
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); animation: tile-in 0.5s ease both; }
+.tile.r16-9 { --ar: 1.7778; }
+.tile.r1-1 { --ar: 1; }
+.tile video, .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.tile .tl { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.tile .tr { position: absolute; top: 8px; right: 8px; }
+.tile .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 11px; font-size: 12.5px; line-height: 1.35; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.78)); }
+.tile .cap b { display: block; font: 500 10.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); margin-bottom: 3px; }
+.tile .cap .ost { font-family: var(--mono); color: #fff; opacity: 0.9; }
+.tile.rej { opacity: 0.55; }
+.tile.acc { border-color: rgba(74, 222, 128, 0.7); box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.5), 0 24px 60px -24px rgba(0, 0, 0, 0.7); }
+@keyframes tile-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+.tile .tag { background: rgba(11, 11, 11, 0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.tile .tag.ok { background: rgba(10, 40, 20, 0.85); }
+.tile .tag.bad { background: rgba(60, 5, 20, 0.85); }
+.tile .tag.run { background: var(--paper); }
+
+/* Animated gradient placeholder for anything still generating. */
+.ph { position: absolute; inset: 0; background: linear-gradient(120deg, #2b2fe6, #8e2bd8, #ff2d6f, #c02ad6, #2b2fe6); background-size: 400% 400%; animation: ph 6s ease-in-out infinite; }
+.ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.18) 50%, transparent 70%); background-size: 250% 100%; animation: shimmer 2.2s linear infinite; }
+.ph.dim { filter: saturate(0.6) brightness(0.55); }
+.ph.fail { background: linear-gradient(120deg, #3a0612, #5a0a1e); animation: none; }
+.ph.fail::after { display: none; }
+.ph .phl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font: 500 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.9); z-index: 1; padding: 10px; }
+@keyframes ph { 50% { background-position: 100% 50%; } }
+@keyframes shimmer { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .ph, .ph::after, .tile { animation: none; } }
+
+/* Reference mosaic: screenshots tiled to fill the stage. */
+.mosaic { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 10px; }
+.mosaic .mt { position: relative; border-radius: 12px; overflow: hidden; background: #0b0b0b; border: 1px solid rgba(255, 255, 255, 0.1); animation: tile-in 0.5s ease both; }
+.mosaic .mt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mosaic .mt .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 20px 10px 8px; font-size: 11.5px; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.8)); }
+.mosaic .mt .cap b { font: 500 10px var(--mono); color: rgba(255, 255, 255, 0.75); display: block; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Steps: media first in every row, text beside it. */
+.attempts.rows { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.attempt.row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px; align-items: start; }
+.attempt.row.wide-media { grid-template-columns: 240px minmax(0, 1fr); }
+.attempt.row .body { padding: 6px 10px; }
+.ref-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: start; }
+.ref-row .shots { margin: 0; flex-direction: row; }
+.ref-row .shots img { height: 190px; }
+@media (max-width: 700px) { .attempts.rows { grid-template-columns: 1fr; } .attempt.row { grid-template-columns: 110px 1fr; } .ref-row { grid-template-columns: 1fr; } }
+
+/* Result: hero video first. */
+.page-result #flow { order: 1; }
+.page-result .hero { margin-top: 8px; }
+.hero h1 { font-size: clamp(30px, 3.6vw, 52px); letter-spacing: -0.04em; line-height: 1; margin: 12px 0 8px; }
+
+.falst { display: inline-flex; gap: 10px; align-items: center; flex-wrap: wrap; }
