@@ -37,7 +37,7 @@ All JSON. Paths inside files are relative to the run folder.
 **`brief.json`** (the only user input)
 `{ runId, source: page|file, file, promote, objective, url, platform, videoType, domain, aspectRatio: "9:16"|"16:9"|"1:1", notes, raw, submittedAt }`
 `raw` is the original brief text when the brief came from a file.
-`file` is the brief's path relative to the repo root (for example `briefs/02-nike.md`) when it came from a file; `export` uses it for `traces.brief` and the `outputs/<brief-slug>/` folder name (falling back to `promote`, then the run slug).
+`file` is the brief's path relative to the repo root (for example `briefs/02-nike.md`) when it came from a file; `export` uses it for `traces.brief` and the `outputs/<brief-slug>/` folder name (falling back to the run slug).
 
 **`config.json`** (effort slider resolved, with user overrides applied)
 `{ effort: 1..5, scenes, clipSeconds, parallelism, videoModel, imageModel, resolution, referencesCount, goalsCount, clipRetries, finalRetries, passScore, timeBudgetMinutes, scorer: jev|haiku, compositor: blender|ffmpeg, audio: true|false }`
@@ -75,6 +75,7 @@ The final validator writes `compositions/<attempt>/validation.json` (`{ id, atte
 | `wait-brief <runId>` | Blocks until `brief.json` exists, then prints it with `config.json` |
 | `stage`, `trace` | As above |
 | `generate-clips <runId> [--scene id --steering "..."]` | fal generation, all scenes in parallel, or one scene as a retry attempt. Updates `clips.json` |
+| `preflight [runId] [--probe]` | Checks `FAL_KEY` is set and accepted by fal (free balance check; `--probe` submits a tiny job). Exits 1 with a one-line reason; with a runId, adds a trace step |
 | `frames <video> <outDir> [--count 6]` | Extracts evenly spaced frames for validation sub-agents |
 | `accept-clips <runId>` | Sets `acceptedAttempt` per scene from validation scores |
 | `compose <runId>` | Composes accepted clips with the configured compositor (Blender, ffmpeg fallback) and adds audio. Adds an entry to `result.json` |

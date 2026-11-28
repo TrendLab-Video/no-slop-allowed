@@ -1,6 +1,6 @@
 import { readJson, runPath } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
-import { run as falRun, download, toolCall, videoArgs, falKey, VIDEO_MODELS } from '../../lib/fal.mjs';
+import { run as falRun, download, toolCall, videoArgs, checkAccount, isAuthError, VIDEO_MODELS } from '../../lib/fal.mjs';
 import { probeDuration } from '../../lib/compositors/ffmpeg.mjs';
 import { generateAssets } from '../../lib/audio.mjs';
 
@@ -16,10 +16,11 @@ export async function mapLimit(items, limit, fn) {
 }
 
 export function scenePrompt(plan, scene, steering) {
-  let p = scene.prompt || scene.description;
-  if (plan.style && !p.toLowerCase().includes(String(plan.style).toLowerCase().slice(0, 20))) p += `. Style: ${plan.style}`;
+  const clean = (t) => String(t || '').trim().replace(/[\s.,;:]+$/, '');
+  let p = clean(scene.prompt || scene.description);
+  if (plan.style && !p.toLowerCase().includes(String(plan.style).toLowerCase().slice(0, 20))) p += `. Style: ${clean(plan.style)}`;
   p += '. No on-screen text, no captions, no logos, no watermarks.';
-  if (steering) p += ` Important correction from review: ${steering}`;
+  if (steering) p += ` Important correction from review: ${clean(steering)}.`;
   return p;
 }
 
@@ -28,7 +29,9 @@ export default async function ([runId], flags) {
   const plan = readJson(runId, 'plan.json');
   if (!plan) throw new Error(`No plan.json in run ${runId}`);
   const config = readJson(runId, 'config.json', {});
-  falKey(); // fail fast with a clear message
+  // Fail fast on a missing key, bad key or empty balance before reserving any attempts.
+  const account = await checkAccount();
+  if (!account.ok) throw new Error(account.reason);
 
   const model = config.videoModel || VIDEO_MODELS[config.effort || 3];
   const aspectRatio = config.aspectRatio || plan.aspectRatio || readJson(runId, 'brief.json', {})?.aspectRatio || '16:9';
@@ -74,12 +77,19 @@ export default async function ([runId], flags) {
   // Start the music bed (and voiceover) alongside the clips so compose finds them cached.
   const audioJob = flags.scene || config.audio === false ? null : generateAssets(runId, plan, config).catch((e) => ({ notes: [e.message] }));
 
+  // A 401/403 (bad key, locked or exhausted account) stops every job that has not started yet.
+  let authError = null;
   const results = await mapLimit(jobs, parallelism, async (job) => {
+    if (authError) {
+      update(job.scene.id, job.attempt, { status: 'failed', error: `skipped: ${authError}` });
+      return { sceneId: job.scene.id, attempt: job.attempt, model, status: 'failed', file: null, error: `skipped: ${authError}` };
+    }
     const call = (m) => falRun(m, videoArgs(m, { prompt: job.prompt, aspectRatio, seconds: job.seconds, resolution: job.resolution }), {
       timeoutMs: (config.clipTimeoutMinutes || 8) * 60000,
       onSubmit: (r) => update(job.scene.id, job.attempt, { requestId: r.requestId, model: m }),
     });
     const calls = [await call(model)];
+    if (calls[0].status === 'failed' && isAuthError(calls[0].error)) authError = authError || calls[0].error;
     // An unknown or retired endpoint (404) falls back to the known-good default for this effort level.
     const fallback = VIDEO_MODELS[config.effort || 3];
     if (calls[0].status === 'failed' && / -> 404:/.test(calls[0].error || '') && fallback !== model) calls.push(await call(fallback));
@@ -109,6 +119,7 @@ export default async function ([runId], flags) {
 
   const audio = audioJob ? await audioJob : null;
   const failed = results.filter((r) => r.status === 'failed');
+  if (authError) throw new Error(`fal refused the request, stopped: ${authError}`);
   if (failed.length === results.length) throw new Error(`All ${failed.length} clip(s) failed: ${failed.map((f) => f.error).join(' | ')}`);
   return { runId, model, results, audio: audio && { music: !!audio.music, voiceover: !!audio.voiceover, notes: audio.notes } };
 }
