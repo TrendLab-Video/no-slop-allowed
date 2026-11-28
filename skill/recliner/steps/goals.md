@@ -7,6 +7,16 @@ Never ask the user anything. Time cap: the seconds the orchestrator gave you (de
 ## Inputs
 
 - `$RUN/brief.json`, `$RUN/config.json` (`goalsCount`, `scenes`, `clipSeconds`), `$RUN/references.json`
+- Style memory: `recliner style-memory --recent 8` (what recent runs chose: modality, hookType, palette, pacing, references). Empty on the first run.
+
+## 0. Steer away from recent runs (diversity is judged)
+
+Before writing goals, list the modalities, hook types and palettes in the recent entries. Then:
+- No goal may repeat the **modality + hookType** pair of any of the last 3 entries, whatever the brief.
+- At most one goal may reuse a modality from the last 8 entries; it must change the hook and the palette.
+- If an earlier entry has the same `briefSlug` (a repeat run of this brief), every goal must differ from that run's goal in modality **and** palette, and should borrow from different references.
+- If the orchestrator gave you a **modality hint**, make your strongest goal in that modality (goal-1).
+- Say in your return summary what you avoided.
 
 ## 1. Intent
 
@@ -79,6 +89,7 @@ Each `scene.prompt` goes straight to a text-to-video model. Write it as a shot, 
       "referenceIds": ["ref-2"],
       "audio": { "musicPrompt": "...", "voiceover": null },
       "endCard": { "text": "...", "seconds": 1.5 },
+      "styleTags": { "modality": "kinetic sports montage", "hookType": "sound-first physical action", "palette": "sodium orange / pre-dawn blue", "pacing": "0.5s cuts to a 2s hold" },
       "scenes": [
         { "id": "goal-1-s1", "index": 1, "durationSeconds": 5, "description": "...", "prompt": "...", "onScreenText": "..." }
       ]
@@ -88,7 +99,7 @@ Each `scene.prompt` goes straight to a text-to-video model. Write it as a shot, 
 }
 ```
 
-Ids: goals `goal-1`…; scenes `<goalId>-s<index>`. `intent` is an extra field the validators read.
+Ids: goals `goal-1`…; scenes `<goalId>-s<index>`. `intent` is an extra field the validators read. `styleTags` (extra) feeds the style memory: short plain labels, one each.
 
 ## Return
 
