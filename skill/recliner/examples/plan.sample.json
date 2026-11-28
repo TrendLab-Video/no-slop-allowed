@@ -1,0 +1,42 @@
+{
+  "id": "goal-2",
+  "goalId": "goal-2",
+  "confidence": 0.82,
+  "title": "First light, first pour",
+  "description": "A 15 second vertical teaser for a small-batch coffee roaster: dawn mood, tactile close-ups, one clear call to action.",
+  "creativeGuidance": "Warm, slow, tactile. No faces. Let steam and light carry it. Text short and confident.",
+  "durationSeconds": 15,
+  "aspectRatio": "9:16",
+  "style": "cinematic macro photography, warm golden morning light, shallow depth of field, 35mm film grain",
+  "referenceIds": ["ref-1"],
+  "audio": {
+    "musicPrompt": "warm lo-fi acoustic guitar and soft brushed drums, calm morning mood, 80 bpm, instrumental",
+    "voiceover": null
+  },
+  "scenes": [
+    {
+      "id": "s1",
+      "index": 0,
+      "durationSeconds": 5,
+      "description": "Coffee beans tumbling out of a roaster drum in slow motion",
+      "prompt": "Slow motion macro shot of freshly roasted coffee beans tumbling out of a copper roaster drum, wisps of smoke, warm sunrise light through a window",
+      "onScreenText": "Roasted at dawn"
+    },
+    {
+      "id": "s2",
+      "index": 1,
+      "durationSeconds": 5,
+      "description": "Pour-over: hot water spirals onto ground coffee, bloom rises",
+      "prompt": "Close-up of hot water poured in a slow spiral onto ground coffee in a ceramic pour-over dripper, the coffee bed blooms and bubbles, steam rising, golden backlight",
+      "onScreenText": "Brewed slow"
+    },
+    {
+      "id": "s3",
+      "index": 2,
+      "durationSeconds": 5,
+      "description": "Steaming cup on a wooden table by a sunny window, camera pushes in",
+      "prompt": "Slow push-in on a steaming cup of black coffee on a worn oak table beside a sunlit window, dust motes in the light, cosy morning atmosphere",
+      "onScreenText": "Order your first bag today"
+    }
+  ]
+}
