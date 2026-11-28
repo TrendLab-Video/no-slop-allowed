@@ -35,15 +35,18 @@ export default async function ([runId], flags) {
   const clips = readJson(runId, 'clips.json', { scenes: [] });
   const notes = [];
 
+  // Hard cuts between scenes by default (cross-dissolves between generated clips read as AI morphing);
+  // config.transitions "dissolve" restores them. The last scene always dissolves into the end card.
+  const sceneX = config.transitions === 'dissolve' ? TRANSITION : 0;
   const scenes = [...plan.scenes].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
   const segments = [];
   const used = [];
   for (const [i, scene] of scenes.entries()) {
     const a = pickAttempt(clips.scenes.find((s) => s.sceneId === scene.id), runId);
     if (!a || !fs.existsSync(runPath(runId, a.file))) { notes.push(`scene ${scene.id}: no usable clip, skipped`); continue; }
-    const want = (scene.durationSeconds || config.clipSeconds || 5) + (i < scenes.length - 1 ? TRANSITION : 0);
+    const want = (scene.durationSeconds || config.clipSeconds || 5) + (i < scenes.length - 1 ? sceneX : 0);
     const have = a.durationSeconds || (await ffmpeg.probeDuration(runPath(runId, a.file)));
-    segments.push({ file: runPath(runId, a.file), seconds: Math.round((have ? Math.min(want, have) : want) * 100) / 100, text: scene.onScreenText || '' });
+    segments.push({ file: runPath(runId, a.file), seconds: Math.round((have ? Math.min(want, have) : want) * 100) / 100, available: have, text: scene.onScreenText || '', xfadeIn: segments.length ? sceneX : 0 });
     used.push({ sceneId: scene.id, attempt: a.attempt, file: a.file });
   }
   if (!segments.length) throw new Error('No generated clips to compose');
@@ -56,17 +59,44 @@ export default async function ([runId], flags) {
   const aspect = config.aspectRatio || plan.aspectRatio || brief.aspectRatio || '16:9';
   const { width, height } = ffmpeg.dimensions(aspect, config.outputLongEdge || 1920);
   const fps = 30;
-  const total = segments.reduce((a, s) => a + s.seconds, 0) - TRANSITION * (segments.length - 1);
 
-  // Audio bed: cached fal assets, mixed to the exact length and loudness-normalised.
+  // End card (plan.endCard, either contract shape): a designed card the last scene cross-fades into.
+  const card = ffmpeg.endCardSpec(plan.endCard);
+  if (card) {
+    try {
+      const file = await ffmpeg.endCardClip({ ...card, seconds: card.seconds + TRANSITION }, { width, height, fps, file: runPath(runId, dir, 'work', 'endcard.mp4') });
+      if (file) {
+        // The last scene now overlaps the card, so it gains the transition (as far as its clip allows).
+        const last = segments[segments.length - 1];
+        last.seconds = Math.round(Math.min(last.seconds + TRANSITION, last.available || last.seconds + TRANSITION) * 100) / 100;
+        segments.push({ file, seconds: card.seconds + TRANSITION, text: '', endCard: true, xfadeIn: TRANSITION });
+      } else notes.push('end card skipped: rsvg-convert not found');
+    } catch (err) { notes.push(`end card failed: ${err.message}`); }
+  } else notes.push('no end card in plan');
+
+  // Caption windows, in seconds into each segment: start once the scene is fully visible (after the incoming
+  // dissolve or the opening fade), clear before the outgoing dissolve or the final fade to black.
+  segments.forEach((s, i) => {
+    const fadeIn = i > 0 ? s.xfadeIn : 0.25;
+    const fadeOut = i < segments.length - 1 ? segments[i + 1].xfadeIn : 0.5;
+    s.textIn = Math.round((fadeIn + 0.15) * 100) / 100;
+    s.textOut = Math.round(Math.max(s.textIn + 0.8, s.seconds - fadeOut - 0.1) * 100) / 100;
+  });
+  const total = segments.reduce((a, s, i) => a + s.seconds - (i ? s.xfadeIn : 0), 0);
+
+  // Audio bed: cached fal assets, mixed to the exact length and loudness-normalised. Without a bed the video
+  // has no audio stream at all (never a silent track that claims to be audio).
   let bed = null;
   const audioStarted = Date.now();
-  try {
-    const assets = await generateAssets(runId, plan, config);
-    notes.push(...assets.notes);
-    bed = await mixBed({ music: assets.music, voiceover: assets.voiceover, total, outFile: runPath(runId, dir, 'bed.wav') });
-    if (!bed && config.audio !== false) notes.push('no audio bed: silent track used');
-  } catch (err) { notes.push(`audio failed, silent track used: ${err.message}`); }
+  if (config.audio === false) notes.push('no audio: disabled in config');
+  else {
+    try {
+      const assets = await generateAssets(runId, plan, config);
+      notes.push(...assets.notes);
+      bed = await mixBed({ music: assets.music, voiceover: assets.voiceover, total, outFile: runPath(runId, dir, 'bed.wav') });
+      if (!bed) notes.push('no audio: music generation failed');
+    } catch (err) { notes.push(`no audio: ${err.message}`); }
+  }
   const audioMs = Date.now() - audioStarted;
 
   const job = { segments, width, height, fps, transition: TRANSITION, bed, outFile: runPath(runId, dir, 'final.mp4'), workDir, plan };
@@ -86,17 +116,25 @@ export default async function ([runId], flags) {
   await ffmpeg.thumbnail(out.file, runPath(runId, dir, 'thumb.jpg'));
   fs.rmSync(workDir, { recursive: true, force: true });
 
+  // Verify the music is actually audible in the delivered file (integrated loudness of the final mix).
+  const loud = await ffmpeg.loudness(out.file);
+  const audio = loud
+    ? { present: true, bed: `${dir}/bed.wav`, lufs: loud.lufs, truePeak: loud.truePeak, audible: loud.lufs > -30 }
+    : { present: false, note: notes.find((x) => x.startsWith('no audio')) || 'no audio' };
+  if (loud && !audio.audible) notes.push(`audio present but too quiet (${loud.lufs} LUFS)`);
+
   const entry = {
     id: `comp-${n}`, attempt: n, file: `${dir}/final.mp4`, thumbnail: `${dir}/thumb.jpg`, compositor,
-    durationSeconds: out.durationSeconds, width, height, clips: used, audio: bed ? `${dir}/bed.wav` : null, notes, validation: null,
+    durationSeconds: out.durationSeconds, width, height, clips: used, endCard: card ? { headline: card.headline, subline: card.subline, seconds: card.seconds } : null,
+    audio, notes, validation: null,
   };
   // Append only our entry under the lock, so validation that rank merged into other entries is kept.
   updateJson(runId, 'result.json', { results: [], selectedId: null }, (doc) => { doc.results.push(entry); });
   appendTraceLocked(runId, {
     name: `compose:${entry.id}`, stage: 'composition', model: null,
-    inputs: { clips: used, aspectRatio: aspect, width, height, fps, transition: TRANSITION, onScreenText: segments.map((s) => s.text) },
+    inputs: { clips: used, aspectRatio: aspect, width, height, fps, transitions: sceneX ? 'dissolve' : 'cut', endCardDissolve: TRANSITION, onScreenText: segments.map((s) => s.text) },
     tool_calls: (out.commands || []).map((c) => ({ tool: compositor, arguments: { command: c.length > 4000 ? c.slice(0, 4000) + '…' : c }, result: { file: entry.file } })),
-    outputs: { file: entry.file, thumbnail: entry.thumbnail, durationSeconds: entry.durationSeconds, compositor, notes, audio_ms: audioMs },
+    outputs: { file: entry.file, thumbnail: entry.thumbnail, durationSeconds: entry.durationSeconds, compositor, endCard: entry.endCard, audio, notes, audio_ms: audioMs },
     duration_ms: Date.now() - started,
   });
   return entry;

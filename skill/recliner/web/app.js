@@ -8,7 +8,7 @@ export const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&a
 export const $ = (sel, root = document) => root.querySelector(sel);
 
 // URL of a file in the run folder (paths inside run files are relative to it).
-export const fileUrl = (p, id = runId) => (p ? `/runs/${encodeURIComponent(id)}/${String(p).split('/').map(encodeURIComponent).join('/')}` : '');
+export const fileUrl = (p, id = runId) => (p && /^https?:\/\//.test(p) ? p : p ?`/runs/${encodeURIComponent(id)}/${String(p).split('/').map(encodeURIComponent).join('/')}` : '');
 
 // Fetch one JSON run file; null when it does not exist yet.
 export async function getJson(name, id = runId) {
@@ -120,12 +120,14 @@ export async function balance() {
   try {
     const r = await api('/api/preflight');
     const usd = (n) => `$${Number(n).toFixed(2)}`;
+    // Floor comes from lib/fal.mjs (RECLINER_MIN_BALANCE) via the preflight result; 0 means off.
+    const floor = r.floor == null ? '' : `<span>· floor ${r.floor ? usd(r.floor) : 'off'}</span>`;
     if (r.balance != null) {
       el.className = `bal ${r.low || r.status === 'rejected' ? 'low' : 'okb'}`;
-      el.innerHTML = `<i></i>fal ${usd(r.balance)} <span>· floor ${usd(r.floor)}</span>`;
+      el.innerHTML = `<i></i>fal ${usd(r.balance)} ${floor}`;
     } else {
-      el.className = `bal ${r.status === 'missing' || r.status === 'rejected' ? 'low' : ''}`;
-      el.innerHTML = `<i></i>fal ${esc({ missing: 'no key', rejected: 'rejected', present: 'key set', accepted: 'ok' }[r.status] || r.status)} <span>· floor ${usd(r.floor)}</span>`;
+      el.className = `bal ${['missing', 'rejected', 'low'].includes(r.status) ? 'low' : ''}`;
+      el.innerHTML = `<i></i>fal ${esc({ missing: 'no key', rejected: 'rejected', present: 'key set', accepted: 'ok', low: 'low' }[r.status] || r.status)} ${floor}`;
     }
     el.title = r.reason || '';
   } catch { el.textContent = ''; }
@@ -187,15 +189,93 @@ export function needRun() {
 // Found files are cached; missing ones are retried on the next poll. Sets attempt.keyframeValidation.
 const kfCache = {};
 export const kfValidationPath = (kf) => String(kf).replace(/\.(jpe?g|png|webp)$/i, '') + '.validation.json';
+// attempt.keyframe is either a path or an object { file, url, prompt, model, validation, reference }.
+// Normalises it to a path (or fal URL) in attempt.keyframe, keeps the object in attempt.keyframeInfo, and
+// takes the validation from the object when embedded, else from the .validation.json beside the file.
+const normVal = (v) => (v ? { score: v.score ?? v.validation?.score, passed: v.passed ?? v.validation?.passed, reason: v.reason ?? v.validation?.reason, steering: v.steering ?? v.validation?.steering } : null);
+
+// ---------- Validator verdicts: always labelled, never mistaken for the plan ----------
+const BD_LABELS = { hook: 'Hook', briefFit: 'Brief fit', craft: 'Craft', originality: 'Originality', slop: 'No slop' };
+const asList = (x) => (Array.isArray(x) ? x : x ? [x] : []).map((i) => (typeof i === 'string' ? i : i?.text || i?.repair || i?.description || JSON.stringify(i)));
+
+// "VALIDATOR VERDICT 43 · BELOW PASS SCORE 60" (label can be changed, e.g. KEYFRAME VALIDATOR).
+export function verdictHead(v, passScore, label = 'Validator verdict') {
+  if (!v || v.score == null) return `<div class="verdict"><span class="vlabel">${esc(label)}</span><span class="tag">not validated yet</span></div>`;
+  return `<div class="verdict"><span class="vlabel">${esc(label)}</span><span class="vscore ${v.passed === false ? 'fail' : ''}">${esc(v.score)}</span>
+    <span class="tag ${v.passed === false ? 'bad' : v.passed ? 'ok' : ''}">${v.passed === false ? `below pass score${passScore != null ? ` ${esc(passScore)}` : ''}` : v.passed ? 'passed' : 'scored'}</span></div>`;
+}
+
+// Banner when the selected (best) result did not pass.
+export function belowPassBanner(result, config) {
+  const sel = result?.results?.find((r) => r.id === result.selectedId);
+  const v = sel?.validation;
+  if (!v || v.passed !== false) return '';
+  const used = Math.max(0, (result.results?.length || 1) - 1);
+  const allowed = config?.finalRetries;
+  return `<div class="failbanner"><b>Best available result: did not pass validation</b>
+    <span>score ${esc(v.score)}${config?.passScore != null ? `, pass ${esc(config.passScore)}` : ''}. Retries used ${used}${allowed != null ? ` of ${esc(allowed)}` : ''}.</span></div>`;
+}
+
+// INTENDED (the plan) beside WHAT THE VALIDATOR SAW (reason, breakdown, biggestProblem, repairs).
+export function intendedVsSaw(plan, v, passScore) {
+  const scenes = plan?.scenes || [];
+  const problems = asList(v?.biggestProblem);
+  const repairs = asList(v?.repairs);
+  const bd = v?.breakdown || {};
+  return `<div class="compare">
+    <div class="cmp intended"><div class="vlabel">Intended · the plan</div>
+      ${plan ? `<h3>${esc(plan.title || '')}</h3>${plan.creativeGuidance ? `<p>${esc(plan.creativeGuidance)}</p>` : plan.description ? `<p>${esc(plan.description)}</p>` : ''}
+      <ol class="scenes">${scenes.map((s) => `<li><span>${esc(s.description || '')}${s.onScreenText ? ` <span class="muted mono small">“${esc(s.onScreenText)}”</span>` : ''}</span><span class="d">${esc(s.durationSeconds ?? '')}s</span></li>`).join('')}</ol>`
+        : '<p class="muted">No plan.</p>'}
+    </div>
+    <div class="cmp saw"><div class="vlabel">What the validator saw</div>
+      ${verdictHead(v, passScore)}
+      ${v?.reason ? `<blockquote>${esc(v.reason)}</blockquote>` : ''}
+      ${Object.keys(bd).length ? `<div class="breakdown">${Object.entries(bd).map(([k, n]) => `<div class="score"><span>${esc(BD_LABELS[k] || k)}</span>${scoreBar(n, 100, passScore != null ? Number(n) >= passScore : undefined)}<span>${esc(n)}</span></div>`).join('')}</div>` : ''}
+      ${problems.length ? `<div class="vsub">Biggest problem</div><ul>${problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+      ${repairs.length ? `<div class="vsub">Repairs</div><ul>${repairs.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+    </div>
+  </div>`;
+}
+
+// Music for a composition: result.audio { present, bed, lufs, truePeak, audible } + plan.audio.musicPrompt.
+export function musicBlock(r, plan) {
+  const a = r?.audio; const prompt = plan?.audio?.musicPrompt;
+  if (!a && !prompt) return '';
+  const stats = a ? [a.present === false ? 'no audio' : 'music', a.lufs != null ? `${a.lufs} LUFS` : '', a.truePeak != null ? `peak ${a.truePeak} dBTP` : '', a.audible === false ? 'inaudible' : ''].filter(Boolean).join(' · ') : '';
+  return `<div class="musicblk"><div class="mh"><span class="tag ${a?.present === false || a?.audible === false ? 'bad' : 'info'}">♪ ${esc(stats || 'music planned')}</span></div>
+    ${prompt ? `<p class="small muted">${esc(prompt)}</p>` : ''}
+    ${a?.bed ? `<audio controls preload="none" src="${esc(fileUrl(a.bed))}"></audio>` : ''}</div>`;
+}
 export async function withKeyframeValidations(clips) {
   const atts = (clips?.scenes || []).flatMap((sc) => sc.attempts || []).filter((a) => a.keyframe);
   await Promise.all(atts.map(async (a) => {
+    if (typeof a.keyframe === 'object') {
+      a.keyframeInfo = a.keyframe;
+      a.keyframe = a.keyframe.file || a.keyframe.url || null;
+      if (a.keyframeInfo.validation) { a.keyframeValidation = normVal(a.keyframeInfo.validation); return; }
+    }
+    if (!a.keyframe || /^https?:/.test(a.keyframe)) return;
     const p = kfValidationPath(a.keyframe);
     if (!kfCache[p]) { const v = await getJson(p); if (v) kfCache[p] = v; }
-    const v = kfCache[p];
-    if (v) a.keyframeValidation = { score: v.score ?? v.validation?.score, passed: v.passed ?? v.validation?.passed, reason: v.reason ?? v.validation?.reason };
+    if (kfCache[p]) a.keyframeValidation = normVal(kfCache[p]);
   }));
   return clips;
+}
+
+// plan.endCard: { text, seconds } or { headline, subline, durationSeconds } or a string.
+export function endCardOf(plan) {
+  const e = plan?.endCard;
+  if (!e) return null;
+  if (typeof e === 'string') return { headline: e, subline: '', seconds: null };
+  const headline = e.headline || e.text || '';
+  if (!headline && !e.subline) return null;
+  return { headline, subline: e.subline || '', seconds: e.durationSeconds ?? e.seconds ?? null };
+}
+
+// plan.productImages: real product photos used as generation references. Paths or objects.
+export function productImagesOf(plan) {
+  return (plan?.productImages || []).map((x) => (typeof x === 'string' ? { src: x } : { src: x.file || x.path || x.image || x.url, label: x.title || x.label || x.name || '' })).filter((x) => x.src);
 }
 export const kfBadge = (v) => (v && v.score != null ? `<span class="tag ${v.passed === false ? 'bad' : 'ok'}" title="${esc(v.reason || '')}">key ${esc(v.score)}</span>` : '');
 
@@ -237,14 +317,21 @@ function keywords(b) {
   return Object.entries(counts).sort((a, z) => z[1] - a[1]).slice(0, 10).map(([w]) => w);
 }
 
-function refTile(r, shot, i) {
+// All images for a reference: screenshots plus frame strips (references/<id>/frame-N.jpg), any of png/jpg/webp/svg.
+export const refImages = (r) => [...new Set([...(r?.screenshots || []), ...(r?.frames || [])].filter(Boolean))];
+export const isBrand = (r) => r?.kind === 'brand';
+export const refBadge = (r) => (isBrand(r) ? '<span class="tag brandb">Brand</span>' : '<span class="tag refb">Reference</span>');
+
+function refTile(r, i) {
   const m = r.metrics || {};
-  const proof = metrics(m, ['views', 'likes'], false) || '<span>metrics unavailable</span>';
-  const head = `<div class="tl"><span class="tag refb">Reference</span><span class="tag">${esc(r.platform || '')}</span></div>`;
-  if (shot) return `<div class="mt ref" style="animation-delay:${i * 60}ms"><img src="${esc(fileUrl(shot))}" alt="" loading="lazy">${head}
-    <div class="cap"><b>${esc(r.title || '')}</b><span class="proof">${proof}</span></div></div>`;
+  const proof = metrics(m, ['views', 'likes'], false) || (isBrand(r) ? '' : '<span>metrics unavailable</span>');
+  const imgs = refImages(r);
+  const head = `<div class="tl">${refBadge(r)}${r.platform ? `<span class="tag">${esc(r.platform)}</span>` : ''}</div>`;
+  if (imgs.length) return `<div class="mt ref ${isBrand(r) ? 'isbrand' : ''}" style="animation-delay:${i * 60}ms"><img src="${esc(fileUrl(imgs[0]))}" alt="" loading="lazy">${head}
+    <div class="cap"><b>${esc(r.title || '')}</b><span class="proof">${proof}</span>
+      ${imgs.length > 1 ? `<div class="fstrip">${imgs.slice(1, 6).map((f) => `<img src="${esc(fileUrl(f))}" alt="" loading="lazy">`).join('')}${imgs.length > 6 ? `<span>+${imgs.length - 6}</span>` : ''}</div>` : ''}</div></div>`;
   const s = r.structure || {};
-  return `<div class="mt ref card-ref" style="animation-delay:${i * 60}ms">${head}
+  return `<div class="mt ref card-ref ${isBrand(r) ? 'isbrand' : ''}" style="animation-delay:${i * 60}ms">${head}
     <div class="refbody"><div class="rt">${esc(r.title || 'Untitled reference')}</div>
       <div class="proof big">${proof}${m.shares ? `<span>${fmtNum(m.shares)} shares</span>` : ''}</div>
       ${s.hook ? `<div class="rk"><b>Hook</b>${esc(s.hook)}</div>` : ''}${s.pacing ? `<div class="rk"><b>Pacing</b>${esc(s.pacing)}</div>` : ''}
@@ -268,9 +355,11 @@ function sceneTile(scene, i, clipScene, ar, total) {
   } else if (atts.some((a) => a.keyframe)) {
     const k = [...atts].reverse().find((a) => a.keyframe);
     const failed = latest?.status === 'failed';
+    const kfRejected = k.keyframeValidation?.passed === false;
+    const state = failed ? ['bad', 'clip failed'] : kfRejected && k === latest ? ['retry', 'keyframe rejected'] : kfRejected ? ['retry', '↻ new keyframe'] : ['run', 'animating'];
     cls = 'kf';
     inner = `<img src="${esc(fileUrl(k.keyframe))}" alt="">`;
-    badges = `<div class="tl"><span class="tag kfb">Keyframe</span>${kfBadge(k.keyframeValidation)}<span class="tag ${failed ? 'bad' : 'run'}">${failed ? 'clip failed' : 'animating'}</span></div>`;
+    badges = `<div class="tl"><span class="tag kfb">Keyframe</span>${kfBadge(k.keyframeValidation)}<span class="tag ${state[0]}">${state[1]}</span></div>`;
   } else {
     const failed = latest?.status === 'failed';
     const state = !clipScene ? 'Planned' : failed ? 'Failed' : 'Generating';
@@ -306,9 +395,9 @@ export function mediaStage(container) {
         const final = state.status === 'done' || !!result.selectedId && ['done'].includes(state.stages?.find((s) => s.id === 'final_validation')?.status);
         const v = sel.validation || {};
         info.innerHTML = `${pill(final ? 'Final video' : 'Composed video')}<h1>${esc(b.promote || 'Untitled')}</h1>
-          ${v.score != null ? `<div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score)}<small>/100</small></div>
-            <div class="tags">${v.passed === false ? `<span class="tag bad">below pass score${d['config.json']?.passScore != null ? ` ${esc(d['config.json'].passScore)}` : ''}</span>` : v.passed ? '<span class="tag ok">passed</span>' : ''}</div>` : '<div class="sub">Validating…</div>'}
-          <p>${esc(v.reason || plan?.title || '')}</p>
+          ${v.score != null ? `${verdictHead(v, d['config.json']?.passScore)}<div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score)}<small>/100</small></div>
+            ${v.passed === false && final ? `<div class="sub warnline">Best available result: did not pass. Retries used ${Math.max(0, results.length - 1)}${d['config.json']?.finalRetries != null ? ` of ${esc(d['config.json'].finalRetries)}` : ''}.</div>` : ''}
+            ${v.reason ? `<p class="vquote"><span class="vlabel">Validator saw</span>${esc(v.reason.length > 220 ? v.reason.slice(0, 220) + '…' : v.reason)}</p>` : ''}` : '<div class="sub">Validating…</div>'}
           <div class="sub">${results.length} composition${results.length === 1 ? '' : 's'} · ${esc(sel.compositor || '')} · ${esc(sel.durationSeconds ?? '')}s</div>${curNote}${links}`;
         setMode('final', '<div class="tiles"></div>');
         patch(media.firstElementChild, [{ key: sel.id, html: `<div class="tile hero-tile ${arCls(ar)}" style="--n:1"><video src="${esc(fileUrl(sel.file))}" ${sel.thumbnail ? `poster="${esc(fileUrl(sel.thumbnail))}"` : ''} autoplay muted loop playsinline controls preload="auto"></video>
@@ -320,15 +409,22 @@ export function mediaStage(container) {
         const scenes = plan?.scenes || (clips?.scenes || []).map((s) => ({ id: s.sceneId }));
         const byId = Object.fromEntries((clips?.scenes || []).map((s) => [s.sceneId, s]));
         const ready = (clips?.scenes || []).filter((s) => s.attempts.some((a) => a.status === 'generated')).length;
-        const total = Math.round((scenes.reduce((n, s) => n + (Number(s.durationSeconds) || 0), 0) + (Number(plan?.endCard?.seconds) || 0)) * 10) / 10;
+        const end = endCardOf(plan);
+        const prods = productImagesOf(plan);
+        const total = Math.round((scenes.reduce((n, s) => n + (Number(s.durationSeconds) || 0), 0) + (Number(end?.seconds) || 0)) * 10) / 10;
+        const music = plan?.audio?.musicPrompt;
         info.innerHTML = `${pill(clips ? `Clips · ${ready}/${scenes.length} ready` : 'Storyboard')}<h1>${esc(plan?.title || b.promote || '')}</h1>
           <p>${esc(plan?.description || '')}</p>
-          <div class="sub">${scenes.length} scenes · ${total}s · ${esc(ar)}${plan?.confidence != null ? ` · ${Math.round(plan.confidence * 100)}% brief fit` : ''}</div>${curNote}${links}`;
-        setMode('board', '<div class="board"><div class="tiles"></div><div class="timeline"></div></div>');
-        const end = plan?.endCard && (plan.endCard.text || typeof plan.endCard === 'string') ? (typeof plan.endCard === 'string' ? { text: plan.endCard } : plan.endCard) : null;
+          <div class="sub">${scenes.length} scenes · ${total}s · ${esc(ar)}${plan?.confidence != null ? ` · ${Math.round(plan.confidence * 100)}% brief fit` : ''}</div>
+          ${music ? `<div class="sub music" title="${esc(music)}">♪ ${esc(music.slice(0, 90))}${music.length > 90 ? '…' : ''}</div>` : ''}${curNote}${links}`;
+        setMode('board', '<div class="board"><div class="boardrow"><div class="prodcol"></div><div class="tiles"></div></div><div class="timeline"></div></div>');
+        // Product references (real photos used to steer generation) beside the keyframes, for comparison.
+        const pc = media.querySelector('.prodcol');
+        pc.hidden = !prods.length;
+        patch(pc, prods.slice(0, 3).map((p, i) => ({ key: p.src, html: `<div class="prodtile"><img src="${esc(fileUrl(p.src))}" alt=""><span class="tag prodb">Product reference</span>${p.label ? `<span class="pl">${esc(p.label)}</span>` : ''}</div>` })));
         const n = scenes.length + (end ? 1 : 0);
         const tiles = scenes.map((s, i) => ({ key: s.id, html: sceneTile(s, i, byId[s.id], ar, n) }));
-        if (end) tiles.push({ key: '__end', html: `<div class="tile endcard ${arCls(ar)}" style="--n:${n}"><div class="ec"><div class="ec-t">${esc(end.text || '')}</div></div>
+        if (end) tiles.push({ key: '__end', html: `<div class="tile endcard ${arCls(ar)}" style="--n:${n}"><div class="ec"><div><div class="ec-t">${esc(end.headline)}</div>${end.subline ? `<div class="ec-s">${esc(end.subline)}</div>` : ''}</div></div>
           <div class="tl"><span class="tag">End card</span></div><div class="cap"><b>End card${end.seconds ? ` · ${esc(end.seconds)}s` : ''}</b>Added at composition</div></div>` });
         patch(media.querySelector('.tiles'), tiles);
         const segs = scenes.map((s, i) => {
@@ -359,15 +455,18 @@ export function mediaStage(container) {
       }
 
       if (refs?.references?.length) {
-        const items = refs.references.flatMap((r) => (r.screenshots?.length ? r.screenshots.slice(0, 2).map((s, k) => ({ r, s, key: `${r.id}-${k}` })) : [{ r, s: null, key: r.id }])).slice(0, 12);
-        info.innerHTML = `${pill(`References · ${refs.references.length}`)}<h1>${esc(b.promote || '')}</h1>
-          <p>Proven, current examples for ${esc(b.platform || 'the platform')}. These are other people's videos, used only to learn what works.</p>
+        // One big tile per reference (brand last), its extra frames as a strip inside the tile.
+        const items = [...refs.references].sort((a, z) => isBrand(a) - isBrand(z)).slice(0, 8);
+        const nBrand = refs.references.filter(isBrand).length;
+        info.innerHTML = `${pill(`References · ${refs.references.length - nBrand}${nBrand ? ` + brand` : ''}`)}<h1>${esc(b.promote || '')}</h1>
+          <p>Proven, current examples for ${esc(b.platform || 'the platform')}. These are other people's videos, used only to learn what works${nBrand ? '; the brand card is the client’s own look' : ''}.</p>
           ${refs.takeaways?.length ? `<div class="sub">${refs.takeaways.slice(0, 3).map((t) => `· ${esc(t)}`).join('<br>')}</div>` : ''}${curNote}${links}`;
         setMode('refs', '<div class="mosaic"></div>');
         const m = media.firstElementChild;
         const n = items.length;
-        m.style.setProperty('--cols', n <= 3 ? n : n <= 6 ? 3 : 4);
-        patch(m, items.map((it, i) => ({ key: it.key, html: refTile(it.r, it.s, i) })));
+        m.style.setProperty('--cols', n <= 4 ? n : n <= 6 ? 3 : 4);
+        m.style.setProperty('--rows', n <= 4 ? 1 : 2);
+        patch(m, items.map((r, i) => ({ key: r.id, html: refTile(r, i) })));
         return;
       }
 

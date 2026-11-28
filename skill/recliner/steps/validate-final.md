@@ -14,7 +14,8 @@ If the fal skills **fal-video-production** (its review of the finished ad), **vi
 ## How
 
 1. `recliner frames $RUN/compositions/<attempt>/final.mp4 $RUN/compositions/<attempt>/frames --count 12`
-2. Look at the reference images first (`screenshots` in `references.json`, and the `kind: "brand"` image), then every frame in order, then frame 1 alone: that is the hook. The references are the quality bar: **would this video sit next to them without looking like the weak one?** If not, `craft` and `originality` are at most 60; say which reference it falls short of and how.
+2. Look at `plan.productImages` first: they are **ground truth for the product's look** (other brand images may be partial; never penalise correct details that match `productImages`). Then the reference images (`screenshots` in `references.json`), then every frame in order, then frame 1 alone: that is the hook. The references are the quality bar: **would this video sit next to them without looking like the weak one?** If not, `craft` and `originality` are at most 60; say which reference it falls short of and how. Reference video frames (`references/<id>/frame-N.jpg`) and their measured `structure` (duration, cuts, seconds per shot) show real layout, framing, text placement and pacing: compare against them.
+   **Scene boundaries are hard cuts by design.** A frame that falls on or next to a cut (two scenes blended, a sudden change of subject, a flash of the next shot) is a transition, not an artefact: never count it as a slop hit or a craft fault. Judge each scene on its own frames.
 3. Run the anti-slop checklist. Each item that applies is a slop hit; cite the frame:
    - generic AI visual clichés (glossy abstract 3D, neon gradients, floating product in a void, lens-flare everything)
    - visuals that could belong to any brand; no clear link between product and visual concept

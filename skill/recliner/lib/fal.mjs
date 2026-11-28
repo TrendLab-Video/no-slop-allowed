@@ -20,6 +20,8 @@ export const VIDEO_MODELS = {
   5: 'fal-ai/kling-video/v3/pro/text-to-video',
 };
 export const IMAGE_MODEL = 'fal-ai/flux/schnell';
+// With plan.productImages, every keyframe is made by a multi-reference edit model from the real product photos.
+export const PRODUCT_IMAGE_MODEL = 'fal-ai/nano-banana/edit';
 export const MUSIC_MODEL = 'elevenlabs/music/v2.5';
 export const MUSIC_FALLBACK_MODEL = 'fal-ai/stable-audio-25/text-to-audio';
 export const TTS_MODEL = 'fal-ai/elevenlabs/tts/turbo-v2.5';
@@ -280,13 +282,20 @@ export function imageToVideoArgs(model, opts, imageUrl) {
 }
 
 // Still keyframe arguments. FLUX schnell/dev/pro take image_size; ultra and most others take aspect_ratio.
-export function imageArgs(model, { prompt, aspectRatio = '16:9' }) {
-  if (model.includes('flux') && !model.includes('ultra')) {
-    const size = { '9:16': 'portrait_16_9', '16:9': 'landscape_16_9', '1:1': 'square_hd' }[aspectRatio] || 'landscape_16_9';
-    return { prompt, image_size: size, num_images: 1, output_format: 'jpeg', enable_safety_checker: true };
+// With referenceUrls (an edit model such as flux-2 flash edit or nano-banana edit) the stills share a subject.
+export function imageArgs(model, { prompt, aspectRatio = '16:9' }, referenceUrls = null) {
+  const refs = referenceUrls?.length ? { image_urls: referenceUrls } : {};
+  const size = { '9:16': 'portrait_16_9', '16:9': 'landscape_16_9', '1:1': 'square_hd' }[aspectRatio] || 'landscape_16_9';
+  if (model.includes('seedream')) return { prompt, image_size: size, num_images: 1, ...refs };
+  if (model.includes('flux') && !model.includes('ultra') && !model.includes('kontext')) {
+    return { prompt, image_size: size, num_images: 1, output_format: 'png', enable_safety_checker: true, ...refs };
   }
-  return { prompt, aspect_ratio: aspectRatio, num_images: 1, output_format: 'jpeg' };
+  return { prompt, aspect_ratio: aspectRatio, num_images: 1, output_format: 'png', ...refs };
 }
 
-// A local image as a data URI, for when a keyframe's fal CDN url is missing.
-export const dataUri = (file) => `data:image/jpeg;base64,${fs.readFileSync(file).toString('base64')}`;
+// A local image as a data URI (keyframes without a CDN url, product reference photos).
+export function dataUri(file) {
+  const ext = file.toLowerCase().split('.').pop();
+  const type = { png: 'image/png', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif' }[ext] || 'image/jpeg';
+  return `data:${type};base64,${fs.readFileSync(file).toString('base64')}`;
+}

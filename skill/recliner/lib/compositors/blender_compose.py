@@ -10,7 +10,6 @@ import bpy
 
 job = json.load(open(sys.argv[sys.argv.index("--") + 1]))
 W, H, FPS = job["width"], job["height"], job["fps"]
-T = int(round(job.get("transition", 0.4) * FPS)) if len(job["segments"]) > 1 else 0
 
 scene = bpy.context.scene
 scene.render.resolution_x = W
@@ -45,25 +44,29 @@ def key_alpha(strip, frames_values):
         strip.keyframe_insert("blend_alpha", frame=f)
 
 
-start = 1
 prev = None
+prev_end = 1  # first frame after the previous segment
 movies = []
 for i, seg in enumerate(job["segments"]):
+    # Per-segment incoming overlap: 0 is a hard cut, > 0 a cross-dissolve of that many seconds.
+    Ti = 0 if i == 0 else int(round(seg.get("xfadeIn", job.get("transition", 0.4)) * FPS))
+    start = prev_end - Ti
     length = max(1, int(round(seg["seconds"] * FPS)))
     ch = 1 + (i % 2)
     m = strips.new_movie(f"clip{i}", seg["file"], ch, start, fit_method="FILL")
     # compose.mjs never asks for more than the clip holds, so this only trims.
     m.frame_final_duration = min(length, m.frame_final_duration)
     length = m.frame_final_duration
-    if prev is not None and T > 0:
-        strips.new_effect(f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, frame_end=start + T, input1=prev, input2=m)
+    if prev is not None and Ti > 0:
+        strips.new_effect(f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, frame_end=start + Ti, input1=prev, input2=m)
     movies.append(m)
 
     text = (seg.get("text") or "").strip()
     if text:
         L = seg["layout"]
-        tstart = start + (T if i > 0 else 0) + int(0.2 * FPS)
-        tend = start + length - (T if i < len(job["segments"]) - 1 else 0)
+        # Caption window from compose.mjs (seconds into the segment): after the cross-fade in, before the one out.
+        tstart = start + int(round(seg.get("textIn", 0.3) * FPS))
+        tend = start + min(length, int(round(seg.get("textOut", seg["seconds"] - 0.5) * FPS)))
         t = strips.new_effect(f"text{i}", "TEXT", 6, tstart, frame_end=max(tstart + 1, tend))
         t.text = "\n".join(L["lines"])
         t.font_size = L["fontSize"]
@@ -99,9 +102,9 @@ for i, seg in enumerate(job["segments"]):
         )
 
     prev = m
-    start += length - T
+    prev_end = start + length
 
-end = start + T - 1
+end = prev_end - 1
 scene.frame_start = 1
 scene.frame_end = end
 

@@ -49,13 +49,19 @@ export async function generateAssets(runId, plan, config = {}) {
   const voText = voiceoverText(plan);
   fs.mkdirSync(runPath(runId, 'audio'), { recursive: true });
 
+  // stable-audio 2.5 ($0.20 a track) for efforts 1-3; ElevenLabs music ($0.60 a minute, richer) for 4-5.
+  const primary = config.musicModel || ((config.effort || 3) >= 4 ? MUSIC_MODEL : MUSIC_FALLBACK_MODEL);
+  const secondary = primary === MUSIC_MODEL ? MUSIC_FALLBACK_MODEL : MUSIC_MODEL;
+  const musicArgs = (m) => (m.includes('elevenlabs')
+    ? { prompt: musicPrompt, music_length_ms: seconds * 1000, force_instrumental: true }
+    : { prompt: musicPrompt, seconds_total: Math.min(seconds, 190) });
   const musicJob = cached(runId, `audio/music-${hash(musicPrompt + seconds)}.mp3`, async (tmp) => {
-    let rec = await falToFile(MUSIC_MODEL, { prompt: musicPrompt, music_length_ms: seconds * 1000, force_instrumental: true }, tmp);
+    let rec = await falToFile(primary, musicArgs(primary), tmp);
     trace(runId, 'music', rec, musicPrompt);
     // Auth errors and the spend floor stop audio at once: no fallback model.
     if (rec.status !== 'ok' && !rec.stop) {
-      notes.push(`music: ${MUSIC_MODEL} failed (${rec.error}); trying ${MUSIC_FALLBACK_MODEL}`);
-      rec = await falToFile(MUSIC_FALLBACK_MODEL, { prompt: musicPrompt, seconds_total: Math.min(seconds, 190) }, tmp);
+      notes.push(`music: ${primary} failed (${rec.error}); trying ${secondary}`);
+      rec = await falToFile(secondary, musicArgs(secondary), tmp);
       trace(runId, 'music-fallback', rec, musicPrompt);
     }
     return rec;

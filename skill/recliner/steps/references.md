@@ -33,12 +33,27 @@ If the fal skill **cinematography** is available in your environment, load and f
 
 - Search the web for the platform plus the domain plus terms like "most viewed", "top performing", "case study", "campaign results", "Cannes Lions", "ad of the year", the creator or brand name. Brand newsrooms, Ads of the World, The Drum, Campaign, Think with Google, TikTok Creative Center and the post pages themselves are good sources.
 - Open the post page where you can to read metrics and timing.
-- **`url` is the post itself** (a YouTube watch or Shorts URL, a TikTok `/video/` URL, an Instagram `/reel/` or `/p/` URL) or, failing that, the article covering it. Never a profile page: profiles yield no image and no metrics.
-- **Images, for every reference:** write your JSON file first, then for each entry run `recliner fetch-ref <runId> <id> <url>`. Add `--file references.<angle>.json` if you have an angle. It tries the YouTube thumbnail, oEmbed `thumbnail_url` and the page's `og:image`/`twitter:image`, saves one image to `references/<id>/` and adds it to that entry's `screenshots`. It never fails. If it prints `ok: false`, run it once more with the covering article's URL. If that also fails, leave `screenshots: []`. Run the calls in parallel.
-- **The brand's own image:** if you have no angle or the `platform` angle, also run `recliner fetch-ref <runId> brand <brief.url> --kind brand --title "<brand> site"` (plus `--file` as above). This adds a `kind: "brand"` entry whose image shows what the product, logo and palette actually look like. Skip it when `brief.url` is empty.
+- **`url` is the video post itself**: a YouTube watch or Shorts URL, a TikTok `/@user/video/<id>` URL, an Instagram `/reel/` URL, an X `/status/` URL. Prefer these over blog write-ups so real frames can be captured; put the article in `why` as the metrics source. Never a profile page.
+- **Images, for every reference:** write your JSON file first, then for each entry run `recliner fetch-ref <runId> <id> <url>` (add `--file references.<angle>.json` if you have an angle). Run the calls in parallel. For a video post with `yt-dlp` installed, it saves 6 frames (`references/<id>/frame-N.jpg`) and writes the **measured** `structure.durationSeconds`, `measuredCuts` and `measuredSecondsPerShot`. Use those numbers for `pacing` instead of guessing. Otherwise it saves one image (thumbnail or `og:image`). It never fails.
+- **Every reference ends with at least one image.** If `fetch-ref` prints `ok: false`, try the covering article's URL once. If that also fails, drop the reference and replace it with one that has an image.
+- **Product photos (ground truth for the whole run):** if you have no angle or the `platform` angle, run `recliner fetch-ref <runId> brand <brief.url> --kind brand --title "<brand> site" --image-query "<brand> <product> product photo front"` (plus `--file` as above; without `brief.url`, pass any product page). It collects 3–4 candidates into `references/brand/`: the page's og:image, other large images on the page and, with a Tavily key, an image search.
+  **Then look at every candidate image.** Candidates are often wrong: the back of the product, a lifestyle crop, or a different product from the same brand. On the brand entry, set `"productImages": [...]` to the 2–3 paths that clearly show **the front or hero view of the actual product**, and `"rejectedImages": [{ "path": "...", "reason": "back of the device" }]` for the rest. `score` copies `productImages` into `plan.productImages`; keyframe generation uses them as image references. If none shows the product's front, run once more with a sharper `--image-query` (the exact product name plus "front view").
 - `structure.scenes` may be reconstructed from coverage when you cannot watch the video; say so in `why`.
 
-> **Recommendation:** use your host's web search and fetch tools. Do not log in anywhere.
+> **Recommendation:** Tavily (`TAVILY_API_KEY`) or Parallel (`PARALLEL_API_KEY`) via `recliner search`, for fast, current results. Without a key, or if it errors, use your host's built-in web search instead; the output you write is the same either way. Do not log in anywhere.
+
+**Search recipes, two kinds of query per angle** (run them in parallel):
+
+1. **Posts** (these feed `fetch-ref` and yt-dlp frames):
+   `recliner search <runId> "<brand or category> <format words, e.g. ad / launch / commercial>" --domains video --days 365 --max 8`
+   `--domains video` means tiktok.com, youtube.com and instagram.com; use `--domains tiktok.com` or `--domains youtube.com` to focus. Take URLs from the output's **`posts`** list: direct post URLs, including TikTok posts recovered from image ids as `https://www.tiktok.com/@_/video/<id>` (yt-dlp accepts these). YouTube Shorts and short YouTube ads are fine; skip long reviews and explainers (over about 90 s) unless the angle needs one.
+2. **Proof and context** (metrics, why it worked):
+   `recliner search <runId> "<campaign or post title> views results" --days 730 --max 5`
+   Use these for `why` and to source `metrics`. `fetch-ref` also records the platform's own views, likes, comments and shares from yt-dlp where it can.
+
+The output is `{ provider, query, results: [{ title, url, snippet, publishedAt, image, isVideoPost }], images, posts }`, and the search is logged to the trace.
+
+With `TAVILY_API_KEY` set, `fetch-ref` also falls back to Tavily for images when a page blocks plain fetches (common on TikTok and Instagram). It tries the page's images first, then an image search on the reference's title and platform. For the brand it always adds up to two "`<brand> <product>` product photo" images, so goals see the real product. Each image's origin is recorded in `screenshotSources`.
 
 Fallback: if search or fetch is unavailable, write entries from what you reliably know, with `null` metrics where you do not know the figure, and add "metrics unverified (no web access)" to `why`.
 
@@ -65,7 +80,7 @@ If you were given an angle, write `$RUN/references.<angle>.json` instead and the
       },
       "screenshots": ["references/ref-1/1.jpg"]
     },
-    { "id": "brand", "kind": "brand", "title": "Nike site", "url": "https://www.nike.com", "screenshots": ["references/brand/1.jpg"] }
+    { "id": "brand", "kind": "brand", "title": "Nike site", "url": "https://www.nike.com", "screenshots": ["references/brand/1.jpg", "references/brand/2.jpg", "references/brand/3.jpg"], "productImages": ["references/brand/2.jpg", "references/brand/3.jpg"], "rejectedImages": [{ "path": "references/brand/1.jpg", "reason": "outsole only, no upper" }] }
   ],
   "takeaways": ["3-5 concrete, borrowable lessons across the set, each naming its reference id"],
   "diversityNote": "How the set is varied, and which obvious picks were excluded and why"
@@ -76,4 +91,4 @@ Ids are `ref-1`, `ref-2`, and so on (with an angle: `ref-<angle>-1`).
 
 ## Return
 
-Two lines: how many references, and the biggest takeaway.
+Two lines: how many references (ids and titles), and the biggest takeaway. **Re-read your file before you answer:** the summary must match what the file actually contains (count, ids, titles, images). The orchestrator trusts the file, not the summary.

@@ -14,7 +14,7 @@ skill/recliner/
   web/                            Brief / live run, Steps and Result pages
 runs/<runId>/                     one folder per run (gitignored)
 outputs/<brief-slug>/             hackathon export: final.mp4 + traces.json (+ validation evidence when present)
-.env                              FAL_KEY, JEV_API_KEY (gitignored; main checkout's .env is shared by worktrees)
+.env                              FAL_KEY, JEV_API_KEY, TAVILY_API_KEY, PARALLEL_API_KEY (gitignored; main checkout's .env is shared by worktrees)
 ```
 
 CLI is `node skill/recliner/bin/recliner.mjs <command>`, written `recliner` below.
@@ -53,11 +53,13 @@ Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 mi
 **`scores.json`**
 `{ scorer, question, scores: [{ goalId, confidence: 0..1, reason }], selectedGoalId }`
 
-**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. `score` guarantees `endCard` and a `keyframePrompt` per scene. This is the input to clip generation.
+**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. `score` guarantees `endCard` and a `keyframePrompt` per scene, and adds `productImages: [path]` (run-relative, up to 3): the brand reference's selected front/hero product photos, the ground truth for the product's look and the image references for keyframe generation. The brand entry in `references.json` carries them as `productImages` (plus `rejectedImages: [{ path, reason }]`). This is the input to clip generation.
 
 **`clips.json`**
 `{ scenes: [{ sceneId, acceptedKeyframe, acceptedAttempt, attempts: [{ attempt, keyframe: { file: "clips/<sceneId>/<attempt>.keyframe.png", prompt, model, requestId, status: generating|generated|failed, error, validation }, file: "clips/<sceneId>/<attempt>.mp4", model, prompt, steering, requestId, status: generating|generated|failed, error, durationSeconds, validation: { score: 0..100, passed, reason, steering } }] }] }`
 `acceptedAttempt` is the highest scoring attempt, whether or not it passed. `acceptedKeyframe` is the attempt holding the highest scoring still; `generate-clips` (video) animates it.
+Also written by `generate-clips`: attempt `status: pending` for a still-only attempt whose video is not made yet (`--keyframes-only`); attempt `mode: image-to-video|text-to-video|ken-burns` (`ken-burns`: fal timed out or failed, so the clip is a local move over the still) and `notes: [string]`; `keyframe.url` (fal CDN) and `keyframe.reference` (the still it was made from, for scenes after the first).
+Config keys read by `generate-clips` beyond the list above: `clipTimeoutSeconds` (default 240), `referenceImageModel` (default `fal-ai/flux-2/flash/edit`, `false` disables). Env `RECLINER_MIN_BALANCE` (USD, default 100, 0 disables) is the fal spend floor below which every paid call is refused.
 Keyframe validators write `clips/<sceneId>/<attempt>.keyframe.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`), merged by `accept-clips` into `keyframe.validation`.
 Validation sub-agents run in parallel, so they never write `clips.json`: each writes `clips/<sceneId>/<attempt>.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`) and `accept-clips` merges them.
 
@@ -81,7 +83,8 @@ The final validator writes `compositions/<attempt>/validation.json` (`{ id, atte
 | `generate-clips <runId> [--keyframes-only] [--scene id --steering "..."]` | fal generation, all scenes in parallel, or one scene as a retry attempt. `--keyframes-only` makes stills from `keyframePrompt`; without it, video animates each scene's `acceptedKeyframe` (or text-to-video when `config.keyframes` is false). Updates `clips.json` |
 | `preflight [runId] [--probe]` | Checks `FAL_KEY` is set and accepted by fal (free balance check; `--probe` submits a tiny job). Exits 1 with a one-line reason; with a runId, adds a trace step |
 | `frames <video> <outDir> [--count 6]` | Extracts evenly spaced frames for validation sub-agents |
-| `fetch-ref <runId> <refId> <url> [--kind brand] [--file f]` | Saves one image for a reference to `references/<refId>/` and adds it to `screenshots`; never fails the stage |
+| `fetch-ref <runId> <refId> <url> [--kind brand] [--file f]` | Video posts with yt-dlp: 6 frames plus measured `structure.durationSeconds`, `measuredCuts`, `measuredSecondsPerShot`. Otherwise one image, with a Tavily image fallback; origins go in `screenshotSources`. Never fails the stage |
+| `search <runId> "<query>" [--max 8] [--recency r]` | Tavily (`TAVILY_API_KEY`) or Parallel (`PARALLEL_API_KEY`). Prints `{ provider, query, results: [{ title, url, snippet, publishedAt, image }], images }`; exits with "no search key configured" without a key |
 | `accept-clips <runId>` | Sets `acceptedAttempt` per scene from validation scores |
 | `compose <runId>` | Composes accepted clips with the configured compositor (Blender, ffmpeg fallback) and adds audio. Adds an entry to `result.json` |
 | `rank <runId>` | Sets `selectedId` in `result.json` |

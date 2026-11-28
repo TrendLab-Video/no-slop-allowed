@@ -42,6 +42,8 @@ Requires Node 22 and ffmpeg. Blender is optional: it is the recommended composit
 # keys go in .env at the repo root (names only here)
 #   FAL_KEY=...        required
 #   JEV_API_KEY=...    optional: Jev scoring; without it a Haiku sub-agent scores
+#   TAVILY_API_KEY=... or PARALLEL_API_KEY=...   optional: reference search (Tavily also finds images)
+# optional: yt-dlp on PATH captures frames and measured pacing from reference videos
 
 # In Claude Code, from the repo root (.claude/skills/recliner links to the skill):
 /recliner new content for <product>        # interactive: opens the Brief page, then runs on its own
@@ -58,6 +60,7 @@ Each run ends with `outputs/<brief-slug>/final.mp4` and `outputs/<brief-slug>/tr
 Required environment variables (names only, no keys):
 - `FAL_KEY`
 - `JEV_API_KEY` (optional)
+- `TAVILY_API_KEY` or `PARALLEL_API_KEY` (optional)
 
 ## Outputs
 

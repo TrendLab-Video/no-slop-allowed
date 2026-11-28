@@ -8,7 +8,7 @@ Never ask the user anything. Time cap: the seconds the orchestrator gave you (de
 
 - `$RUN/brief.json`, `$RUN/config.json` (`goalsCount`, `scenes`, `clipSeconds`), `$RUN/references.json`
 - Style memory: `recliner style-memory --recent 8` (what recent runs chose: modality, hookType, palette, pacing, references). Empty on the first run.
-- **Reference images**: open every file in each reference's `screenshots`, and above all the `kind: "brand"` entry's image. From the brand image, write down what the product actually looks like: colours, materials, shape, the brand mark and where it sits on the product (for example "black swoosh on the lateral side, white midsole"), and the brand palette. Use those exact words in every `keyframePrompt`. Never describe a product look you have not seen or cannot verify; when no image exists, describe its well-known, current design.
+- **Reference images**: open every file in each reference's `screenshots`, and above all the brand entry's `productImages` (selected front/hero photos of the actual product; they are ground truth, while other brand images may be partial or wrong). From the product photos, write down what the product actually looks like: colours, materials, shape, the brand mark and where it sits on the product (for example "black swoosh on the lateral side, white midsole"), and the brand palette. Use those exact words in every `keyframePrompt`. Never describe a product look you have not seen or cannot verify; when no image exists, describe its well-known, current design.
 
 ## 0. Steer away from recent runs (diversity is judged)
 
@@ -47,6 +47,9 @@ Each goal:
 - `creativeGuidance`: what a validator should check: hook in the first second, product visible and centred in every scene from frame 1, the colour and light world, the camera language, what to avoid.
 - Script it before prompting (fal-script-writer, condensed): pick a structure (hook → turn → payoff, or problem → product → proof → sign-off); give every scene its beat in `description`; voiceover at most ~2.5 words per second of its scene; put continuity notes (colourway, wardrobe, location, time of day, screen direction) in `creativeGuidance`.
 - Creator formats (ugc, condensed): face or hands in frame in the first second, native phone look (handheld, available light, 9:16), one person speaking one claim in plain words, show the product being used, never a polished-ad look.
+- **Every scene a different shot**: each scene uses a different shot size or setup (for example wide establishing → macro detail → hero close-up), stated at the start of its `keyframePrompt` ("Wide establishing shot: …", "Macro detail: …"). No two scenes share both shot size and angle.
+- **The hook is a visible physical action** in scene 1: something happens in frame in the first second (a hand slams a pad, a foot hits water, a lid pops). Scene 1's `prompt` must actually perform that action, not describe a mood.
+- **At least two scenes carry short `onScreenText`** (≤ 6 words, concrete, naming what is on screen or the one message).
 - **At least one product hero beat** per goal: a close-up scene in which the product and the brand's real mark are unmistakable, filling a good part of the frame.
 - **Every scene pays off**: each one ends on a clear action or result (the foot lands, the cup is set down, the screen fills in). A setup with no payoff is a failed scene; the last scene before the end card is the strongest payoff.
 

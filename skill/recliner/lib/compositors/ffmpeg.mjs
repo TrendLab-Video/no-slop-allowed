@@ -63,42 +63,64 @@ export async function extractFrames(video, outDir, count = 6) {
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-function wrap(text, maxChars) {
-  const words = String(text).trim().split(/\s+/);
-  const lines = [];
-  let line = '';
-  for (const w of words) {
-    if (line && (line + ' ' + w).length > maxChars) { lines.push(line); line = w; } else line = line ? `${line} ${w}` : w;
+// Balanced wrap: the fewest lines that fit, with breaks chosen so lines are as even as possible
+// ("Order your first / bag today", never "Order your first bag / today").
+export function wrap(text, maxChars, maxLines = 3) {
+  const words = String(text).trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const join = (ws) => ws.join(' ');
+  if (join(words).length <= maxChars) return [join(words)];
+  let best = null;
+  const consider = (lines) => {
+    const longest = Math.max(...lines.map((l) => l.length));
+    const score = (longest > maxChars ? 1000 + longest : longest) * 10 + lines.length;
+    if (!best || score < best.score) best = { lines, score };
+  };
+  for (let i = 1; i < words.length; i++) {
+    consider([join(words.slice(0, i)), join(words.slice(i))]);
+    if (maxLines >= 3) for (let j = i + 1; j < words.length; j++) consider([join(words.slice(0, i)), join(words.slice(i, j)), join(words.slice(j))]);
   }
-  if (line) lines.push(line);
-  return lines;
+  // Prefer two lines when they fit.
+  const two = [];
+  for (let i = 1; i < words.length; i++) two.push([join(words.slice(0, i)), join(words.slice(i))]);
+  const fitTwo = two.filter((l) => Math.max(l[0].length, l[1].length) <= maxChars).sort((a, b) => Math.max(a[0].length, a[1].length) - Math.max(b[0].length, b[1].length))[0];
+  return fitTwo || best.lines;
 }
 
 // Heavy display font shared by both compositors (rsvg by family name, Blender by file).
 export const FONT_FILES = ['/System/Library/Fonts/Supplemental/Arial Black.ttf', '/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'];
 const FONT_FAMILY = "'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
-// Text layout inside platform safe areas: vertical video keeps clear of the bottom ~22% (captions, UI)
-// and the top ~12%; text sits in the lower-middle band, at most 3 lines within 84% of the width.
+// Caption layout: centred in the lower third, never over the bottom 15% (platform UI) and within 84% of the
+// width; at most 3 balanced lines.
 export function textLayout(text, width, height) {
   const vertical = height > width;
-  const fontSize = Math.round(vertical ? width * 0.088 : height * 0.078);
-  const maxChars = Math.max(8, Math.floor((width * 0.84) / (fontSize * 0.6)));
+  // Arial Black averages ~0.6 x font size per character (measured on renders); lines may use 88% of the width.
+  const fontSize = Math.round(vertical ? width * 0.088 : height * 0.085);
+  const maxChars = Math.max(8, Math.floor((width * 0.88) / (fontSize * 0.6)));
   const lines = wrap(text, maxChars).slice(0, 3);
   const lineH = Math.round(fontSize * 1.15);
-  const centerY = Math.round(height * (vertical ? 0.63 : 0.76));
-  return { lines, fontSize, lineH, centerY, firstBaseline: centerY - ((lines.length - 1) * lineH) / 2 + fontSize * 0.36 };
+  const blockH = lines.length * lineH;
+  const centerY = Math.round(Math.min(height * 0.72, height * 0.85 - blockH / 2 - fontSize * 0.4));
+  return { lines, fontSize, lineH, centerY, blockH, firstBaseline: centerY - ((lines.length - 1) * lineH) / 2 + fontSize * 0.36 };
 }
 
-// Full-frame transparent PNG with the on-screen text, rendered with rsvg-convert (ffmpeg here has no drawtext).
-// A heavy font with a doubled soft shadow keeps white text legible on any footage (Blender adds a plate).
+// Full-frame transparent PNG with the caption, rendered with rsvg-convert (ffmpeg here has no drawtext).
+// A soft dark scrim across the caption band plus a doubled shadow keeps heavy white text legible on any
+// footage (Blender draws a rounded plate instead).
 export async function textCard(text, width, height, file) {
   if (!text || !which('rsvg-convert')) return null;
   const L = textLayout(text, width, height);
   const fs_ = L.fontSize;
   const tspans = L.lines.map((l, i) => `<tspan x="${width / 2}" y="${Math.round(L.firstBaseline + i * L.lineH)}">${esc(l)}</tspan>`).join('');
+  const scrimH = Math.round(L.blockH + fs_ * 2.4);
+  const scrimY = Math.round(L.centerY - scrimH / 2);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
   <defs>
+    <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.3" stop-color="#000" stop-opacity="0.42"/>
+      <stop offset="0.7" stop-color="#000" stop-opacity="0.42"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </linearGradient>
     <filter id="shadow" x="-30%" y="-60%" width="160%" height="220%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="${Math.round(fs_ * 0.09)}" result="sb"/>
       <feOffset in="sb" dy="${Math.round(fs_ * 0.04)}" result="shadow"/>
@@ -106,6 +128,7 @@ export async function textCard(text, width, height, file) {
       <feMerge><feMergeNode in="shadowA"/><feMergeNode in="shadowA"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
+  <rect x="0" y="${scrimY}" width="${width}" height="${scrimH}" fill="url(#scrim)"/>
   <text font-family="${FONT_FAMILY}" font-weight="900" font-size="${fs_}" fill="#ffffff" text-anchor="middle" filter="url(#shadow)">${tspans}</text>
 </svg>`;
   const svgFile = file.replace(/\.png$/, '.svg');
@@ -125,8 +148,10 @@ async function normalise(seg, i, { width, height, fps, workDir }) {
   let filter;
   if (card) {
     args.push('-loop', '1', '-t', String(len), '-i', card);
-    const fadeOut = Math.max(0.5, len - 0.45);
-    filter = `${base}[v];[1:v]format=rgba,fade=in:st=0.25:d=0.4:alpha=1,fade=out:st=${fadeOut.toFixed(2)}:d=0.3:alpha=1[t];[v][t]overlay=0:0:format=auto,format=yuv420p[o]`;
+    // Caption window from compose: starts once the scene is fully visible, clears before it starts leaving.
+    const tin = seg.textIn ?? 0.3;
+    const tout = Math.max(tin + 0.6, seg.textOut ?? len - 0.5);
+    filter = `${base}[v];[1:v]format=rgba,fade=in:st=${tin.toFixed(2)}:d=0.3:alpha=1,fade=out:st=${(tout - 0.25).toFixed(2)}:d=0.25:alpha=1[t];[v][t]overlay=0:0:format=auto,format=yuv420p[o]`;
   } else filter = `${base}[o]`;
   await ff([...args, '-filter_complex', filter, '-map', '[o]', '-an', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-r', String(fps), out]);
   return { out, card };
@@ -140,31 +165,39 @@ export async function compose({ segments, width, height, fps = 30, transition = 
   const norm = [];
   for (let i = 0; i < segments.length; i++) norm.push(await normalise(segments[i], i, { width, height, fps, workDir }));
 
-  // Join with xfade cross-dissolves; each transition overlaps adjacent segments by `transition` seconds.
-  const T = segments.length > 1 ? transition : 0;
+  // Join: each segment's `xfadeIn` (seconds of overlap with the previous one) is a cross-dissolve; 0 is a hard
+  // cut (concat). Without per-segment values every join uses `transition`.
+  const xf = (i) => (i === 0 ? 0 : segments[i].xfadeIn ?? transition);
   const args = [];
   norm.forEach((n) => args.push('-i', n.out));
-  let filter = '';
-  let last = '[0:v]';
-  let offset = 0;
+  // One timebase for every input, so xfade accepts the output of an earlier concat.
+  let filter = norm.map((_, i) => `[${i}:v]settb=1/${fps * 1000},setpts=PTS-STARTPTS[s${i}];`).join('');
+  let last = '[s0]';
+  let length = segments[0].seconds;
   for (let i = 1; i < norm.length; i++) {
-    offset += segments[i - 1].seconds - T;
+    const T = xf(i);
     const label = `[x${i}]`;
-    filter += `${last}[${i}:v]xfade=transition=fade:duration=${T}:offset=${offset.toFixed(3)}${label};`;
+    filter += T > 0
+      ? `${last}[s${i}]xfade=transition=fade:duration=${T}:offset=${(length - T).toFixed(3)}${label};`
+      : `${last}[s${i}]concat=n=2:v=1:a=0,settb=1/${fps * 1000}${label};`;
+    length += segments[i].seconds - T;
     last = label;
   }
-  const total = segments.reduce((a, s) => a + s.seconds, 0) - T * (segments.length - 1);
+  const total = length;
   const fadeOutStart = Math.max(0, total - 0.5);
   filter += `${last}fade=in:st=0:d=0.25,fade=out:st=${fadeOutStart.toFixed(3)}:d=0.5,format=yuv420p[v]`;
 
-  const audioIdx = norm.length;
-  if (bed) args.push('-i', bed);
-  else args.push('-f', 'lavfi', '-t', String(total), '-i', 'anullsrc=r=48000:cl=stereo');
-  filter += `;[${audioIdx}:a]atrim=0:${total.toFixed(3)},apad=whole_dur=${total.toFixed(3)},aresample=48000[a]`;
+  // Audio only when there is a bed: no silent track pretending to be audio.
+  let audioArgs = ['-an'];
+  if (bed) {
+    args.push('-i', bed);
+    filter += `;[${norm.length}:a]atrim=0:${total.toFixed(3)},apad=whole_dur=${total.toFixed(3)},aresample=48000[a]`;
+    audioArgs = ['-map', '[a]', '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2'];
+  }
 
-  const final = [...args, '-filter_complex', filter, '-map', '[v]', '-map', '[a]',
+  const final = [...args, '-filter_complex', filter, '-map', '[v]', ...audioArgs,
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-profile:v', 'high', '-level', '4.1', '-pix_fmt', 'yuv420p', '-r', String(fps),
-    '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', '-t', total.toFixed(3), outFile];
+    '-movflags', '+faststart', '-t', total.toFixed(3), outFile];
   await ff(final);
   return { file: outFile, durationSeconds: await probeDuration(outFile), notes, commands: ['ffmpeg ' + final.join(' ')] };
 }
@@ -173,12 +206,72 @@ export async function compose({ segments, width, height, fps = 30, transition = 
 export async function finalize(input, outFile, { bed = null, fps = 30, copyVideo = false } = {}) {
   const total = await probeDuration(input);
   const args = ['-i', input];
-  if (bed) args.push('-i', bed); else args.push('-f', 'lavfi', '-t', String(total), '-i', 'anullsrc=r=48000:cl=stereo');
   const video = copyVideo ? ['-c:v', 'copy'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-r', String(fps)];
-  args.push('-map', '0:v:0', '-map', '1:a:0', '-filter:a', `atrim=0:${total},apad=whole_dur=${total}`, ...video,
-    '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', '-t', String(total), outFile);
+  if (bed) {
+    args.push('-i', bed, '-map', '0:v:0', '-map', '1:a:0', '-filter:a', `atrim=0:${total},apad=whole_dur=${total}`,
+      '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2');
+  } else args.push('-map', '0:v:0', '-an');
+  args.push(...video, '-movflags', '+faststart', '-t', String(total), outFile);
   await ff(args);
   return outFile;
+}
+
+// Integrated loudness (LUFS) and true peak of a file's audio, or null when it has no audio stream.
+export async function loudness(file) {
+  if (!(await hasAudio(file))) return null;
+  const { err } = await sh('ffmpeg', ['-hide_banner', '-nostats', '-i', file, '-af', 'ebur128=peak=true', '-f', 'null', '-']);
+  const summary = err.slice(err.lastIndexOf('Summary:'));
+  const I = parseFloat((summary.match(/I:\s+(-?[\d.]+|-inf)\s+LUFS/) || [])[1]);
+  const peak = parseFloat((summary.match(/Peak:\s+(-?[\d.]+|-inf)\s+dBFS/) || [])[1]);
+  return { lufs: Number.isFinite(I) ? I : -Infinity, truePeak: Number.isFinite(peak) ? peak : null };
+}
+
+// End card: brand-tinted background, large headline, small subline, as a short clip that the compositors
+// cross-fade into like any scene. Accepts { headline, subline, durationSeconds } or { text, seconds }.
+export function endCardSpec(card) {
+  if (!card) return null;
+  let headline = card.headline || '';
+  let subline = card.subline || '';
+  if (!headline && card.text) {
+    const m = String(card.text).split(/\s+[—–|-]\s+|:\s+|\.\s+/);
+    headline = m[0];
+    subline = m.slice(1).join(' ');
+  }
+  headline = String(headline).trim().replace(/[.]+$/, '');
+  if (!headline) return null;
+  const seconds = Number(card.durationSeconds ?? card.seconds) || 1.5;
+  return { headline, subline: String(subline).trim(), seconds: Math.min(4, Math.max(1, seconds)), color: card.color || card.background || null };
+}
+
+export async function endCardClip(spec, { width, height, fps = 30, file }) {
+  if (!which('rsvg-convert')) return null;
+  const vertical = height > width;
+  const hSize = Math.round(vertical ? width * 0.115 : height * 0.11);
+  const sSize = Math.round(hSize * 0.42);
+  const hLines = wrap(spec.headline, Math.max(6, Math.floor((width * 0.84) / (hSize * 0.62))), 3);
+  const sLines = spec.subline ? wrap(spec.subline, Math.max(10, Math.floor((width * 0.8) / (sSize * 0.55))), 2) : [];
+  const hLH = Math.round(hSize * 1.08), sLH = Math.round(sSize * 1.3);
+  const gap = sLines.length ? Math.round(hSize * 0.55) : 0;
+  const blockH = hLines.length * hLH + gap + sLines.length * sLH;
+  let y = Math.round(height / 2 - blockH / 2 + hSize * 0.8);
+  const bg = /^#[0-9a-f]{3,8}$/i.test(spec.color || '') ? spec.color : '#101114';
+  const head = hLines.map((l, i) => `<tspan x="${width / 2}" y="${y + i * hLH}">${esc(l)}</tspan>`).join('');
+  y += (hLines.length - 1) * hLH + gap + (sLines.length ? sLH * 0.75 : 0);
+  const sub = sLines.map((l, i) => `<tspan x="${width / 2}" y="${Math.round(y + i * sLH)}">${esc(l)}</tspan>`).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  <defs><radialGradient id="g" cx="0.5" cy="0.45" r="0.75"><stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/><stop offset="1" stop-color="#000000" stop-opacity="0.35"/></radialGradient></defs>
+  <rect width="100%" height="100%" fill="${bg}"/><rect width="100%" height="100%" fill="url(#g)"/>
+  <text font-family="${FONT_FAMILY}" font-weight="900" font-size="${hSize}" fill="#ffffff" text-anchor="middle" letter-spacing="${(-hSize * 0.01).toFixed(1)}">${head}</text>
+  ${sub ? `<text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="500" font-size="${sSize}" fill="#ffffff" fill-opacity="0.82" text-anchor="middle">${sub}</text>` : ''}
+</svg>`;
+  const png = file.replace(/\.mp4$/, '.png');
+  fs.writeFileSync(file.replace(/\.mp4$/, '.svg'), svg);
+  await sh('rsvg-convert', ['-w', String(width), '-h', String(height), '-o', png, file.replace(/\.mp4$/, '.svg')]);
+  // A slow 3% push-in so the card is not a dead frame; the cross-fade into it is the fade-in.
+  const n = Math.round(spec.seconds * fps);
+  await ff(['-loop', '1', '-i', png, '-vf', `scale=${width * 2}:${height * 2},zoompan=z='1+0.03*on/${n}':x='(iw-iw/zoom)/2':y='(ih-ih/zoom)/2':d=${n}:s=${width}x${height}:fps=${fps},format=yuv420p`,
+    '-frames:v', String(n), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '16', '-r', String(fps), file]);
+  return file;
 }
 
 // Ken Burns move over a still (the fallback when fal video times out): a slow push-in or pull-out with a
