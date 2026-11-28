@@ -14,7 +14,7 @@
 </main>
 <footer>Recliner · local only · runs/<span id="fr"></span></footer>
 <script type="module">
-import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage, withKeyframeValidations, metrics } from '/app.js';
+import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage, withKeyframeValidations, metrics, refImages, isBrand, refBadge } from '/app.js';
 
 header(runId ? 'brief' : 'runs');
 $('#fr').textContent = runId || '';
@@ -227,9 +227,9 @@ function renderLive(d) {
       <div class="card"><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><h2>Config</h2><span class="tag info">effort ${esc(c.effort ?? '–')}</span></div>
         <div class="chips">${Object.entries(c).filter(([k]) => k !== 'effort').map(([k, v]) => `<span class="chip"><b>${esc(k)}</b>${esc(v)}</span>`).join('')}</div></div>
       <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>References</h2><span class="eyebrow" style="margin-left:auto">${refs ? `${refs.references.length} found` : 'pending'}</span></div>
-        ${refs ? `<div class="grid">${refs.references.map((r) => `<div style="display:flex;gap:10px;align-items:center">
-            ${r.screenshots?.[0] ? `<img src="${fileUrl(r.screenshots[0])}" alt="" style="width:44px;height:58px;object-fit:cover;border-radius:2px;border:1px solid var(--line-soft)">` : ''}
-            <div style="min-width:0"><div style="font-size:13.5px;font-weight:500">${esc(r.title)}</div><div class="metrics"><span>${esc(r.platform)}</span>${metrics(r.metrics, ['views', 'likes'])}</div></div></div>`).join('')}</div>`
+        ${refs ? `<div class="refcards">${refs.references.map((r) => { const imgs = refImages(r); return `<div class="refcard ${isBrand(r) ? 'isbrand' : ''}">
+            <div class="rc-img">${imgs[0] ? `<img src="${fileUrl(imgs[0])}" alt="" loading="lazy">` : `<div class="rc-none">${esc(r.platform || 'no image')}</div>`}<span class="badge">${refBadge(r)}</span>${imgs.length > 1 ? `<span class="badge2"><span class="tag">${imgs.length} frames</span></span>` : ''}</div>
+            <div class="rc-body"><div class="rc-t">${esc(r.title)}</div><div class="metrics">${r.platform ? `<span>${esc(r.platform)}</span>` : ''}${metrics(r.metrics, ['views', 'likes'])}</div></div></div>`; }).join('')}</div>`
           : '<div class="empty">Searching for proven references…</div>'}</div>
     </div>
     <div class="grid">
