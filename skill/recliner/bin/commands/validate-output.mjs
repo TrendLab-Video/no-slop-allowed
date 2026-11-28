@@ -1,10 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { readJson, runPath, repoRoot } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 import { sh } from '../../lib/compositors/ffmpeg.mjs';
 
 export const describe = 'validate-output <runId> [--attempt n] [--strict]: run deterministic ffmpeg/audio validation for a composed final.mp4';
+
+// The Python `validation` package sits at the repo root in the repository and inside the skill folder in the
+// packaged skill (scripts/package-skill.sh copies it there). Run from whichever holds it.
+function validationRoot() {
+  const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+  for (const dir of [repoRoot(), skillRoot]) if (fs.existsSync(path.join(dir, 'validation', 'run.py'))) return dir;
+  throw new Error('the validation package was not found (looked in the workspace root and the skill folder)');
+}
 
 export default async function ([runId], flags) {
   if (!runId) throw new Error('usage: validate-output <runId> [--attempt n] [--strict]');
@@ -25,7 +34,7 @@ export default async function ([runId], flags) {
   const contactFile = path.join(compositionDir, 'contact-sheet.png');
   const brief = readJson(runId, 'brief.json', {}) || {};
   const plan = readJson(runId, 'plan.json', {}) || {};
-  const briefRef = brief.file || `runs/${runId}/brief.json`;
+  const briefRef = path.resolve(repoRoot(), brief.file || `runs/${runId}/brief.json`);
 
   const args = [
     '-m', 'validation.run', compositionDir,
@@ -44,7 +53,7 @@ export default async function ([runId], flags) {
   let cliOut = '';
   let error = null;
   try {
-    const run = await sh('python3', args, { cwd: repoRoot(), timeoutMs: 150000 });
+    const run = await sh('python3', args, { cwd: validationRoot(), timeoutMs: 150000 });
     cliOut = run.out;
   } catch (err) {
     error = err;

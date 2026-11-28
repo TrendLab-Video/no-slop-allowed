@@ -18,12 +18,18 @@ export default async function () {
   loadEnv();
   const node = Number(process.versions.node.split('.')[0]);
   const blender = process.env.BLENDER_BIN || which('blender') || (fs.existsSync(MAC_BLENDER) ? MAC_BLENDER : null);
+  let py = 0;
+  try {
+    const [maj, min] = execSync('python3 -c "import sys;print(sys.version_info[0],sys.version_info[1])"', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().split(' ').map(Number);
+    py = maj * 100 + min;
+  } catch {}
   const checks = [
     { name: 'Node 22+', required: true, ok: node >= 22, detail: `found ${process.versions.node}` },
     { name: 'ffmpeg', required: true, ok: !!which('ffmpeg'), detail: which('ffmpeg') || 'not on PATH' },
     { name: 'ffprobe', required: true, ok: !!which('ffprobe'), detail: which('ffprobe') || 'not on PATH' },
     { name: 'FAL_KEY', required: true, ok: !!(process.env.FAL_KEY || process.env.FAL_API_KEY), detail: `looked in ${envFiles().join(', ')} (or enter it on the Brief page)` },
     { name: 'Blender (recommended compositor)', required: false, ok: !!blender, detail: blender || 'not found: ffmpeg will compose' },
+    { name: 'Python 3.11+ (technical validation)', required: false, ok: py >= 311, detail: py ? `found python3 ${Math.floor(py / 100)}.${py % 100}` : 'python3 not on PATH: technical validation is skipped' },
     { name: 'rsvg-convert (captions on the ffmpeg path)', required: false, ok: !!which('rsvg-convert'), detail: which('rsvg-convert') || 'not on PATH' },
     { name: 'yt-dlp (reference video frames)', required: false, ok: !!which('yt-dlp'), detail: which('yt-dlp') || 'not on PATH: one image per reference' },
     { name: 'Search key (TAVILY_API_KEY or PARALLEL_API_KEY)', required: false, ok: !!(process.env.TAVILY_API_KEY || process.env.PARALLEL_API_KEY), detail: 'optional: built-in web search otherwise' },
