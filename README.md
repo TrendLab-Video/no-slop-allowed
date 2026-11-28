@@ -65,3 +65,7 @@ If a video file is too large for GitHub (>100 MB), keep `traces.json` in the rep
 The top eight teams will be invited to present their work. Please prepare a two-minute presentation in advance so you are ready if your team is selected.
 
 Schedule, judging criteria, prizes, team setup and fal credits are on the hackathon portal.
+
+## Team design notes
+
+- [Recliner: skill-based creative harness proposal](docs/skill-based-harness.md)
