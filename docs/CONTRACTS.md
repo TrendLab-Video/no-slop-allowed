@@ -56,10 +56,12 @@ Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 mi
 **`clips.json`**
 `{ scenes: [{ sceneId, acceptedAttempt, attempts: [{ attempt, file: "clips/<sceneId>/<attempt>.mp4", model, prompt, steering, requestId, status: generating|generated|failed, error, durationSeconds, validation: { score: 0..100, passed, reason, steering } }] }] }`
 `acceptedAttempt` is the highest scoring attempt, whether or not it passed.
+Validation sub-agents run in parallel, so they never write `clips.json`: each writes `clips/<sceneId>/<attempt>.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`) and `accept-clips` merges them.
 
 **`result.json`**
 `{ results: [{ id, attempt, file: "compositions/<attempt>/final.mp4", thumbnail, compositor, durationSeconds, validation: { score: 0..100, passed, reason, breakdown: { hook, briefFit, craft, originality, slop } } }], selectedId }`
 `selectedId` is the highest scoring result.
+The final validator writes `compositions/<attempt>/validation.json` (`{ id, attempt, score, passed, reason, breakdown, slopHits, biggestProblem, repairs: [{ sceneId, steering }] }`) and `rank` merges it.
 
 **`traces.json`**: shape of `traces.example.json`, appended through `appendTrace`. Each step also carries `stage` and `at`.
 
