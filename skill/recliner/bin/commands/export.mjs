@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { readJson, runPath, repoRoot } from '../../lib/store.mjs';
+import { readJson, runPath, repoRoot, setStage } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 
 export const describe = 'export <runId> [--slug s]: copy the selected video and traces.json to outputs/<brief-slug>/';
@@ -34,13 +34,22 @@ export default async function ([runId], flags) {
     tool_calls: [{ tool: 'copy', arguments: { from: selected.file, to: `${outRel}/final.mp4` }, result: { ok: true } }],
     outputs: { video: `${outRel}/final.mp4`, traces: `${outRel}/traces.json` },
   });
+  // Mark the run finished before the copy, so the exported traces.json is complete: the output stage is done
+  // and the last step records it (a later `recliner stage <runId> output done` is then a no-op).
+  const finishedAt = new Date().toISOString();
+  try { setStage(runId, 'output', 'done', `exported to ${outRel}`); } catch {}
+  const startedAt = readJson(runId, 'traces.json', {})?.started_at;
+  appendTraceLocked(runId, {
+    name: 'run:finished', stage: 'output',
+    outputs: { status: 'done', output_video: `${outRel}/final.mp4`, finished_at: finishedAt, run_seconds: startedAt ? Math.round((Date.parse(finishedAt) - Date.parse(startedAt)) / 1000) : null },
+  });
   // Fill the top-level trace fields in the run's own traces.json too, so both copies agree.
   // traces.brief is a path: the brief file when there is one, else the run's brief.json.
   const briefRef = brief.file || `runs/${runId}/brief.json`;
   const traces = updateJson(runId, 'traces.json', { steps: [] }, (t) => {
     t.brief = briefRef;
     t.output_video = `${outRel}/final.mp4`;
-    t.finished_at = new Date().toISOString();
+    t.finished_at = finishedAt;
     t.run_id = runId;
     t.selected_result = { id: selected.id, file: selected.file, compositor: selected.compositor, validation: selected.validation ?? null };
   });
