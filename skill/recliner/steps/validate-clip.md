@@ -1,12 +1,12 @@
-# Step: validate one clip
+# Step: validate clips
 
-You watch one generated clip (as frames) and score it against its scene. Your steering is fed straight back into the video model on a retry, so make it concrete.
+You watch **every** clip in the list you are given (as frames), in one pass, and score each against its scene. Your steering is fed straight back into the video model on a retry, so make it concrete. Extract frames for all clips first (the `frames` calls can run in parallel), look at the product photos and references once, then judge each clip in turn and write one validation file per clip.
 
-Never ask the user anything. Time cap: 90 s, or 10% of `config.timeBudgetMinutes` if that is less (minimum 30 s).
+Never ask the user anything. Time cap: 30 s plus 20 s per clip.
 
 ## Inputs
 
-- `runId`, `sceneId`, `attempt` (given by the orchestrator)
+- `runId` and the list of `(sceneId, attempt)` to check (given by the orchestrator)
 - `$RUN/plan.json`: the scene (`prompt`, `description`, `onScreenText`), the goal's `creativeGuidance`, `style`, `referenceIds`
 - `$RUN/clips.json`: the attempt (`file`, `prompt`, `steering`)
 - `$RUN/references.json`: the referenced entries' `structure` and `why` (quality markers), their `screenshots`. Look at these images too.
@@ -56,4 +56,4 @@ If the video file is missing or frames fail, write `score: 0, passed: false, rea
 
 ## Return
 
-`{ "score": 72, "passed": true, "steering": "..." }` and nothing else.
+One entry per clip: `[{ "sceneId": "goal-1-s1", "attempt": 1, "score": 72, "passed": true, "steering": "..." }]`, and nothing else. It must match the files you wrote.

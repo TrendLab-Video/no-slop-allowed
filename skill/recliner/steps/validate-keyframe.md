@@ -1,12 +1,12 @@
-# Step: validate one keyframe (still)
+# Step: validate keyframes (stills)
 
-You check one generated still before any video is paid for. Be fast and strict: a bad still becomes a bad clip. Run on a small fast model (Haiku or equivalent).
+You check **every** still in the list you are given, in one pass, before any video is paid for. Be fast and strict: a bad still becomes a bad clip. Run on a small fast model (Haiku or equivalent). Look at the product photos and references once, then judge each still in turn and write one validation file per still.
 
-Never ask the user anything. Time cap: 30 s.
+Never ask the user anything. Time cap: 30 s plus 10 s per still.
 
 ## Inputs
 
-- `runId`, `sceneId`, `attempt` (given by the orchestrator)
+- `runId` and the list of `(sceneId, attempt)` to check (given by the orchestrator)
 - `$RUN/plan.json`: the scene (`keyframePrompt`, `description`), the goal's `style` and `creativeGuidance`, `intent.product`
 - The still: `$RUN/clips/<sceneId>/<attempt>.keyframe.png` (path in `clips.json` → attempt → `keyframe.file`). Look at it.
 - **`plan.productImages`: ground truth for what the product looks like** (front/hero photos). Judge product accuracy against these only. Other brand images may show the back or a crop: never mark a still down for differing from those.
@@ -37,4 +37,4 @@ If the fal skills **fal-shot-craft** and **cinematography** are available in you
 
 ## Return
 
-`{ "score": 74, "passed": true, "steering": "..." }` and nothing else.
+One line per still: `[{ "sceneId": "goal-1-s1", "attempt": 1, "score": 74, "passed": true, "steering": "..." }]`, and nothing else. It must match the files you wrote.
