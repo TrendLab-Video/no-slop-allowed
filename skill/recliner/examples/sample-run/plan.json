@@ -1,0 +1,45 @@
+{
+  "id": "g1",
+  "title": "Pocket studio, one take",
+  "description": "A single continuous-feeling POV: hands find the device, tap, and a beat builds as the city moves past.",
+  "creativeGuidance": "Warm practical light, macro on pads, no faces.",
+  "durationSeconds": 9,
+  "style": "Cinematic macro, film grain",
+  "referenceIds": [
+    "r2",
+    "r1"
+  ],
+  "audio": {
+    "musicPrompt": "Lo-fi hip hop beat built from found sounds, 90 bpm",
+    "voiceover": ""
+  },
+  "scenes": [
+    {
+      "id": "s1",
+      "index": 0,
+      "durationSeconds": 3,
+      "description": "Macro: fingertip presses a glowing orange pad",
+      "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light",
+      "onScreenText": "tap."
+    },
+    {
+      "id": "s2",
+      "index": 1,
+      "durationSeconds": 3,
+      "description": "POV on a moving train, device on knee",
+      "prompt": "first-person view on a train, small grey hardware sampler resting on knee, city lights streaking past window",
+      "onScreenText": "record."
+    },
+    {
+      "id": "s3",
+      "index": 2,
+      "durationSeconds": 3,
+      "description": "Pull back: the beat drops, headphones on",
+      "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections",
+      "onScreenText": "make the beat."
+    }
+  ],
+  "aspectRatio": "9:16",
+  "goalId": "g1",
+  "confidence": 0.86
+}

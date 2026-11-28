@@ -1,0 +1,18 @@
+{
+  "effort": 2,
+  "scenes": 3,
+  "clipSeconds": 5,
+  "parallelism": 3,
+  "videoModel": "fal-ai/kling-video/v2.1/standard/text-to-video",
+  "imageModel": "fal-ai/flux/schnell",
+  "resolution": "720p",
+  "referencesCount": 3,
+  "goalsCount": 5,
+  "clipRetries": 1,
+  "finalRetries": 0,
+  "passScore": 60,
+  "timeBudgetMinutes": 8,
+  "scorer": "haiku",
+  "compositor": "ffmpeg",
+  "audio": true
+}

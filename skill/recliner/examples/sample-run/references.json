@@ -1,0 +1,96 @@
+{
+  "references": [
+    {
+      "id": "r1",
+      "title": "Making a beat from kitchen sounds in 60s",
+      "url": "https://www.tiktok.com/@example/video/1",
+      "platform": "TikTok",
+      "metrics": {
+        "views": 2400000,
+        "likes": 310000,
+        "comments": 4200,
+        "shares": 18000
+      },
+      "why": "Everyday-object sampling is an instant hook and shows the mic in use.",
+      "structure": {
+        "durationSeconds": 58,
+        "scenes": [
+          "Cold open: tap a mug",
+          "Sample it",
+          "Chop on pads",
+          "Drop the beat"
+        ],
+        "pacing": "Fast cuts on the beat, 1–2 s each",
+        "music": "Built live in the video",
+        "hook": "Sound of the first tap before any visuals"
+      },
+      "screenshots": [
+        "references/r1-1.jpg",
+        "references/r1-2.jpg"
+      ]
+    },
+    {
+      "id": "r2",
+      "title": "Pocket studio on the train",
+      "url": "https://www.instagram.com/reel/example2",
+      "platform": "Instagram Reels",
+      "metrics": {
+        "views": 870000,
+        "likes": 64000,
+        "comments": 900,
+        "shares": 5100
+      },
+      "why": "Shows portability with a relatable setting; POV framing.",
+      "structure": {
+        "durationSeconds": 24,
+        "scenes": [
+          "POV hands on device",
+          "Window blur",
+          "Headphones on"
+        ],
+        "pacing": "Slow, one continuous take feel",
+        "music": "Lo-fi loop made on the device",
+        "hook": "Text: \"my whole studio fits in my coat\""
+      },
+      "screenshots": [
+        "references/r2-1.jpg",
+        "references/r2-2.jpg"
+      ]
+    },
+    {
+      "id": "r3",
+      "title": "Unboxing to first track speedrun",
+      "url": "https://www.youtube.com/shorts/example3",
+      "platform": "YouTube Shorts",
+      "metrics": {
+        "views": 1300000,
+        "likes": 92000,
+        "comments": 3100,
+        "shares": 7400
+      },
+      "why": "Timer overlay creates tension; payoff is a finished loop.",
+      "structure": {
+        "durationSeconds": 45,
+        "scenes": [
+          "Box",
+          "Timer starts",
+          "Build",
+          "Final loop"
+        ],
+        "pacing": "Accelerating",
+        "music": "Device output",
+        "hook": "On-screen timer from frame 1"
+      },
+      "screenshots": [
+        "references/r3-1.jpg",
+        "references/r3-2.jpg"
+      ]
+    }
+  ],
+  "takeaways": [
+    "Lead with sound, not the product shot",
+    "Hands on pads are the hero visual",
+    "A visible payoff (a finished loop) inside 15 s"
+  ],
+  "diversityNote": "Three platforms and three formats: found-sound, POV lifestyle, speedrun."
+}
