@@ -101,10 +101,10 @@ export function header(active) {
       <span class="prod">No Slop Allowed</span><span class="prod2">· Recliner</span>
     </a>
     <nav class="nav">
-      <a href="/" class="${active === 'runs' ? 'on' : ''}">Runs</a>
-      <a href="/${q}" class="${active === 'brief' ? 'on' : ''} ${off}">Brief</a>
-      <a href="/steps.html${q}" class="${active === 'steps' ? 'on' : ''} ${off}">Steps</a>
+      <a href="/" class="${active === 'runs' ? 'on' : ''}">Gallery</a>
+      <a href="/${q}" class="${active === 'brief' ? 'on' : ''} ${off}">Studio</a>
       <a href="/result.html${q}" class="${active === 'result' ? 'on' : ''} ${off}">Result</a>
+      <a href="/steps.html${q}" class="${active === 'steps' ? 'on' : ''} ${off}">Inspect</a>
     </nav>
     <div class="top-right"><span class="bal" id="bal" title="fal account balance and the minimum a run should start with"></span><span class="rid">${runId ? esc(runId) : 'local'}</span></div>
   </div>`;
@@ -133,49 +133,105 @@ export async function balance() {
   } catch { el.textContent = ''; }
 }
 
-// Live workflow diagram: 9 stages, horizontal. Call render(state) on every poll.
+// Human progress summary, with the nine internal stages available as secondary detail.
+// The primary UI answers "what is happening?" in user language; the pipeline remains inspectable.
+const FLOW_PHASES = [
+  { id: 'understand', label: 'Understanding', stages: ['brief', 'references', 'goals', 'scoring'] },
+  { id: 'scenes', label: 'Creating scenes', stages: ['clips', 'clip_validation'] },
+  { id: 'assemble', label: 'Assembling', stages: ['composition'] },
+  { id: 'review', label: 'Final review', stages: ['final_validation', 'output'] },
+];
+const HUMAN_STAGE = {
+  brief: 'Reading the brief', references: 'Studying references', goals: 'Writing creative directions', scoring: 'Choosing the strongest direction',
+  clips: 'Generating scenes', clip_validation: 'Reviewing scenes', composition: 'Assembling the edit', final_validation: 'Checking quality', output: 'Preparing delivery',
+};
+const terminalStage = (s) => ['done', 'skipped'].includes(s.status);
+
 export function flow(container) {
   container.innerHTML = `<div class="flow-wrap">
-    <div class="flow-head"><span class="ttl">Workflow</span><span class="pulse idle"></span><span class="status"></span><span class="right"><span class="total"></span><span class="polled"></span></span></div>
-    <div class="flow"></div>
-    <div class="flow-note" hidden><span class="tag"></span><span class="txt"></span></div>
+    <div class="progress-card">
+      <div class="pc-main">
+        <div class="pc-copy">
+          <span class="eyebrow">Run status</span>
+          <div class="pc-title">Preparing…</div>
+          <div class="pc-note">Waiting for the run state.</div>
+        </div>
+        <div class="pc-meta"><span class="status"></span><span class="total"></span></div>
+      </div>
+      <div class="pc-bar"><i></i></div>
+      <div class="phases"></div>
+      <details class="pipeline-detail"><summary>Pipeline detail</summary><div class="flow"></div><div class="flow-note" hidden><span class="tag"></span><span class="txt"></span></div></details>
+    </div>
   </div>`;
   const $f = (s) => container.querySelector(s);
   let last = null;
+
+  const phaseFor = (state, phase) => {
+    const stages = phase.stages.map((id) => state.stages.find((s) => s.id === id)).filter(Boolean);
+    if (!stages.length) return 'pending';
+    if (stages.some((s) => s.status === 'failed')) return 'failed';
+    if (stages.every(terminalStage)) return 'done';
+    if (stages.some((s) => ['running', 'retrying'].includes(s.status))) return 'active';
+    return 'pending';
+  };
+
   const draw = () => {
     const state = last;
-    if (!state) { $f('.flow').innerHTML = '<div class="small" style="grid-column:1/-1;color:var(--muted)">Waiting for state.json…</div>'; return; }
-    const live = state.status === 'running' || state.status === 'awaiting_brief';
-    $f('.pulse').className = `pulse ${state.status === 'running' ? '' : 'idle'}`;
-    $f('.status').innerHTML = statusTag(state.status);
-    const end = live ? null : state.updatedAt;
-    $f('.total').textContent = `Elapsed ${fmtMs(elapsed(state.createdAt, end))}`;
-    $f('.flow').innerHTML = state.stages.map((s, i) => {
+    if (!state) {
+      $f('.pc-title').textContent = 'Preparing…';
+      $f('.pc-note').textContent = 'Waiting for state.json…';
+      return;
+    }
+    const stages = state.stages || [];
+    const cur = stages.find((s) => s.id === state.currentStage) || stages.find((s) => ['running', 'retrying', 'failed'].includes(s.status));
+    const active = stages.some((s) => ['running', 'retrying'].includes(s.status));
+    const outputDone = ['done', 'skipped'].includes(stages.find((s) => s.id === 'output')?.status);
+    const failed = stages.some((s) => s.status === 'failed') || state.status === 'failed';
+    // Output is the delivery terminal: if it completed, stale "running" marks on earlier parallel
+    // stages must not make the user-facing status contradict itself.
+    const complete = outputDone || (state.status === 'done' && !active);
+    const awaiting = state.status === 'awaiting_brief';
+    const title = complete ? 'Your video is ready' : failed ? 'The run needs attention' : awaiting ? 'Ready when you are' : active ? 'Creating your video' : 'Finishing the last stages';
+    const doneCount = stages.filter(terminalStage).length;
+    const progress = complete ? 100 : stages.length ? Math.min(96, Math.round(((doneCount + (active ? 0.45 : 0)) / stages.length) * 100)) : 0;
+    const end = state.status === 'running' || awaiting ? null : state.updatedAt;
+
+    $f('.pc-title').textContent = title;
+    $f('.pc-note').textContent = failed
+      ? `${HUMAN_STAGE[cur?.id] || cur?.label || 'A stage'} hit a problem. Open pipeline detail for the exact failure.`
+      : complete
+        ? 'The finished video is ready to watch and download.'
+        : awaiting
+          ? 'Fill in the brief below to start generation.'
+          : cur
+            ? `${HUMAN_STAGE[cur.id] || cur.label}${cur.note ? ` — ${cur.note}` : ''}`
+            : 'Coordinating the next stage.';
+    $f('.status').innerHTML = statusTag(complete ? 'done' : failed ? 'failed' : active ? 'running' : state.status);
+    $f('.total').textContent = `${progress}% · ${fmtMs(elapsed(state.createdAt, end)) || '0s'}`;
+    $f('.pc-bar i').style.width = `${progress}%`;
+    $f('.phases').innerHTML = FLOW_PHASES.map((p) => `<span class="phase ${phaseFor(state, p)}"><i></i>${esc(p.label)}</span>`).join('');
+
+    $f('.flow').innerHTML = stages.map((s, i) => {
+      const live = state.status === 'running' || awaiting;
       const t = s.startedAt ? fmtMs(elapsed(s.startedAt, s.finishedAt || (live ? null : state.updatedAt))) : '';
       const icon = { done: '✓', failed: '✕', retrying: '↻', skipped: '–' }[s.status] || '';
       const note = s.note || (s.status === 'running' ? 'Working…' : s.status === 'retrying' ? 'Retrying…' : s.status === 'pending' ? 'Waiting' : '');
       return `<div class="st ${esc(s.status)}" title="${esc(`${s.label}: ${s.status}${s.note ? ` · ${s.note}` : ''}`)}">
         <div class="top-row"><span>${String(i + 1).padStart(2, '0')}</span><span class="t">${esc(t)}</span><span class="ic">${icon}</span></div>
         <div class="nm">${esc(s.label)}</div><div class="note">${esc(note)}</div></div>`;
-    }).join('');
-    const cur = state.stages.find((s) => s.id === state.currentStage);
+    }).join('') || '<div class="empty">No pipeline state yet.</div>';
+
     const note = $f('.flow-note');
     if (cur && (cur.status === 'running' || cur.status === 'retrying' || cur.status === 'failed')) {
       note.hidden = false;
       note.querySelector('.tag').className = `tag ${{ running: 'run', retrying: 'retry', failed: 'bad' }[cur.status]}`;
       note.querySelector('.tag').textContent = `${cur.label} · ${cur.status}`;
       note.querySelector('.txt').textContent = cur.note || (cur.id === 'brief' ? 'Waiting for the brief to be submitted.' : 'Working…');
-    } else if (state.status === 'done') {
-      note.hidden = false;
-      note.querySelector('.tag').className = 'tag ok';
-      note.querySelector('.tag').textContent = 'Complete';
-      note.querySelector('.txt').textContent = 'The run finished. See the Result page.';
     } else note.hidden = true;
+    if (failed) $f('.pipeline-detail').open = true;
   };
   setInterval(() => { if (last && last.status === 'running') draw(); }, 1000); // tick elapsed timers
-  return {
-    render(state) { last = state; draw(); $f('.polled').textContent = `polled ${new Date().toLocaleTimeString()}`; },
-  };
+  return { render(state) { last = state; draw(); } };
 }
 
 export function needRun() {
@@ -194,12 +250,12 @@ export const kfValidationPath = (kf) => String(kf).replace(/\.(jpe?g|png|webp)$/
 // takes the validation from the object when embedded, else from the .validation.json beside the file.
 const normVal = (v) => (v ? { score: v.score ?? v.validation?.score, passed: v.passed ?? v.validation?.passed, reason: v.reason ?? v.validation?.reason, steering: v.steering ?? v.validation?.steering } : null);
 
-// ---------- Validator verdicts: always labelled, never mistaken for the plan ----------
+// ---------- Quality review verdicts: always labelled, never mistaken for the plan ----------
 const BD_LABELS = { hook: 'Hook', briefFit: 'Brief fit', craft: 'Craft', originality: 'Originality', slop: 'No slop' };
 const asList = (x) => (Array.isArray(x) ? x : x ? [x] : []).map((i) => (typeof i === 'string' ? i : i?.text || i?.repair || i?.description || JSON.stringify(i)));
 
-// "VALIDATOR VERDICT 43 · BELOW PASS SCORE 60" (label can be changed, e.g. KEYFRAME VALIDATOR).
-export function verdictHead(v, passScore, label = 'Validator verdict') {
+// "QUALITY REVIEW 43 · BELOW PASS SCORE 60" (label can be changed for keyframes or clips).
+export function verdictHead(v, passScore, label = 'Quality review') {
   if (!v || v.score == null) return `<div class="verdict"><span class="vlabel">${esc(label)}</span><span class="tag">not validated yet</span></div>`;
   return `<div class="verdict"><span class="vlabel">${esc(label)}</span><span class="vscore ${v.passed === false ? 'fail' : ''}">${esc(v.score)}</span>
     <span class="tag ${v.passed === false ? 'bad' : v.passed ? 'ok' : ''}">${v.passed === false ? `below pass score${passScore != null ? ` ${esc(passScore)}` : ''}` : v.passed ? 'passed' : 'scored'}</span></div>`;
@@ -228,12 +284,12 @@ export function intendedVsSaw(plan, v, passScore) {
       <ol class="scenes">${scenes.map((s) => `<li><span>${esc(s.description || '')}${s.onScreenText ? ` <span class="muted mono small">“${esc(s.onScreenText)}”</span>` : ''}</span><span class="d">${esc(s.durationSeconds ?? '')}s</span></li>`).join('')}</ol>`
         : '<p class="muted">No plan.</p>'}
     </div>
-    <div class="cmp saw"><div class="vlabel">What the validator saw</div>
+    <div class="cmp saw"><div class="vlabel">What the reviewer saw</div>
       ${verdictHead(v, passScore)}
       ${v?.reason ? `<blockquote>${esc(v.reason)}</blockquote>` : ''}
       ${Object.keys(bd).length ? `<div class="breakdown">${Object.entries(bd).map(([k, n]) => `<div class="score"><span>${esc(BD_LABELS[k] || k)}</span>${scoreBar(n, 100, passScore != null ? Number(n) >= passScore : undefined)}<span>${esc(n)}</span></div>`).join('')}</div>` : ''}
       ${problems.length ? `<div class="vsub">Biggest problem</div><ul>${problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
-      ${repairs.length ? `<div class="vsub">Repairs</div><ul>${repairs.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+      ${repairs.length ? `<div class="vsub">Suggested improvements</div><ul>${repairs.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
     </div>
   </div>`;
 }
@@ -419,7 +475,7 @@ export function mediaStage(container) {
       const ar = plan?.aspectRatio || b.aspectRatio || '9:16';
       const cur = state.stages?.find((s) => s.id === state.currentStage);
       const q = `?run=${encodeURIComponent(runId)}`;
-      const links = `<div class="links"><a class="btn ghost" href="/steps.html${q}">Steps <span class="arrow">→</span></a><a class="btn" href="/result.html${q}">Result <span class="arrow">→</span></a></div>`;
+      const links = `<div class="links"><a class="btn ghost" href="/steps.html${q}">Behind the scenes</a><a class="btn" href="/result.html${q}">Watch result <span class="arrow">→</span></a></div>`;
       const pill = (t) => `<span class="pillb">${state.status === 'running' ? '<span class="pulse"></span>' : ''}${esc(t)}</span>`;
       const curNote = cur && cur.status !== 'done' ? `<div class="sub">${esc(cur.label)} · ${esc(cur.status)}${cur.note ? ` — ${esc(cur.note)}` : ''}</div>` : '';
       const results = result?.results || [];
@@ -429,10 +485,10 @@ export function mediaStage(container) {
         const final = state.status === 'done' || !!result.selectedId && ['done'].includes(state.stages?.find((s) => s.id === 'final_validation')?.status);
         const v = sel.validation || {};
         info.innerHTML = `${pill(final ? 'Final video' : 'Composed video')}<h1>${esc(b.promote || 'Untitled')}</h1>
-          ${v.score != null ? `${verdictHead(v, d['config.json']?.passScore)}<div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score)}<small>/100</small></div>
-            ${v.passed === false && final ? `<div class="sub warnline">Best available result: did not pass. Retries used ${Math.max(0, results.length - 1)}${d['config.json']?.finalRetries != null ? ` of ${esc(d['config.json'].finalRetries)}` : ''}.</div>` : ''}
-            ${v.reason ? `<p class="vquote"><span class="vlabel">Validator saw</span>${esc(v.reason.length > 220 ? v.reason.slice(0, 220) + '…' : v.reason)}</p>` : ''}` : '<div class="sub">Validating…</div>'}
-          <div class="sub">${results.length} composition${results.length === 1 ? '' : 's'} · ${esc(sel.compositor || '')} · ${esc(sel.durationSeconds ?? '')}s</div>${curNote}${links}`;
+          ${v.score != null ? `<div class="quality-callout ${v.passed === false ? 'warn' : ''}"><span>${v.passed === false ? 'Best available cut' : 'Quality checked'}</span><b>${esc(v.score)}/100</b></div>
+            ${v.passed === false && final ? `<div class="sub warnline">This is the strongest available version, but the quality review still recommends polish.</div>` : ''}
+            ${v.reason ? `<p class="stage-quote">${esc(v.reason.length > 180 ? v.reason.slice(0, 180) + '…' : v.reason)}</p>` : ''}` : '<div class="sub">Checking quality…</div>'}
+          <div class="sub">${esc(sel.durationSeconds ?? '')}s · ${results.length} version${results.length === 1 ? '' : 's'} considered</div>${curNote}${links}`;
         setMode('final', '<div class="tiles"></div>');
         patch(media.firstElementChild, [{ key: sel.id, html: `<div class="tile hero-tile ${arCls(ar)}" style="--n:1"><video src="${esc(fileUrl(sel.file))}" ${sel.thumbnail ? `poster="${esc(fileUrl(sel.thumbnail))}"` : ''} autoplay muted loop playsinline controls preload="auto"></video>
           <div class="tl"><span class="tag genb">Generated</span>${final ? '<span class="tag ok">selected</span>' : ''}</div></div>` }]);
