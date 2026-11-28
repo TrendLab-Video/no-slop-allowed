@@ -9,7 +9,8 @@ Never ask the user anything. Time cap: 30 s.
 - `runId`, `sceneId`, `attempt` (given by the orchestrator)
 - `$RUN/plan.json`: the scene (`keyframePrompt`, `description`), the goal's `style` and `creativeGuidance`, `intent.product`
 - The still: `$RUN/clips/<sceneId>/<attempt>.keyframe.png` (path in `clips.json` → attempt → `keyframe.file`). Look at it.
-- The quality bar: the images in `$RUN/references.json` `screenshots`, above all the `kind: "brand"` image. Look at them first. Ask: **would this still sit next to these references without looking like the weak one?** If not, cap the score at 60 and say what is weaker (light, finish, product accuracy). Reference video frames (`references/<id>/frame-N.jpg`) show real layout, framing and where text sits; use them to judge composition and the room left for `onScreenText`.
+- **`plan.productImages`: ground truth for what the product looks like** (front/hero photos). Judge product accuracy against these only. Other brand images may show the back or a crop: never mark a still down for differing from those.
+- The quality bar: the images in `$RUN/references.json` `screenshots`. Look at them first. Ask: **would this still sit next to these references without looking like the weak one?** If not, cap the score at 60 and say what is weaker (light, finish, product accuracy). Reference video frames (`references/<id>/frame-N.jpg`) show real layout, framing and where text sits; use them to judge composition and the room left for `onScreenText`.
 
 If the fal skills **fal-shot-craft** and **cinematography** are available in your environment, load and follow them for the composition check and the steering wording.
 

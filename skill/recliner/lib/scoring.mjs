@@ -85,6 +85,15 @@ export async function jevScoreGoal(brief, goal, intent, key = jevKey()) {
   };
 }
 
+// Ground-truth product photos (run-relative): the brand reference's selected `productImages`, else its
+// screenshots, keeping only files that exist. Keyframe generation uses them as image references.
+export function productImages(runId) {
+  const brand = (readJson(runId, 'references.json', {}).references || []).find((r) => r.kind === 'brand');
+  if (!brand) return [];
+  const pick = Array.isArray(brand.productImages) && brand.productImages.length ? brand.productImages : brand.screenshots || [];
+  return pick.filter((p) => typeof p === 'string' && fs.existsSync(runPath(runId, p))).slice(0, 3);
+}
+
 // plan.json always carries endCard { headline, subline, durationSeconds } (older shape { text, seconds } is converted).
 export function normaliseEndCard(card, brief = {}, intent = null) {
   const c = card || {};
@@ -154,6 +163,7 @@ export async function scoreRun(runId, { scorer } = {}) {
     intent: goalsDoc.intent ?? null,
     endCard: normaliseEndCard(goal.endCard, brief, goalsDoc.intent),
     scenes: goal.scenes.map((sc) => ({ ...sc, keyframePrompt: sc.keyframePrompt || sc.prompt })),
+    productImages: productImages(runId),
   });
   appendTraceLocked(runId, {
     name: 'score-goals',
