@@ -82,7 +82,16 @@ export default async function ([runId], flags) {
     s.textIn = Math.round((fadeIn + 0.15) * 100) / 100;
     s.textOut = Math.round(Math.max(s.textIn + 0.8, s.seconds - fadeOut - 0.1) * 100) / 100;
   });
-  const total = segments.reduce((a, s, i) => a + s.seconds - (i ? s.xfadeIn : 0), 0);
+  // Keep the composed length within the validator's tolerance of plan.durationSeconds: the end card
+  // sits on top of the scenes, so without this every video lands ~card.seconds over plan and fails
+  // the duration gate. Trim the last segment (the card when present).
+  const target = plan.durationSeconds ? plan.durationSeconds + 1 : Infinity;
+  const sum = (segs) => segs.reduce((a, s, i) => a + s.seconds - (i ? s.xfadeIn : 0), 0);
+  if (sum(segments) > target && segments.length) {
+    const lastSeg = segments[segments.length - 1];
+    lastSeg.seconds = Math.max(0.5, Math.round((lastSeg.seconds - (sum(segments) - target)) * 100) / 100);
+  }
+  const total = sum(segments);
 
   // Audio bed: cached fal assets, mixed to the exact length and loudness-normalised. Without a bed the video
   // has no audio stream at all (never a silent track that claims to be audio).

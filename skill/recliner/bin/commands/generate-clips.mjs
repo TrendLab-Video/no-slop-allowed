@@ -191,7 +191,7 @@ export default async function ([runId], flags) {
     }
     update(sid, job.attempt, {}, still ? { ...still, status: 'generated', error: null } : { status: 'failed', error: rec.error || 'no image url' });
     appendTraceLocked(runId, {
-      ...traceBase, name: `keyframe:${sid}#${job.attempt}`, model: rec.endpoint, prompt: rec.prompt,
+      ...traceBase, name: `keyframe:${sid}#${job.attempt}`, model: rec.endpoint, prompt: rec.prompt, requestId: rec.requestId || null,
       tool_calls: calls.map(toolCall), outputs: { file: still?.file || null, productImages: still?.productImages || null, error: still ? null : rec.error, cost: rec.cost, costEstimated: rec.costEstimated },
       duration_ms: calls.reduce((a, c) => a + c.duration_ms, 0),
     });
@@ -273,7 +273,7 @@ export default async function ([runId], flags) {
     const ok = rec.status === 'ok';
     update(sid, job.attempt, { status: ok ? 'generated' : 'failed', error: rec.error, requestId: rec.requestId, model: rec.endpoint, prompt: rec.prompt, mode, durationSeconds, notes });
     appendTraceLocked(runId, {
-      ...traceBase, name: `generate-clip:${sid}#${job.attempt}`, model: rec.endpoint, prompt: rec.prompt,
+      ...traceBase, name: `generate-clip:${sid}#${job.attempt}`, model: rec.endpoint, prompt: rec.prompt, requestId: rec.requestId || null,
       tool_calls: calls.map(toolCall), // the keyframe call has its own trace step
       outputs: { file: ok ? job.file : null, status: ok ? 'generated' : 'failed', mode, keyframe: job.keyframe?.file || null, keyframeReused: job.reused, error: rec.error, durationSeconds, cost: rec.cost, notes },
       duration_ms: calls.reduce((a, c) => a + c.duration_ms, 0),

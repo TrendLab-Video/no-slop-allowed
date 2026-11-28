@@ -22,7 +22,7 @@ export function sh(bin, args, { timeoutMs = 10 * 60000, cwd = undefined, env = u
     p.on('close', (code) => {
       clearTimeout(t);
       if (code === 0) resolve({ out, err });
-      else reject(new Error(`${path.basename(bin)} exited ${code}: ${(`${err}\n${out}`).split('\n').filter(Boolean).slice(-8).join(' | ')}`));
+      else reject(new Error(`${path.basename(bin)} exited ${code}: ${(`${err}\n${out}`).split('\n').filter(Boolean).slice(-20).join(' | ')}`));
     });
   });
 }
@@ -171,15 +171,20 @@ export async function compose({ segments, width, height, fps = 30, transition = 
   const args = [];
   norm.forEach((n) => args.push('-i', n.out));
   // One timebase for every input, so xfade accepts the output of an earlier concat.
-  let filter = norm.map((_, i) => `[${i}:v]settb=1/${fps * 1000},setpts=PTS-STARTPTS[s${i}];`).join('');
+  // Order matters: settb before fps — settb after fps resets the link's frame-rate metadata to 1/0,
+  // which xfade rejects ("inputs need to be a constant frame rate").
+  let filter = norm.map((_, i) => `[${i}:v]settb=1/${fps * 1000},setpts=PTS-STARTPTS,fps=${fps}[s${i}];`).join('');
   let last = '[s0]';
   let length = segments[0].seconds;
   for (let i = 1; i < norm.length; i++) {
     const T = xf(i);
     const label = `[x${i}]`;
+    // xfade fails at the exact EOF boundary (offset+duration == input length loses the last
+    // frame), so pull the offset back by one frame.
+    const offset = Math.max(0, length - T - 1 / fps);
     filter += T > 0
-      ? `${last}[s${i}]xfade=transition=fade:duration=${T}:offset=${(length - T).toFixed(3)}${label};`
-      : `${last}[s${i}]concat=n=2:v=1:a=0,settb=1/${fps * 1000}${label};`;
+      ? `${last}[s${i}]xfade=transition=fade:duration=${T}:offset=${offset.toFixed(3)},settb=1/${fps * 1000},fps=${fps}${label};`
+      : `${last}[s${i}]concat=n=2:v=1:a=0,settb=1/${fps * 1000},fps=${fps}${label};`;
     length += segments[i].seconds - T;
     last = label;
   }
@@ -198,6 +203,7 @@ export async function compose({ segments, width, height, fps = 30, transition = 
   const final = [...args, '-filter_complex', filter, '-map', '[v]', ...audioArgs,
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-profile:v', 'high', '-level', '4.1', '-pix_fmt', 'yuv420p', '-r', String(fps),
     '-movflags', '+faststart', '-t', total.toFixed(3), outFile];
+  if (process.env.RECLINER_DEBUG_FILTER) console.error('FILTER:', filter, '\nARGS:', final.join(' '));
   await ff(final);
   return { file: outFile, durationSeconds: await probeDuration(outFile), notes, commands: ['ffmpeg ' + final.join(' ')] };
 }

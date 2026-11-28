@@ -39,7 +39,9 @@ function jevState(brief, goal, intent) {
     intent: intent || null,
     goal: {
       title: goal.title,
+      creativeThesis: goal.creativeThesis || null,
       description: goal.description,
+      realWorldGrounding: goal.realWorldGrounding || [],
       creativeGuidance: goal.creativeGuidance,
       style: goal.style,
       durationSeconds: goal.durationSeconds,
@@ -57,9 +59,9 @@ export async function jevScoreGoal(brief, goal, intent, key = jevKey()) {
     questions: {
       match: {
         type: 'choice',
-        instructions: `${QUESTION} Judge whether the goal sells this specific product toward the brief's objective on its platform, rather than being generic.`,
+        instructions: `${QUESTION} Judge whether the goal sells this specific product toward the brief's objective on its platform through a specific creative thesis and real-world grounding, rather than being generic atmosphere.`,
         criteria: {
-          yes: 'The goal clearly promotes this product toward the brief objective on the brief platform',
+          yes: 'The goal clearly promotes this product toward the brief objective on the brief platform with specific verifiable grounding',
           no: 'The goal is generic, off-objective, off-platform or about something else',
         },
       },
@@ -158,6 +160,8 @@ export async function scoreRun(runId, { scorer } = {}) {
   const goal = goals.find((g) => g.id === best.goalId);
   writeJson(runId, 'plan.json', {
     ...goal,
+    creativeThesis: goal.creativeThesis || goal.title,
+    realWorldGrounding: Array.isArray(goal.realWorldGrounding) ? goal.realWorldGrounding : [],
     goalId: goal.id,
     confidence: best.confidence,
     intent: goalsDoc.intent ?? null,
@@ -172,7 +176,7 @@ export async function scoreRun(runId, { scorer } = {}) {
     inputs: { question: QUESTION, goals: goals.map((g) => g.id), requestedScorer: want },
     prompt: scores.scorer === 'jev' ? QUESTION : 'steps/scoring.md',
     tool_calls: scores.scorer === 'jev' ? goals.map((g) => ({ tool: 'jev', arguments: { url: JEV_URL, goalId: g.id }, result: (scores.raw || []).find((x) => x.goalId === g.id)?.answer ?? null })) : [],
-    outputs: { scores: valid, selectedGoalId: best.goalId, confidence: best.confidence, files: ['scores.json', 'plan.json'] },
+    outputs: { scores: valid, selectedGoalId: best.goalId, confidence: best.confidence, creativeThesis: goal.creativeThesis || goal.title, realWorldGrounding: goal.realWorldGrounding || [], files: ['scores.json', 'plan.json'] },
     duration_ms: Date.now() - t0,
     extra: { decision: `selected ${best.goalId}`, rationale: best.reason || 'highest confidence', fallback: jevError ? `Jev unavailable: ${jevError}` : null },
   });
@@ -212,25 +216,28 @@ export function acceptClips(runId) {
 
 function mergeClips(runId, clips, summary) {
   const passScore = num(readJson(runId, 'config.json', {}).passScore) ?? 70;
+  // keyframe may be a plain path string (sample/older runs) or an object (generate-clips).
+  const kfFile = (a) => (typeof a.keyframe === 'string' ? a.keyframe : a.keyframe?.file) || null;
+  const kfObj = (a) => (typeof a.keyframe === 'string' ? (a.keyframe = { file: a.keyframe }) : a.keyframe);
   for (const scene of clips.scenes) {
     for (const a of scene.attempts || []) {
       const v = readFile(`clips/${scene.sceneId}/${a.attempt}.validation.json`, runId);
       if (v && num(v.score) !== null) {
         a.validation = { score: v.score, passed: typeof v.passed === 'boolean' ? v.passed : v.score >= passScore, reason: v.reason || '', steering: v.steering || '' };
       }
-      const kv = a.keyframe && readFile(`clips/${scene.sceneId}/${a.attempt}.keyframe.validation.json`, runId);
+      const kv = kfFile(a) && readFile(`clips/${scene.sceneId}/${a.attempt}.keyframe.validation.json`, runId);
       if (kv && num(kv.score) !== null) {
-        a.keyframe.validation = { score: kv.score, passed: typeof kv.passed === 'boolean' ? kv.passed : kv.score >= passScore, reason: kv.reason || '', steering: kv.steering || '' };
+        kfObj(a).validation = { score: kv.score, passed: typeof kv.passed === 'boolean' ? kv.passed : kv.score >= passScore, reason: kv.reason || '', steering: kv.steering || '' };
       }
     }
     // Best still per scene (keyframe-first flow); generate-clips animates scene.acceptedKeyframe.
-    const stills = (scene.attempts || []).filter((a) => a.keyframe?.file && a.keyframe.status !== 'failed' && fs.existsSync(runPath(runId, a.keyframe.file)));
-    if (stills.length) scene.acceptedKeyframe = best(stills, (a) => num(a.keyframe.validation?.score)).attempt;
+    const stills = (scene.attempts || []).filter((a) => kfFile(a) && kfObj(a).status !== 'failed' && fs.existsSync(runPath(runId, kfFile(a))));
+    if (stills.length) scene.acceptedKeyframe = best(stills, (a) => num(kfObj(a).validation?.score)).attempt;
     const usable = (scene.attempts || []).filter((a) => a.status === 'generated' || (a.status !== 'failed' && a.status !== 'generating' && a.file && fs.existsSync(runPath(runId, a.file))));
     const pick = best(usable, (a) => num(a.validation?.score));
     scene.acceptedAttempt = pick ? pick.attempt : null;
     const kf = stills.find((a) => a.attempt === scene.acceptedKeyframe);
-    summary.push({ sceneId: scene.sceneId, acceptedKeyframe: scene.acceptedKeyframe ?? null, keyframeScore: kf?.keyframe?.validation?.score ?? null, keyframePassed: kf ? (kf.keyframe.validation?.passed ?? false) : null, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
+    summary.push({ sceneId: scene.sceneId, acceptedKeyframe: scene.acceptedKeyframe ?? null, keyframeScore: kf ? (kf.keyframe?.validation?.score ?? null) : null, keyframePassed: kf ? (kf.keyframe?.validation?.passed ?? false) : null, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
   }
   return clips;
 }
@@ -250,7 +257,14 @@ function mergeResults(runId, result) {
   for (const r of result.results) {
     const v = readFile(`compositions/${r.attempt}/validation.json`, runId);
     if (v && num(v.score) !== null) {
-      r.validation = { score: v.score, passed: typeof v.passed === 'boolean' ? v.passed : v.score >= passScore, reason: v.reason || '', breakdown: v.breakdown || {} };
+      r.validation = {
+        score: v.score,
+        passed: typeof v.passed === 'boolean' ? v.passed : v.score >= passScore,
+        reason: v.reason || '',
+        breakdown: v.breakdown || {},
+        slopHits: v.slopHits || [],
+        biggestProblem: v.biggestProblem || null,
+      };
     }
   }
   const usable = result.results.filter((r) => !r.file || fs.existsSync(runPath(runId, r.file)));

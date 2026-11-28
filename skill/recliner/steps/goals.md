@@ -44,6 +44,8 @@ Each goal:
 - exactly `config.scenes` scenes, each `durationSeconds` = `config.clipSeconds`.
 - `aspectRatio` = `brief.aspectRatio` (default `9:16`).
 - `referenceIds`: the references it borrows from (ids from `references.json`).
+- `creativeThesis`: one sentence that compresses the whole idea and could be said aloud to a judge ("A live globe of aurora, meteors and the ISS", not "a cinematic journey"). If it cannot be compressed into one specific sentence, the goal is not ready.
+- `realWorldGrounding`: 2–4 concrete anchors that make the piece true rather than generic: exact product photos or product construction details, real UI states or workflows, real data/sources, physical materials, locations, or documented brand facts. Every goal needs at least one anchor beyond "the product exists". Do not use abstract vibes as grounding.
 - `creativeGuidance`: what a validator should check: hook in the first second, product visible and centred in every scene from frame 1, the colour and light world, the camera language, what to avoid.
 - Script it before prompting (fal-script-writer, condensed): pick a structure (hook → turn → payoff, or problem → product → proof → sign-off); give every scene its beat in `description`; voiceover at most ~2.5 words per second of its scene; put continuity notes (colourway, wardrobe, location, time of day, screen direction) in `creativeGuidance`.
 - Creator formats (ugc, condensed): face or hands in frame in the first second, native phone look (handheld, available light, 9:16), one person speaking one claim in plain words, show the product being used, never a polished-ad look.
@@ -92,7 +94,9 @@ Also:
     {
       "id": "goal-1",
       "title": "Short name",
+      "creativeThesis": "One specific sentence a judge could repeat",
       "description": "The idea in two sentences: what the viewer sees and why it sells the product.",
+      "realWorldGrounding": ["actual product front photo: black mesh upper, volt midsole", "real running cadence and wet asphalt physical detail"],
       "creativeGuidance": "What to check: ...",
       "durationSeconds": 15,
       "aspectRatio": "9:16",

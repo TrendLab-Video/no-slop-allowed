@@ -7,7 +7,7 @@ Never ask the user anything. Time cap: 2 minutes, or 15% of `config.timeBudgetMi
 ## Inputs
 
 - `runId`, `attempt` (the newest entry in `$RUN/result.json`, or the one you were given)
-- `$RUN/brief.json`, `$RUN/plan.json` (goal, scenes, `creativeGuidance`, `intent` if present), `$RUN/references.json`, `$RUN/clips.json` (accepted attempts and their scores)
+- `$RUN/brief.json`, `$RUN/plan.json` (goal, scenes, `creativeThesis`, `realWorldGrounding`, `creativeGuidance`, `intent` if present), `$RUN/references.json`, `$RUN/clips.json` (accepted attempts and their scores)
 
 If the fal skills **fal-video-production** (its review of the finished ad), **video-compositing** and **fal-motion-graphics** are available in your environment, load and follow them for this review; otherwise apply the condensed checks below.
 
@@ -19,6 +19,8 @@ If the fal skills **fal-video-production** (its review of the finished ad), **vi
 3. Run the anti-slop checklist. Each item that applies is a slop hit; cite the frame:
    - generic AI visual clichés (glossy abstract 3D, neon gradients, floating product in a void, lens-flare everything)
    - visuals that could belong to any brand; no clear link between product and visual concept
+   - no real-world grounding or verifiable detail: the piece is atmosphere without product truth, real UI/workflow detail, real data, physical specificity or documented brand facts
+   - no compressible creative thesis: after watching, the viewer cannot say what the piece is about in one specific sentence
    - meaningless buzzwords or empty motivational copy in on-screen text
    - weak or delayed hook (nothing arresting in the first second; product or stakes not established early)
    - repetitive shots or pacing; every shot the same length and framing
@@ -39,7 +41,7 @@ If the fal skills **fal-video-production** (its review of the finished ad), **vi
 score = 0.30 hook + 0.25 briefFit + 0.20 craft + 0.15 originality + 0.10 slop
 ```
 
-`slop` is 100 with no hits, minus 15 per hit (minimum 0). `briefFit` checks that it promotes this product toward `brief.objective` on `brief.platform` and carries the goal's message.
+`slop` is 100 with no hits, minus 15 per hit (minimum 0). `briefFit` checks that it promotes this product toward `brief.objective` on `brief.platform`, carries the goal's message and expresses the `creativeThesis` through the planned `realWorldGrounding`.
 
 `passed` = `score >= config.passScore`.
 

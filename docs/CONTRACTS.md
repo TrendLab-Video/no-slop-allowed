@@ -13,7 +13,7 @@ skill/recliner/
   lib/                            other shared code (effort presets, fal client, compositors)
   web/                            Brief / live run, Steps and Result pages
 runs/<runId>/                     one folder per run (gitignored)
-outputs/<brief-slug>/             hackathon export: final.mp4 + traces.json (+ validation evidence when present)
+outputs/<brief-slug>/             hackathon export: final.mp4 + traces.json + creative_rationale.json (+ validation evidence when present)
 .env                              FAL_KEY, JEV_API_KEY, TAVILY_API_KEY, PARALLEL_API_KEY (gitignored; main checkout's .env is shared by worktrees)
 ```
 
@@ -47,7 +47,7 @@ Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 mi
 `{ references: [{ id, kind: reference|brand, title, url, platform, metrics: { views, likes, comments, shares }, why, structure: { durationSeconds, scenes: [string], pacing, music, hook }, screenshots: [path] }], takeaways: [string], diversityNote }`
 
 **`goals.json`**
-`{ goals: [{ id, title, description, creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
+`{ goals: [{ id, title, creativeThesis, description, realWorldGrounding: [string], creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
 `keyframePrompt` is the still (image model); `prompt` is the motion from that still (image-to-video), or the text-to-video prompt when `config.keyframes` is false.
 
 **`scores.json`**
@@ -64,11 +64,13 @@ Keyframe validators write `clips/<sceneId>/<attempt>.keyframe.validation.json` (
 Validation sub-agents run in parallel, so they never write `clips.json`: each writes `clips/<sceneId>/<attempt>.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`) and `accept-clips` merges them.
 
 **`result.json`**
-`{ results: [{ id, attempt, file: "compositions/<attempt>/final.mp4", thumbnail, compositor, durationSeconds, validation: { score: 0..100, passed, reason, breakdown: { hook, briefFit, craft, originality, slop } }, technicalValidation: { status, report, repairPlan, contactSheet, blockerCount, majorCount, minorCount, wallTimeMs, mode } }], selectedId }`
+`{ results: [{ id, attempt, file: "compositions/<attempt>/final.mp4", thumbnail, compositor, durationSeconds, validation: { score: 0..100, passed, reason, breakdown: { hook, briefFit, craft, originality, slop }, slopHits, biggestProblem }, technicalValidation: { status, report, repairPlan, contactSheet, blockerCount, majorCount, minorCount, wallTimeMs, mode } }], selectedId }`
 `selectedId` is the highest scoring result.
 The final validator writes `compositions/<attempt>/validation.json` (`{ id, attempt, score, passed, reason, breakdown, slopHits, biggestProblem, repairs: [{ sceneId, steering }] }`) and `rank` merges it.
 
 `technicalValidation` is written by `validate-output`. It is deterministic ffmpeg/audio validation, separate from the creative validator's `validation` score. The report and repair plan live beside the composition (`compositions/<attempt>/validation_report.json`, `repair_plan.json`, `contact-sheet.png`) and are copied into `outputs/<brief-slug>/` by `export` when present. In video-only mode Blender scene metadata gates are skipped because this pipeline uses Blender as a compositor rather than a scene-generation substrate.
+
+**`creative_rationale.json`** is written by `export` into both the run folder and `outputs/<brief-slug>/`. It compresses the judging story into one artifact: brief, one-sentence creative thesis, real-world grounding, selected goal, scoring evidence, rejected alternatives, references used, compositor and validation evidence. It is explanatory evidence, not a generation input.
 
 **`traces.json`**: shape of `traces.example.json`, appended through `appendTrace`. Each step also carries `stage` and `at`.
 
@@ -89,7 +91,7 @@ The final validator writes `compositions/<attempt>/validation.json` (`{ id, atte
 | `compose <runId>` | Composes accepted clips with the configured compositor (Blender, ffmpeg fallback) and adds audio. Adds an entry to `result.json` |
 | `rank <runId>` | Sets `selectedId` in `result.json` |
 | `validate-output <runId> [--attempt n] [--strict]` | Runs deterministic technical validation on a composed video, deriving duration gates from `plan.durationSeconds`; writes `validation_report.json`, `repair_plan.json` and `contact-sheet.png`, merges the summary into `result.json`, and appends a trace step |
-| `export <runId>` | Copies the selected video, `traces.json` and available validation evidence to `outputs/<brief-slug>/` |
+| `export <runId>` | Copies the selected video, `traces.json`, `creative_rationale.json` and available validation evidence to `outputs/<brief-slug>/` |
 
 ## Remote Blender composition
 
