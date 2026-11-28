@@ -1,0 +1,90 @@
+{
+  "artifact_type": "creative_rationale",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T14:39:07.364Z",
+  "runId": "20261128-142247-rehearsal",
+  "brief": {
+    "file": null,
+    "promote": "Teenage Engineering EP-133 K.O. II",
+    "objective": "A portable hardware sampler, sequencer and composer. Make bedroom producers want to pick one up and start a beat today.",
+    "platform": "TikTok",
+    "aspectRatio": "9:16"
+  },
+  "creativeThesis": "Pocket studio, one take",
+  "intent": null,
+  "realWorldGrounding": [],
+  "selectedGoal": {
+    "id": "g1",
+    "title": "Pocket studio, one take",
+    "description": "A single continuous-feeling POV: hands find the device, tap, and a beat builds as the city moves past.",
+    "confidence": 0.86,
+    "style": "Cinematic macro, film grain",
+    "styleTags": null
+  },
+  "decisionEvidence": {
+    "scorer": "haiku",
+    "selectedReason": "Puts the tactile pads and portability front and centre; strong sound-first hook.",
+    "alternatives": [
+      {
+        "goalId": "g2",
+        "confidence": 0.74
+      },
+      {
+        "goalId": "g3",
+        "confidence": 0.69
+      },
+      {
+        "goalId": "g5",
+        "confidence": 0.61
+      },
+      {
+        "goalId": "g4",
+        "confidence": 0.52
+      }
+    ],
+    "referencesUsed": [
+      {
+        "id": "r1",
+        "kind": "reference",
+        "title": "Making a beat from kitchen sounds in 60s",
+        "url": "https://www.tiktok.com/@example/video/1",
+        "why": "Everyday-object sampling is an instant hook and shows the mic in use."
+      },
+      {
+        "id": "r2",
+        "kind": "reference",
+        "title": "Pocket studio on the train",
+        "url": "https://www.instagram.com/reel/example2",
+        "why": "Shows portability with a relatable setting; POV framing."
+      },
+      {
+        "id": "brand",
+        "kind": "brand",
+        "title": "Teenage Engineering",
+        "url": "https://teenage.engineering/products/ep-133",
+        "why": "The brand's own look: grey chassis, orange pads, calculator-sized."
+      }
+    ],
+    "compositor": "ffmpeg"
+  },
+  "validationEvidence": {
+    "creative": {
+      "score": 84,
+      "passed": true,
+      "reason": "Sound-first hook lands in the first second; pads are the hero; pacing matches the POV reference.",
+      "biggestProblem": null,
+      "slopHits": []
+    },
+    "technical": {
+      "status": "fail",
+      "report": "compositions/2/validation_report.json",
+      "repairPlan": "compositions/2/repair_plan.json",
+      "contactSheet": "compositions/2/contact-sheet.png",
+      "blockerCount": 1,
+      "majorCount": 2,
+      "minorCount": 0,
+      "wallTimeMs": 607,
+      "mode": "video-only"
+    }
+  }
+}

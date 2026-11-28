@@ -20,7 +20,7 @@ What shape it takes is up to you. It can be a set of agent skills, a TypeScript 
 Each input describes what is being promoted and the objective, without creative direction. What kind of piece you make and how your system gets there is up to you.
 
 - **Passable input**: your system must accept a passed-in brief and run end to end without interactive Q&A
-- **Hidden briefs**: 20 minutes before the submission deadline we will release hidden briefs. You run your system on them locally and include those outputs in your submission
+- **Hidden briefs**: 30 minutes before the submission deadline (15:30) we will release hidden briefs. You run your system on them locally and include those outputs in your submission
 - **Starter briefs**: sample briefs live in [`briefs/`](briefs/) so you can test while you build
 - **Open format**: think across different video modalities and what frontier capabilities can actually do (images, AI-generated video, code-driven visuals and anything else)
 - **Open stack**: any language, framework, skill setup or agent architecture is fair game
@@ -41,16 +41,17 @@ Each input describes what is being promoted and the objective, without creative 
 ├── SUBMISSION.md        # Fill this in before the submission deadline
 ├── traces.example.json  # Example trace structure
 ├── briefs/              # Starter briefs
-└── outputs/             # Put rendered videos and traces.json here
+├── outputs/             # Put traces.json here (upload videos on the portal, not in git)
+└── presentation/        # Put your 2-minute finalist deck here
 ```
 
 ## What you submit
 
-1. Fork this repository and add your fork on the Your team page of the [hackathon portal](https://hack.36labs.ai/team) straight away
+1. Fork this repository and add your fork on the [Submit page](https://hack.36labs.ai/submit) of the hackathon portal straight away
 2. Build everything today in your fork. Commit as often as you can and push to GitHub as you go: it helps judges see what you're working on
-3. 20 minutes before the deadline, run your system on the hidden briefs we release without manually editing the outputs
+3. When the hidden briefs are released at 15:30, run your system on them without manually editing the outputs
 4. Fill in [`SUBMISSION.md`](SUBMISSION.md) with your hidden-brief outputs and how your system works
-5. Check your fork URL on the hackathon portal is up to date before the deadline
+5. Upload each video into its slot on the hackathon portal, select the presentation file, and check your fork URL is up to date before the deadline
 
 Every hidden-brief run must produce two artifacts:
 1. **Video output**: the final rendered video chosen by your system
@@ -58,7 +59,7 @@ Every hidden-brief run must produce two artifacts:
 
 See [`traces.example.json`](traces.example.json) for a minimal shape. Add any extra fields that show how your system works.
 
-If a video file is too large for GitHub (>100 MB), keep `traces.json` in the repo and link the video in `SUBMISSION.md`.
+Do **not** commit video files to GitHub. Upload rendered videos into their slots on the hackathon portal (MP4, MOV or WebM up to 2 GB), and commit `traces.json` logs plus other small evidence artifacts under `outputs/`.
 
 ## Finalist presentations
 

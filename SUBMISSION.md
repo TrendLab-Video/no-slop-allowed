@@ -1,12 +1,13 @@
 # Submission
 
-Fill this in before the submission deadline and submit your fork link through the hackathon portal.
+Fill this in and push to the fork before code freeze at **16:00**. Hidden briefs unlock at **15:30**. Videos are uploaded on the hackathon portal, not committed to git; this repo carries `traces.json` and small evidence artifacts.
 
 ## Team
 
 - **Team name**: recliner
 - **Members**: Harry, Papa
-- **Hidden brief(s) run**: filled in at the hidden-brief window (20 minutes before the deadline); see the Outputs table below
+- **Hidden brief(s) run**: filled in at the hidden-brief window (15:30); see the Outputs table below
+- **Presentation deck**: `presentation/deck.html`
 
 ## How it works
 
@@ -64,12 +65,19 @@ Required environment variables (names only, no keys):
 
 ## Outputs
 
-Include the final video (repo path or public link) and `traces.json` path for each hidden brief:
+Upload every rendered video into its matching slot on the hackathon portal. **Do not commit video files to GitHub.** Commit the corresponding `traces.json` and small validation/rationale artifacts under `outputs/`.
 
-| Brief | Final video | Trace |
-|---|---|---|
-| Hidden brief 1 | (filled at deadline) | (filled at deadline) |
-| Hidden brief 2 | (filled at deadline) | (filled at deadline) |
+| Hidden brief | Video | Uploaded on portal? | Trace path in repo |
+|---|---:|---|---|
+| Brief 1 | 1 | pending hidden brief | `(filled after the 15:30 run)` |
+| Brief 1 | 2 | pending hidden brief | `(filled after the 15:30 run)` |
+| Brief 1 | 3 | pending hidden brief | `(filled after the 15:30 run)` |
+| Brief 2 | 1 | pending hidden brief | `(filled after the 15:30 run)` |
+| Brief 2 | 2 | pending hidden brief | `(filled after the 15:30 run)` |
+| Brief 3 | 1 | pending hidden brief | `(filled after the 15:30 run)` |
+| Rehearsal evidence | sample | not a submission slot | `outputs/rehearsal/traces.json` |
+
+Adjust the rows to the exact per-brief video counts shown on the Task page when hidden briefs unlock.
 
 ## Notes for judges
 

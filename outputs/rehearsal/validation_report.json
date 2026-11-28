@@ -1,0 +1,184 @@
+{
+  "artifact_type": "validation_report",
+  "version": "0.1.0",
+  "created_at": "2026-11-28T14:36:14Z",
+  "source_brief": "runs/20261128-142247-rehearsal/brief.json",
+  "target_video": "runs/20261128-142247-rehearsal/compositions/2/final.mp4",
+  "status": "fail",
+  "hard_gates": [
+    {
+      "id": "video.exists",
+      "passed": true,
+      "severity": "blocker",
+      "evidence": [
+        "runs/20261128-142247-rehearsal/compositions/2/final.mp4"
+      ]
+    },
+    {
+      "id": "video.playable",
+      "passed": true,
+      "severity": "blocker",
+      "actual": {
+        "duration_seconds": 12.0,
+        "has_video_stream": true
+      }
+    },
+    {
+      "id": "duration.in_range",
+      "passed": false,
+      "severity": "blocker",
+      "actual": 12.0,
+      "details": "required range 8-10s"
+    },
+    {
+      "id": "resolution.minimum",
+      "passed": false,
+      "severity": "major",
+      "actual": {
+        "width": 360,
+        "height": 640,
+        "short_edge": 360
+      }
+    },
+    {
+      "id": "frame_rate.valid",
+      "passed": true,
+      "severity": "major",
+      "actual": 24.0
+    },
+    {
+      "id": "video.black_segments",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "total_black_seconds": 0,
+        "segments": []
+      }
+    },
+    {
+      "id": "video.frozen_segments",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "total_frozen_seconds": 0,
+        "segments": []
+      }
+    },
+    {
+      "id": "audio.present",
+      "passed": true,
+      "severity": "major",
+      "actual": {
+        "audio_stream_count": 1
+      }
+    },
+    {
+      "id": "audio.not_silent",
+      "passed": false,
+      "severity": "major",
+      "actual": {
+        "mean_db": -91.0,
+        "max_db": -91.0
+      }
+    },
+    {
+      "id": "audio.not_clipping",
+      "passed": true,
+      "severity": "minor",
+      "actual": {
+        "mean_db": -91.0,
+        "max_db": -91.0
+      }
+    }
+  ],
+  "scores": {
+    "hook": 0,
+    "clarity": 0,
+    "visual_craft": 0,
+    "originality": 0,
+    "brief_fit": 0,
+    "reference_alignment": 0,
+    "diversity": 0,
+    "emotional_payoff": 0
+  },
+  "findings": [
+    {
+      "id": "finding-duration-out-of-range",
+      "severity": "blocker",
+      "standard_id": "duration.in_range",
+      "reviewer": "technical-validator",
+      "finding": "Video duration is 12.00s, outside the required 8-10s range.",
+      "evidence": [
+        "runs/20261128-142247-rehearsal/compositions/2/final.mp4"
+      ],
+      "recommendation": "Adjust scene timing or edit length so the final piece fits the required duration range.",
+      "repairable": true,
+      "target": "scene_plan.duration_seconds"
+    },
+    {
+      "id": "finding-resolution-too-low",
+      "severity": "major",
+      "standard_id": "resolution.minimum",
+      "reviewer": "technical-validator",
+      "finding": "Video resolution is 360x640; shortest edge 360px is below 720px.",
+      "evidence": [
+        "runs/20261128-142247-rehearsal/compositions/2/final.mp4"
+      ],
+      "recommendation": "Render at a higher resolution or verify the intended output format.",
+      "repairable": true,
+      "target": "render.profile"
+    },
+    {
+      "id": "finding-audio-silent",
+      "severity": "major",
+      "standard_id": "audio.not_silent",
+      "reviewer": "technical-validator",
+      "finding": "Audio peak is -91.0dB, below the silence threshold of -45.0dB.",
+      "evidence": [
+        "runs/20261128-142247-rehearsal/compositions/2/final.mp4"
+      ],
+      "recommendation": "Raise the music/voiceover level or verify the correct audio mix was included.",
+      "repairable": true,
+      "target": "audio.mix"
+    }
+  ],
+  "summary": "Validation failed with 1 blocker(s), 2 major finding(s) and 0 minor finding(s).",
+  "agentic_review_status": "not_run",
+  "cost": {
+    "band_plan": "not_used",
+    "model_input_tokens": 0,
+    "model_output_tokens": 0,
+    "estimated_model_cost_usd": 0,
+    "tavily_credits": 0,
+    "wall_time_ms": 607
+  },
+  "inputs": {
+    "artifact_root": "runs/20261128-142247-rehearsal/compositions/2",
+    "scene_metadata": "runs/20261128-142247-rehearsal/compositions/2/scene_metadata.json",
+    "scene_plan": "runs/20261128-142247-rehearsal/compositions/2/scene_plan.json",
+    "contact_sheet": "runs/20261128-142247-rehearsal/compositions/2/contact-sheet.png"
+  },
+  "probes": {
+    "video": {
+      "path": "runs/20261128-142247-rehearsal/compositions/2/final.mp4",
+      "duration_seconds": 12.0,
+      "width": 360,
+      "height": 640,
+      "fps": 24.0,
+      "video_codec": "h264",
+      "audio_stream_count": 1,
+      "black_segments": [],
+      "freeze_segments": [],
+      "audio_volume": {
+        "mean_db": -91.0,
+        "max_db": -91.0
+      }
+    },
+    "scene": {
+      "mode": "video_only"
+    }
+  },
+  "warnings": [
+    "scene validation skipped: video-only mode"
+  ]
+}
