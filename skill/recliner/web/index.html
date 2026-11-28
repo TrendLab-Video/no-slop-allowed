@@ -14,7 +14,7 @@
 </main>
 <footer>Recliner · local only · runs/<span id="fr"></span></footer>
 <script type="module">
-import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar } from '/app.js';
+import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage } from '/app.js';
 
 header(runId ? 'brief' : 'runs');
 $('#fr').textContent = runId || '';
@@ -192,14 +192,18 @@ async function falStatus(fresh) {
 
 // ---------- Live run view ----------
 const LIVE_FILES = ['brief.json', 'config.json', 'references.json', 'goals.json', 'scores.json', 'plan.json', 'clips.json', 'result.json'];
-let liveTick = 0;
 let liveData = null;
+let stage = null;
 async function live(view, state) {
-  // Detail files every 2 s (the diagram polls every 1 s); render only on change.
-  if (liveTick++ % 2 === 0 || !liveData) liveData = await getRun(LIVE_FILES);
+  // Every run file each second; the media stage patches in place, the text detail re-renders on change.
+  if (!stage) {
+    view.innerHTML = '<div id="stage"></div><div id="detail"></div>';
+    stage = mediaStage($('#stage'));
+  }
+  liveData = await getRun(LIVE_FILES);
   const d = { ...liveData, state };
-  if (!changed('live', { ...liveData, status: state?.status, cur: state?.currentStage })) return;
-  view.innerHTML = renderLive(d);
+  stage.render(d);
+  if (changed('live', { ...liveData, status: state?.status, cur: state?.currentStage })) $('#detail').innerHTML = renderLive(d);
 }
 
 function renderLive(d) {
@@ -212,9 +216,6 @@ function renderLive(d) {
   const allAttempts = (clips?.scenes || []).flatMap((s) => s.attempts.map((a) => ({ ...a, sceneId: s.sceneId, accepted: s.acceptedAttempt === a.attempt })));
 
   return `
-  <div class="head"><div><span class="eyebrow">Live run · brief locked</span><h1>${esc(b.promote || 'Untitled brief')}</h1>
-    <p>${esc((b.objective || b.raw || '').slice(0, 260))}${(b.objective || b.raw || '').length > 260 ? '…' : ''}</p></div>
-    <div class="links"><a class="btn ghost" href="/steps.html${q}">Steps <span class="arrow">→</span></a><a class="btn" href="/result.html${q}">Result <span class="arrow">→</span></a></div></div>
   <div class="live">
     <div class="grid">
       <div class="card"><div class="sh" style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><h2>Brief</h2><span class="tag">${esc(b.source || '')}</span><span class="tag" style="margin-left:auto">locked</span></div>
@@ -235,11 +236,6 @@ function renderLive(d) {
           <ol class="scenes">${(selGoal.scenes || []).map((s) => `<li><span>${esc(s.description)}</span><span class="d">${esc(s.durationSeconds)}s</span></li>`).join('')}</ol>`
           : goals ? `<div class="chips">${goals.goals.map((g) => `<span class="chip">${esc(g.title)}${conf(g.id) != null ? ` · ${Math.round(conf(g.id) * 100)}%` : ''}</span>`).join('')}</div><div class="empty" style="margin-top:10px">Scoring goals against the brief…</div>`
           : '<div class="empty">Writing candidate goals…</div>'}</div>
-      <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Clips</h2><span class="eyebrow" style="margin-left:auto">${clips ? `${clips.scenes.length} scenes · ${allAttempts.length} attempts` : 'pending'}</span></div>
-        ${allAttempts.length ? `<div class="thumbs">${allAttempts.map((a) => a.status === 'generated' && a.file
-            ? video(fileUrl(a.file), { ar, controls: false, autoplay: true, badge: a.accepted ? '<span class="tag ok">kept</span>' : a.validation ? `<span class="tag ${a.validation.passed ? 'ok' : 'bad'}">${esc(a.validation.score)}</span>` : '', badge2: `<span class="tag">${esc(a.sceneId)}·${esc(a.attempt)}</span>` })
-            : `<div class="media ${arClass(ar)}" style="display:grid;place-items:center;color:var(--faint);font:11px var(--mono)">${esc(a.sceneId)} · ${esc(a.status)}</div>`).join('')}</div>`
-          : '<div class="empty">Clips appear here as fal generates them.</div>'}</div>
       <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Result</h2><span class="eyebrow" style="margin-left:auto">${result ? `${result.results.length} composition${result.results.length === 1 ? '' : 's'}` : 'pending'}</span></div>
         ${sel ? `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${video(fileUrl(sel.file), { ar, controls: false, autoplay: true, poster: sel.thumbnail ? fileUrl(sel.thumbnail) : '' })}
             <div><div class="bignum" style="font-size:44px">${esc(sel.validation?.score ?? '–')}<small>/100</small></div><p class="small">${esc(sel.validation?.reason || '')}</p><a class="btn" href="/result.html${q}">Watch the result <span class="arrow">→</span></a></div></div>`

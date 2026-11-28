@@ -387,3 +387,61 @@ main > * { min-width: 0; }
 .hero h1 { font-size: clamp(30px, 3.6vw, 52px); letter-spacing: -0.04em; line-height: 1; margin: 12px 0 8px; }
 
 .falst { display: inline-flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* Stage modes */
+.tile { width: min(calc(var(--tile-h, var(--stage-h)) * var(--ar)), calc((100% - (var(--n) - 1) * 12px) / var(--n))); }
+.tag.refb { color: #0b0b0b; background: #f0efe9 !important; border-color: #f0efe9; }
+.tag.genb { color: #fff; background: linear-gradient(90deg, #3b3fff, #e12bd0) !important; border-color: transparent; }
+/* References: dashed, desaturated frame so they never read as our output. */
+.mosaic .mt.ref { border: 1.5px dashed rgba(240, 239, 233, 0.55); }
+.mosaic .mt.ref img { filter: grayscale(0.75) contrast(0.95) brightness(0.8); }
+.mosaic .mt .tl { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; z-index: 1; }
+.mosaic .mt .proof, .card-ref .proof { display: flex; gap: 10px; font: 11px var(--mono); color: rgba(255, 255, 255, 0.85); margin-top: 3px; }
+.mosaic .mt .cap b { text-transform: none; letter-spacing: 0; font: 500 12.5px var(--sans); color: #fff; }
+.card-ref { background: repeating-linear-gradient(135deg, rgba(20, 20, 30, 0.92) 0 14px, rgba(28, 28, 40, 0.92) 14px 28px); }
+.card-ref .refbody { position: absolute; inset: 44px 14px 14px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.card-ref .rt { font-size: 17px; font-weight: 500; letter-spacing: -0.02em; color: #fff; line-height: 1.2; }
+.card-ref .proof.big { font-size: 13px; color: #fff; }
+.card-ref .rk { font-size: 12px; color: rgba(255, 255, 255, 0.8); line-height: 1.35; }
+.card-ref .rk b { display: block; font: 500 10px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+
+/* Storyboard: scene tiles that clips replace in place, plus a duration timeline. */
+.board { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 12px; --tile-h: calc(var(--stage-h) - 46px); }
+.board .tiles { flex: 1; min-height: 0; }
+.timeline { display: flex; gap: 4px; height: 34px; }
+.seg-t { min-width: 34px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; border-radius: 8px; font: 11px var(--mono); color: rgba(255, 255, 255, 0.75); background: rgba(10, 10, 30, 0.45); border: 1px solid rgba(255, 255, 255, 0.12); transition: background 0.4s; }
+.seg-t.gen { background: linear-gradient(90deg, rgba(59, 63, 255, 0.55), rgba(225, 43, 208, 0.55)); background-size: 200% 100%; animation: ph 3s ease-in-out infinite; }
+.seg-t.done { background: var(--paper); color: var(--on-paper); border-color: var(--paper); }
+.sb-text { position: absolute; inset: 40px 12px 64px; display: flex; flex-direction: column; justify-content: center; gap: 10px; z-index: 1; text-align: center; }
+.ost-big { font-size: clamp(16px, 1.8vw, 26px); font-weight: 600; letter-spacing: -0.03em; color: #fff; line-height: 1.1; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35); }
+.prompt { font: 11px/1.45 var(--mono); color: rgba(255, 255, 255, 0.82); display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.tile .cap { z-index: 2; }
+.tile .tl, .tile .tr { z-index: 2; }
+.hero-tile video { object-fit: contain; background: #000; }
+
+/* Goals: cards appear, confidence fills, the winner inverts. */
+.goalgrid { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 12px; align-content: center; }
+.gcard { display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 16px; background: rgba(11, 11, 20, 0.62); border: 1px solid rgba(255, 255, 255, 0.14); color: #fff; min-height: 0; overflow: hidden; animation: tile-in 0.5s ease both; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: opacity 0.4s; }
+.gcard .gtop { display: flex; gap: 10px; align-items: center; font-size: 11px; color: rgba(255, 255, 255, 0.65); }
+.gcard .gtop .tag { margin-left: auto; }
+.gcard .gt { font-size: 19px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; }
+.gcard .gd { font-size: 13px; color: rgba(255, 255, 255, 0.78); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.gcard .gconf { margin-top: auto; display: flex; gap: 10px; align-items: center; font-size: 12px; }
+.gcard .gconf .bar { flex: 1; height: 6px; background: rgba(255, 255, 255, 0.15); }
+.gcard .gconf .bar > i { width: var(--w); background: linear-gradient(90deg, #3b3fff, #e12bd0, #ff2d55); animation: fill 1.2s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes fill { from { width: 0; } }
+.gcard.win { background: var(--paper); color: var(--on-paper); border-color: var(--paper); }
+.gcard.win .gtop, .gcard.win .gd { color: #55544f; }
+.gcard.win .gconf .bar { background: #d8d7d0; }
+.gcard.win .gconf .bar > i { background: var(--on-paper); }
+.gcard.lose { opacity: 0.55; }
+
+/* Brief: chosen frame + keywords. */
+.briefviz { width: 100%; height: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 28px; align-items: center; }
+.briefviz .tiles { justify-content: flex-start; }
+.kw { display: flex; flex-wrap: wrap; gap: 10px; align-content: center; }
+.kwp { font: 500 15px var(--sans); color: #fff; padding: 10px 16px; border-radius: var(--pill); background: rgba(11, 11, 20, 0.5); border: 1px solid rgba(255, 255, 255, 0.18); animation: tile-in 0.6s ease both; }
+.kwp:nth-child(-n+3) { background: var(--paper); color: var(--on-paper); border-color: var(--paper); }
+.stage-info .pulse { background: #fff; }
+.briefviz { grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr); }
+.briefviz .tiles { justify-content: center; }
