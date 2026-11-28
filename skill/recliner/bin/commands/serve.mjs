@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runsDir, runDir, readJson, createRun, newRunId } from '../../lib/store.mjs';
-import { PRESETS, submitBrief, writeKeys } from '../../lib/effort.mjs';
+import { PRESETS, VIDEO_MODEL_OPTIONS, submitBrief, writeKeys } from '../../lib/effort.mjs';
 import { loadEnv } from '../../lib/env.mjs';
 
 export const describe = 'serve [--port 4600]: serve the Brief, Steps and Result pages and the API on 127.0.0.1';
@@ -73,7 +73,7 @@ async function handle(req, res) {
       createRun(runId, body.prefill || {});
       return send(res, 201, { runId });
     }
-    if (p === '/api/effort' && req.method === 'GET') return send(res, 200, { presets: PRESETS });
+    if (p === '/api/effort' && req.method === 'GET') return send(res, 200, { presets: PRESETS, videoModels: VIDEO_MODEL_OPTIONS });
     if (p === '/api/keys' && req.method === 'GET') {
       // Presence only; key values are never sent to the page.
       loadEnv();

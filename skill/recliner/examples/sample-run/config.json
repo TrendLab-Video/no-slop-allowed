@@ -3,7 +3,7 @@
   "scenes": 3,
   "clipSeconds": 5,
   "parallelism": 3,
-  "videoModel": "fal-ai/kling-video/v2.1/standard/text-to-video",
+  "videoModel": "bytedance/seedance-2.0/fast/text-to-video",
   "imageModel": "fal-ai/flux/schnell",
   "resolution": "720p",
   "referencesCount": 3,
@@ -13,6 +13,6 @@
   "passScore": 60,
   "timeBudgetMinutes": 8,
   "scorer": "haiku",
-  "compositor": "ffmpeg",
+  "compositor": "blender",
   "audio": true
 }

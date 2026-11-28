@@ -1,6 +1,7 @@
 {
   "runId": "sample-run",
   "source": "page",
+  "file": null,
   "promote": "Teenage Engineering EP-133 K.O. II",
   "objective": "A portable hardware sampler, sequencer and composer. Make bedroom producers want to pick one up and start a beat today.",
   "url": "https://teenage.engineering/products/ep-133",

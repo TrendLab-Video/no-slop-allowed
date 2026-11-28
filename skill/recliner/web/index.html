@@ -25,7 +25,7 @@ const MAIN_CFG = [
   ['scenes', 'Scenes', 'number'], ['clipSeconds', 'Clip seconds', 'number'], ['parallelism', 'Parallelism', 'number'],
   ['timeBudgetMinutes', 'Time budget (min)', 'number'], ['referencesCount', 'References', 'number'], ['goalsCount', 'Goals', 'number'],
   ['resolution', 'Resolution', ['480p', '720p', '1080p']], ['audio', 'Audio', ['true', 'false']],
-  ['videoModel', 'Video model', 'text', 'wide'], ['imageModel', 'Image model', 'text', 'wide'],
+  ['videoModel', 'Video model', 'videoModels', 'wide'], ['imageModel', 'Image model', 'text', 'wide'],
 ];
 const ADV_CFG = [
   ['clipRetries', 'Clip retries', 'number'], ['finalRetries', 'Final retries', 'number'], ['passScore', 'Pass score (0–100)', 'number'],
@@ -70,14 +70,14 @@ async function start() {
 
 // ---------- Brief form ----------
 async function briefForm(view, prefill, onStarted, isDone) {
-  const [{ presets }, keys] = await Promise.all([api('/api/effort'), api('/api/keys').catch(() => ({}))]);
+  const [{ presets, videoModels = [] }, keys] = await Promise.all([api('/api/effort'), api('/api/keys').catch(() => ({}))]);
   if (isDone()) return;
   const edited = new Set(ALL_CFG.map(([k]) => k).filter((k) => prefill[k] !== undefined));
   let effort = Number(prefill.effort) || 1;
   let ar = prefill.aspectRatio || '9:16';
 
-  const cfgField = ([k, label, type, wide]) => `<div class="field ${wide || ''}" data-k="${k}"><label for="c-${k}">${esc(label)}<button type="button" class="reset" hidden>reset</button></label>
-    ${Array.isArray(type) ? `<select id="c-${k}">${type.map((o) => `<option>${o}</option>`).join('')}</select>` : `<input id="c-${k}" type="${type}" ${type === 'number' ? 'min="0" step="1"' : ''}>`}</div>`;
+  const cfgField = ([k, label, type0, wide]) => { const type = type0 === 'videoModels' ? [...new Set([...videoModels, prefill.videoModel].filter(Boolean))] : type0; return `<div class="field ${wide || ''}" data-k="${k}"><label for="c-${k}">${esc(label)}<button type="button" class="reset" hidden>reset</button></label>
+    ${Array.isArray(type) ? `<select id="c-${k}">${type.map((o) => `<option>${o}</option>`).join('')}</select>` : `<input id="c-${k}" type="${type}" ${type === 'number' ? 'min="0" step="1"' : ''}>`}</div>`; };
 
   view.innerHTML = `
   <div class="head"><div><span class="eyebrow">Step 0 · Brief</span><h1>What are we promoting?</h1>

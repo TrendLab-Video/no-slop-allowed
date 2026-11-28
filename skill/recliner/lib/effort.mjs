@@ -1,11 +1,14 @@
 // Effort presets: the Brief page slider (1 quick .. 5 max) resolves to one of these.
 // Every field matches config.json in docs/CONTRACTS.md; the user may override any of them.
+// Video models come from VIDEO_MODELS in lib/fal.mjs so presets and production code agree.
+import { VIDEO_MODELS } from './fal.mjs';
+export const VIDEO_MODEL_OPTIONS = [...new Set(Object.values(VIDEO_MODELS))];
 export const PRESETS = {
-  1: { effort: 1, label: 'Quick', scenes: 2, clipSeconds: 5, parallelism: 2, videoModel: 'fal-ai/ltx-video-13b-distilled', imageModel: 'fal-ai/flux/schnell', resolution: '480p', referencesCount: 2, goalsCount: 3, clipRetries: 0, finalRetries: 0, passScore: 50, timeBudgetMinutes: 3, scorer: 'haiku', compositor: 'ffmpeg', audio: false },
-  2: { effort: 2, label: 'Light', scenes: 3, clipSeconds: 5, parallelism: 3, videoModel: 'fal-ai/kling-video/v2.1/standard/text-to-video', imageModel: 'fal-ai/flux/schnell', resolution: '720p', referencesCount: 3, goalsCount: 5, clipRetries: 1, finalRetries: 0, passScore: 60, timeBudgetMinutes: 8, scorer: 'haiku', compositor: 'ffmpeg', audio: true },
-  3: { effort: 3, label: 'Standard', scenes: 4, clipSeconds: 5, parallelism: 4, videoModel: 'fal-ai/kling-video/v2.1/master/text-to-video', imageModel: 'fal-ai/flux/dev', resolution: '720p', referencesCount: 5, goalsCount: 5, clipRetries: 1, finalRetries: 1, passScore: 70, timeBudgetMinutes: 15, scorer: 'jev', compositor: 'ffmpeg', audio: true },
-  4: { effort: 4, label: 'High', scenes: 5, clipSeconds: 5, parallelism: 5, videoModel: 'fal-ai/veo3/fast', imageModel: 'fal-ai/flux-pro/v1.1', resolution: '1080p', referencesCount: 6, goalsCount: 5, clipRetries: 2, finalRetries: 1, passScore: 75, timeBudgetMinutes: 25, scorer: 'jev', compositor: 'blender', audio: true },
-  5: { effort: 5, label: 'Max', scenes: 6, clipSeconds: 8, parallelism: 6, videoModel: 'fal-ai/veo3', imageModel: 'fal-ai/flux-pro/v1.1-ultra', resolution: '1080p', referencesCount: 8, goalsCount: 5, clipRetries: 3, finalRetries: 2, passScore: 80, timeBudgetMinutes: 45, scorer: 'jev', compositor: 'blender', audio: true },
+  1: { effort: 1, label: 'Quick', scenes: 2, clipSeconds: 5, parallelism: 2, videoModel: VIDEO_MODELS[1], imageModel: 'fal-ai/flux/schnell', resolution: '480p', referencesCount: 2, goalsCount: 3, clipRetries: 0, finalRetries: 0, passScore: 50, timeBudgetMinutes: 3, scorer: 'haiku', compositor: 'blender', audio: false },
+  2: { effort: 2, label: 'Light', scenes: 3, clipSeconds: 5, parallelism: 3, videoModel: VIDEO_MODELS[2], imageModel: 'fal-ai/flux/schnell', resolution: '720p', referencesCount: 3, goalsCount: 5, clipRetries: 1, finalRetries: 0, passScore: 60, timeBudgetMinutes: 8, scorer: 'haiku', compositor: 'blender', audio: true },
+  3: { effort: 3, label: 'Standard', scenes: 4, clipSeconds: 5, parallelism: 4, videoModel: VIDEO_MODELS[3], imageModel: 'fal-ai/flux/dev', resolution: '720p', referencesCount: 5, goalsCount: 5, clipRetries: 1, finalRetries: 1, passScore: 70, timeBudgetMinutes: 15, scorer: 'jev', compositor: 'blender', audio: true },
+  4: { effort: 4, label: 'High', scenes: 5, clipSeconds: 5, parallelism: 5, videoModel: VIDEO_MODELS[4], imageModel: 'fal-ai/flux-pro/v1.1', resolution: '1080p', referencesCount: 6, goalsCount: 5, clipRetries: 2, finalRetries: 1, passScore: 75, timeBudgetMinutes: 25, scorer: 'jev', compositor: 'blender', audio: true },
+  5: { effort: 5, label: 'Max', scenes: 6, clipSeconds: 8, parallelism: 6, videoModel: VIDEO_MODELS[5], imageModel: 'fal-ai/flux-pro/v1.1-ultra', resolution: '1080p', referencesCount: 8, goalsCount: 5, clipRetries: 3, finalRetries: 2, passScore: 80, timeBudgetMinutes: 45, scorer: 'jev', compositor: 'blender', audio: true },
 };
 
 export const CONFIG_FIELDS = ['effort', 'scenes', 'clipSeconds', 'parallelism', 'videoModel', 'imageModel', 'resolution', 'referencesCount', 'goalsCount', 'clipRetries', 'finalRetries', 'passScore', 'timeBudgetMinutes', 'scorer', 'compositor', 'audio'];
@@ -27,7 +30,7 @@ export function resolveConfig(effort = 1, overrides = {}) {
   }
   out.effort = e;
   if (!['jev', 'haiku'].includes(out.scorer)) out.scorer = 'haiku';
-  if (!['blender', 'ffmpeg'].includes(out.compositor)) out.compositor = 'ffmpeg';
+  if (!['blender', 'ffmpeg'].includes(out.compositor)) out.compositor = 'blender';
   return out;
 }
 
@@ -51,7 +54,7 @@ export function parseBriefMarkdown(text) {
 export function submitBrief(runId, { brief = {}, config = {} } = {}, source = 'page') {
   if (!fs.existsSync(runPath(runId, 'state.json'))) throw Object.assign(new Error(`No run ${runId}`), { code: 404 });
   if (fs.existsSync(runPath(runId, 'brief.json'))) throw Object.assign(new Error('A brief was already submitted for this run'), { code: 409 });
-  const clean = { runId, source };
+  const clean = { runId, source, file: source === 'file' && typeof brief.file === 'string' ? brief.file : null };
   for (const k of BRIEF_FIELDS) clean[k] = typeof brief[k] === 'string' ? brief[k].trim() : '';
   if (!['9:16', '16:9', '1:1'].includes(clean.aspectRatio)) clean.aspectRatio = '9:16';
   if (!clean.platform) clean.platform = 'TikTok';
