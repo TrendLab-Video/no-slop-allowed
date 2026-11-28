@@ -98,6 +98,7 @@ export function appendTrace(runId, step) {
     name: step.name || 'step',
     stage: step.stage || null,
     model: step.model ?? null,
+    requestId: step.requestId ?? null,
     inputs: step.inputs || {},
     prompt: step.prompt ?? null,
     tool_calls: step.tool_calls || [],
