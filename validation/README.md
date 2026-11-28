@@ -54,6 +54,27 @@ Merge one or more critic responses when they exist:
 python3 -m validation.run outputs/example-run   --review-result outputs/example-run/review.visual.json   --review-result outputs/example-run/review.narrative.json
 ```
 
+## Recliner CLI integration
+
+Harry's fal-compositor pipeline does not produce Blender scene-generation metadata; Blender is used as a VSE compositor. For those runs, use video-only validation through the Recliner CLI:
+
+```bash
+node skill/recliner/bin/recliner.mjs validate-output <runId> --attempt <n>
+```
+
+This validates the composed `final.mp4`, derives duration gates from `plan.durationSeconds`, writes `validation_report.json`, `repair_plan.json` and `contact-sheet.png` beside the composition, merges a `technicalValidation` summary into `result.json`, and appends a trace step. `export` copies the validation evidence into `outputs/<brief-slug>/` when present.
+
+Direct video-only use:
+
+```bash
+python3 -m validation.run <artifact-dir> \
+  --video <artifact-dir>/final.mp4 \
+  --video-only \
+  --duration-min 18 --duration-max 22
+```
+
+Scene metadata validation remains the preferred mode for Blender-native scene-generation pipelines and should be used whenever `scene_plan.json` and `scene_metadata.json` exist.
+
 ## Standards
 
 Standards live in [`standards/`](standards/). They are JSON-formatted YAML so the hackathon implementation can stay stdlib-only while remaining valid YAML. Every finding should cite a stable `standard_id`.

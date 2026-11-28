@@ -218,7 +218,7 @@ export function patch(container, items) {
       const fresh = tpl.content.firstElementChild;
       fresh.dataset.key = key;
       fresh.dataset.h = html;
-      if (el) el.replaceWith(fresh); 
+      if (el) el.replaceWith(fresh);
       el = fresh;
     }
     existing.delete(key);

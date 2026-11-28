@@ -13,7 +13,7 @@ skill/recliner/
   lib/                            other shared code (effort presets, fal client, compositors)
   web/                            Brief / live run, Steps and Result pages
 runs/<runId>/                     one folder per run (gitignored)
-outputs/<brief-slug>/             hackathon export: final.mp4 + traces.json
+outputs/<brief-slug>/             hackathon export: final.mp4 + traces.json (+ validation evidence when present)
 .env                              FAL_KEY, JEV_API_KEY (gitignored; main checkout's .env is shared by worktrees)
 ```
 
@@ -62,9 +62,11 @@ Keyframe validators write `clips/<sceneId>/<attempt>.keyframe.validation.json` (
 Validation sub-agents run in parallel, so they never write `clips.json`: each writes `clips/<sceneId>/<attempt>.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`) and `accept-clips` merges them.
 
 **`result.json`**
-`{ results: [{ id, attempt, file: "compositions/<attempt>/final.mp4", thumbnail, compositor, durationSeconds, validation: { score: 0..100, passed, reason, breakdown: { hook, briefFit, craft, originality, slop } } }], selectedId }`
+`{ results: [{ id, attempt, file: "compositions/<attempt>/final.mp4", thumbnail, compositor, durationSeconds, validation: { score: 0..100, passed, reason, breakdown: { hook, briefFit, craft, originality, slop } }, technicalValidation: { status, report, repairPlan, contactSheet, blockerCount, majorCount, minorCount, wallTimeMs, mode } }], selectedId }`
 `selectedId` is the highest scoring result.
 The final validator writes `compositions/<attempt>/validation.json` (`{ id, attempt, score, passed, reason, breakdown, slopHits, biggestProblem, repairs: [{ sceneId, steering }] }`) and `rank` merges it.
+
+`technicalValidation` is written by `validate-output`. It is deterministic ffmpeg/audio validation, separate from the creative validator's `validation` score. The report and repair plan live beside the composition (`compositions/<attempt>/validation_report.json`, `repair_plan.json`, `contact-sheet.png`) and are copied into `outputs/<brief-slug>/` by `export` when present. In video-only mode Blender scene metadata gates are skipped because this pipeline uses Blender as a compositor rather than a scene-generation substrate.
 
 **`traces.json`**: shape of `traces.example.json`, appended through `appendTrace`. Each step also carries `stage` and `at`.
 
@@ -83,7 +85,22 @@ The final validator writes `compositions/<attempt>/validation.json` (`{ id, atte
 | `accept-clips <runId>` | Sets `acceptedAttempt` per scene from validation scores |
 | `compose <runId>` | Composes accepted clips with the configured compositor (Blender, ffmpeg fallback) and adds audio. Adds an entry to `result.json` |
 | `rank <runId>` | Sets `selectedId` in `result.json` |
-| `export <runId>` | Copies the selected video and `traces.json` to `outputs/<brief-slug>/` |
+| `validate-output <runId> [--attempt n] [--strict]` | Runs deterministic technical validation on a composed video, deriving duration gates from `plan.durationSeconds`; writes `validation_report.json`, `repair_plan.json` and `contact-sheet.png`, merges the summary into `result.json`, and appends a trace step |
+| `export <runId>` | Copies the selected video, `traces.json` and available validation evidence to `outputs/<brief-slug>/` |
+
+## Remote Blender composition
+
+Composition normally uses local Blender when available and falls back to ffmpeg. To run the Blender VSE composition step on a remote host, set:
+
+```bash
+RECLINER_REMOTE_BLENDER_HOST=nuncio-vultr
+RECLINER_REMOTE_BLENDER_BIN=/home/linuxuser/recliner-tools/blender-4.5.9-linux-x64/blender  # optional override
+RECLINER_REMOTE_WORKDIR=recliner-compose                                                   # optional
+RECLINER_REMOTE_FONT=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf                  # optional
+RECLINER_REMOTE_BLENDER_CPUSET=0-1                                                          # optional, useful on shared hosts
+```
+
+The host needs SSH access, ffmpeg-era codecs available to Blender, and the Blender binary. Inputs and `blender_compose.py` are copied to a per-job directory, rendered with `nice`, copied back, and removed unless `RECLINER_REMOTE_KEEP=1` is set for debugging. ffmpeg composition and validation still run locally.
 
 ## Server API
 

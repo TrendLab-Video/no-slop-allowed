@@ -1,6 +1,6 @@
 # Recliner: skill-based creative harness
 
-Status: proposal for review  
+Status: proposal for review
 Date: 28 November 2026
 
 ## Thesis
@@ -15,19 +15,19 @@ The intended judging story is:
 
 ## Design principles
 
-1. **Deterministic spine, bounded autonomy**  
+1. **Deterministic spine, bounded autonomy**
    Use a fixed state machine for reliability, with agentic decisions inside defined phases. Avoid free-form multi-agent debate.
 
-2. **Artifacts over conversation**  
+2. **Artifacts over conversation**
    Every important decision should produce a file or structured object that can be inspected, replayed and traced.
 
-3. **Critique must change the output**  
+3. **Critique must change the output**
    A decorative critic is not enough. Even one real repair loop is stronger than several unused evaluation steps.
 
-4. **Diversity by design**  
+4. **Diversity by design**
    The harness should remember prior modality and style choices so repeated runs do not collapse into the same visual formula.
 
-5. **Hidden-brief reliability beats ambition**  
+5. **Hidden-brief reliability beats ambition**
    The final hidden-brief runs are timeboxed. Prefer a polished 15–30 second piece with 3–5 shots over a fragile minute-long concept.
 
 ## Proposed architecture
@@ -201,25 +201,25 @@ A hybrid visual strategy is likely strongest: generated media plus deterministic
 
 ## Implementation order
 
-1. **Thin end-to-end skeleton**  
+1. **Thin end-to-end skeleton**
    One command accepts a brief and produces a rough `final.mp4` plus valid `traces.json`.
 
-2. **Skill abstraction**  
+2. **Skill abstraction**
    Wrap the pipeline in typed skills with artifact persistence and trace logging.
 
-3. **Concept divergence and selection**  
+3. **Concept divergence and selection**
    Prove that the system chooses a direction based on the brief rather than executing a fixed template.
 
-4. **Critique and repair**  
+4. **Critique and repair**
    Add one genuine automated revision loop.
 
-5. **Style memory and modality routing**  
+5. **Style memory and modality routing**
    Demonstrate diversity across repeated runs and different briefs.
 
-6. **Render polish**  
+6. **Render polish**
    Typography, pacing, sound, colour, captions and transitions.
 
-7. **Submission resilience**  
+7. **Submission resilience**
    Rehearse hidden-brief mode end to end, including time budget and failure recovery.
 
 ## Open questions for review

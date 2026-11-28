@@ -62,11 +62,21 @@ def build_validation_report(
     source_brief: str | None = None,
     contact_sheet: str | Path | None = None,
     make_contact_sheet: bool = True,
+    video_only: bool = False,
+    duration_min: float | None = None,
+    duration_max: float | None = None,
+    resolution_min: int | None = None,
 ) -> dict[str, Any]:
     started = time.perf_counter()
     root = Path(artifact_root)
     root.mkdir(parents=True, exist_ok=True)
     standards = load_standards(standards_dir)
+    if duration_min is not None:
+        standards.setdefault("duration.in_range", {})["min_seconds"] = duration_min
+    if duration_max is not None:
+        standards.setdefault("duration.in_range", {})["max_seconds"] = duration_max
+    if resolution_min is not None:
+        standards.setdefault("resolution.minimum", {})["min_short_edge"] = resolution_min
 
     video_path = Path(video) if video else _choose_video(root)
     if video_path is None:
@@ -76,7 +86,15 @@ def build_validation_report(
     brief = _source_brief(root, source_brief, metadata_path, plan_path)
 
     video_result = probe_video(video_path, standards)
-    scene_result = probe_scene(metadata_path, plan_path, standards)
+    if video_only:
+        scene_result = {
+            "probe": {"mode": "video_only"},
+            "gates": [],
+            "findings": [],
+            "warnings": ["scene validation skipped: video-only mode"],
+        }
+    else:
+        scene_result = probe_scene(metadata_path, plan_path, standards)
 
     gates = video_result["gates"] + scene_result["gates"]
     findings = video_result["findings"] + scene_result["findings"]
@@ -176,6 +194,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Path to a critic review_result JSON file; may be passed multiple times",
     )
     parser.add_argument("--no-contact-sheet", action="store_true", help="Do not generate a contact sheet")
+    parser.add_argument(
+        "--video-only",
+        action="store_true",
+        help="Validate only the rendered video/audio artifact; skip Blender scene metadata gates",
+    )
+    parser.add_argument("--duration-min", type=float, help="Override minimum accepted video duration in seconds")
+    parser.add_argument("--duration-max", type=float, help="Override maximum accepted video duration in seconds")
+    parser.add_argument("--resolution-min", type=int, help="Override minimum accepted short edge in pixels")
     parser.add_argument("--strict", action="store_true", help="Exit non-zero when validation fails or requires repair")
     args = parser.parse_args(argv)
 
@@ -190,6 +216,10 @@ def main(argv: list[str] | None = None) -> int:
             source_brief=args.source_brief,
             contact_sheet=args.contact_sheet,
             make_contact_sheet=not args.no_contact_sheet,
+            video_only=args.video_only,
+            duration_min=args.duration_min,
+            duration_max=args.duration_max,
+            resolution_min=args.resolution_min,
         )
     except Exception as exc:
         print(f"validation internal error: {exc}", file=sys.stderr)

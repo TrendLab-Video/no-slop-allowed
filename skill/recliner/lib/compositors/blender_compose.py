@@ -3,9 +3,10 @@
 # job.json: { segments: [{ file, seconds, text, layout }], width, height, fps, transition, bed, out, fontFile }
 # Clips are laid on alternating channels with cross-fades over the overlap, text strips fade in above them,
 # the audio bed sits on its own channel, and the result renders straight to H.264/AAC mp4.
-import bpy
 import json
 import sys
+
+import bpy
 
 job = json.load(open(sys.argv[sys.argv.index("--") + 1]))
 W, H, FPS = job["width"], job["height"], job["fps"]
@@ -55,7 +56,7 @@ for i, seg in enumerate(job["segments"]):
     m.frame_final_duration = min(length, m.frame_final_duration)
     length = m.frame_final_duration
     if prev is not None and T > 0:
-        strips.new_effect(f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, length=T, input1=prev, input2=m)
+        strips.new_effect(f"x{i}", "GAMMA_CROSS", 3 + (i % 2), start, frame_end=start + T, input1=prev, input2=m)
     movies.append(m)
 
     text = (seg.get("text") or "").strip()
@@ -63,7 +64,7 @@ for i, seg in enumerate(job["segments"]):
         L = seg["layout"]
         tstart = start + (T if i > 0 else 0) + int(0.2 * FPS)
         tend = start + length - (T if i < len(job["segments"]) - 1 else 0)
-        t = strips.new_effect(f"text{i}", "TEXT", 6, tstart, length=max(1, tend - tstart))
+        t = strips.new_effect(f"text{i}", "TEXT", 6, tstart, frame_end=max(tstart + 1, tend))
         t.text = "\n".join(L["lines"])
         t.font_size = L["fontSize"]
         if font:
@@ -93,7 +94,9 @@ for i, seg in enumerate(job["segments"]):
         t.wrap_width = 0.0  # lines are pre-wrapped by textLayout
         t.blend_type = "ALPHA_OVER"
         fade = int(0.35 * FPS)
-        key_alpha(t, [(tstart, 0.0), (tstart + fade, 1.0), (max(tstart + fade, tend - int(0.25 * FPS)), 1.0), (tend, 0.0)])
+        key_alpha(
+            t, [(tstart, 0.0), (tstart + fade, 1.0), (max(tstart + fade, tend - int(0.25 * FPS)), 1.0), (tend, 0.0)]
+        )
 
     prev = m
     start += length - T

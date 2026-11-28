@@ -70,11 +70,11 @@ export default async function ([runId], flags) {
   const audioMs = Date.now() - audioStarted;
 
   const job = { segments, width, height, fps, transition: TRANSITION, bed, outFile: runPath(runId, dir, 'final.mp4'), workDir, plan };
-  let compositor = flags.compositor || config.compositor || (blender.findBlender() ? 'blender' : 'ffmpeg');
+  let compositor = flags.compositor || config.compositor || (blender.blenderAvailable() ? 'blender' : 'ffmpeg');
   let out;
   if (compositor === 'blender') {
     try {
-      if (!blender.findBlender()) throw new Error('Blender not found');
+      if (!blender.blenderAvailable()) throw new Error('Blender not found locally or remotely');
       out = await blender.compose(job);
     } catch (err) {
       notes.push(`blender failed, fell back to ffmpeg: ${err.message}`);

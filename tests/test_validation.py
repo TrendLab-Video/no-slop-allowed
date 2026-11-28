@@ -131,6 +131,24 @@ class ValidationReportTests(unittest.TestCase):
             self.assertEqual(report["status"], "fail")
             self.assertTrue(any(f["standard_id"] == "video.exists" for f in report["findings"]))
 
+    def test_video_only_skips_scene_gates_and_honours_duration_override(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_video(root)
+            report = build_validation_report(
+                root,
+                source_brief="briefs/01-ep-133.md",
+                make_contact_sheet=False,
+                video_only=True,
+                duration_min=15,
+                duration_max=17,
+            )
+            self.assertEqual(report["status"], "pass")
+            self.assertNotIn("artifacts.scene_plan", [gate["id"] for gate in report["hard_gates"]])
+            self.assertEqual(report["probes"]["scene"], {"mode": "video_only"})
+            duration_gate = next(gate for gate in report["hard_gates"] if gate["id"] == "duration.in_range")
+            self.assertTrue(duration_gate["passed"])
+
 
 class ReviewProtocolTests(unittest.TestCase):
     def test_build_and_validate_review_result(self) -> None:
