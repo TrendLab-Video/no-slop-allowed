@@ -223,7 +223,7 @@ function renderLive(d) {
       <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Clips</h2><span class="eyebrow" style="margin-left:auto">${clips ? `${clips.scenes.length} scenes · ${allAttempts.length} attempts` : 'pending'}</span></div>
         ${allAttempts.length ? `<div class="thumbs">${allAttempts.map((a) => a.status === 'generated' && a.file
             ? video(fileUrl(a.file), { ar, controls: false, autoplay: true, badge: a.accepted ? '<span class="tag ok">kept</span>' : a.validation ? `<span class="tag ${a.validation.passed ? 'ok' : 'bad'}">${esc(a.validation.score)}</span>` : '', badge2: `<span class="tag">${esc(a.sceneId)}·${esc(a.attempt)}</span>` })
-            : `<div class="media ${arClass(ar)}" style="display:grid;place-items:center;color:#93a097;font:11px var(--mono)">${esc(a.sceneId)} · ${esc(a.status)}</div>`).join('')}</div>`
+            : `<div class="media ${arClass(ar)}" style="display:grid;place-items:center;color:var(--faint);font:11px var(--mono)">${esc(a.sceneId)} · ${esc(a.status)}</div>`).join('')}</div>`
           : '<div class="empty">Clips appear here as fal generates them.</div>'}</div>
       <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>Result</h2><span class="eyebrow" style="margin-left:auto">${result ? `${result.results.length} composition${result.results.length === 1 ? '' : 's'}` : 'pending'}</span></div>
         ${sel ? `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${video(fileUrl(sel.file), { ar, controls: false, autoplay: true, poster: sel.thumbnail ? fileUrl(sel.thumbnail) : '' })}
