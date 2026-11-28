@@ -83,7 +83,7 @@ Runs share fal: with several briefs, keep effort at 2 unless told otherwise.
 
 Hand each sub-agent: the step file path, the `runId`, the run folder path, and the CLI form above. Tell it to read the step file first and to return only the short summary the step file asks for. Sub-agents follow the same one rule: no questions to the user.
 
-> **Recommendation (Claude Code):** use the Agent/Task tool with one sub-agent per step file; launch parallel sub-agents in one message. Use a small fast model (Haiku) for `steps/scoring.md`. Other hosts: any isolated sub-agent or a fresh context works; if you have no sub-agents, follow the step file yourself.
+> **Recommendation (Claude Code):** use the Agent/Task tool with one sub-agent per step file; launch parallel sub-agents in one message. Use a small fast model (Haiku) for `steps/scoring.md` and `steps/validate-keyframe.md`. Sub-agent start-up costs tens of seconds, so batch: one call per validation round, never one per clip. Other hosts: any isolated sub-agent or a fresh context works; if you have no sub-agents, follow the step file yourself.
 
 ## 1. References (stage `references`)
 
@@ -92,7 +92,7 @@ Parallel: launch both sub-agents at the same time (one message), splitting `conf
 
 ## 2. Goals (stage `goals`)
 
-Sub-agent: `steps/goals.md`. Writes `$RUN/goals.json` with about `config.goalsCount` genuinely distinct goals, each with `config.scenes` scenes of about `config.clipSeconds` seconds. Time cap: 15% of the budget (minimum 30 s), passed to the sub-agent. Fallback: if it fails or overruns, write one goal yourself from the brief and the best reference.
+**Start the goals sub-agent the moment `references.json` is merged**, in the same message as the references stage-done calls; do not pause between stages. Sub-agent: `steps/goals.md`. Writes `$RUN/goals.json` with about `config.goalsCount` genuinely distinct goals, each with `config.scenes` scenes of about `config.clipSeconds` seconds. Time cap: 15% of the budget (minimum 30 s), passed to the sub-agent. Fallback: if it fails or overruns, write one goal yourself from the brief and the best reference.
 
 ## 3. Scoring (stage `scoring`)
 
@@ -114,21 +114,26 @@ fal is the generation path (instructed, not optional).
 
 ```text
 recliner generate-clips <runId> --keyframes-only          # one still per scene, from scene.keyframePrompt
-validate every still in parallel: one fast sub-agent (Haiku) per still with steps/validate-keyframe.md
-  → clips/<sceneId>/<attempt>.keyframe.validation.json
-per scene, while keyframe score < config.passScore and retries < max(1, config.clipRetries) and budget allows:
-    recliner generate-clips <runId> --keyframes-only --scene <sceneId> --steering "<keyframe steering>"
-    validate the new still
+validate ALL stills in ONE fast sub-agent call (Haiku) with steps/validate-keyframe.md, given every (sceneId, attempt)
+  → one clips/<sceneId>/<attempt>.keyframe.validation.json per still
 recliner accept-clips <runId>                             # sets scene.acceptedKeyframe (best still)
+at once, in parallel:
+    passing scenes:  recliner generate-clips <runId> --scenes <a,b,...>     # video starts now
+    failing scenes, while keyframe score < config.passScore and retries < max(1, config.clipRetries) and budget allows:
+        recliner generate-clips <runId> --keyframes-only --scene <sceneId> --steering "<keyframe steering>"
+        validate the new still(s) (one sub-agent call for all of them), accept-clips
+        recliner generate-clips <runId> --scenes <sceneId>                  # its video, as soon as its still is accepted
 ```
 
-Then video: `recliner generate-clips <runId>` animates each scene's accepted still with `scene.prompt`, all scenes in parallel, and writes `clips.json`. With `config.keyframes` false, it generates video straight from `scene.prompt`. If fal-video-generation is available, follow it when choosing a model override or wording `--steering`. **This first generation always runs, whatever the time budget says.** If `FAL_KEY` is missing or fal answers 401/403 (bad key, locked, exhausted balance), the command fails with fal's message: `recliner stage <runId> clips failed "<message>"` and stop, with no per-scene retry. If one scene fails for any other reason, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
+**Speed:** sub-agent start-up is the main cost. Batch every validation round into one sub-agent call, and never wait for the slowest scene before paying for the others. If `--scenes` is not available yet, run `generate-clips <runId>` (all scenes) once every still is accepted.
+
+Video: `generate-clips` animates each scene's accepted still with `scene.prompt` and writes `clips.json`. With `config.keyframes` false, it generates video straight from `scene.prompt`. If fal-video-generation is available, follow it when choosing a model override or wording `--steering`. **This first generation always runs, whatever the time budget says.** If `FAL_KEY` is missing or fal answers 401/403 (bad key, locked, exhausted balance), the command fails with fal's message: `recliner stage <runId> clips failed "<message>"` and stop, with no per-scene retry. If one scene fails for any other reason, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
 
 ## 5. Clip validation (stage `clip_validation`)
 
-Parallel: **one sub-agent per generated clip** with `steps/validate-clip.md`, passing `sceneId` and `attempt`. Each writes `$RUN/clips/<sceneId>/<attempt>.validation.json` and returns `{ score, passed, steering }`.
+**One sub-agent call validates every new clip** with `steps/validate-clip.md`, given the list of (sceneId, attempt). It writes one `$RUN/clips/<sceneId>/<attempt>.validation.json` per clip and returns `[{ sceneId, attempt, score, passed, steering }]`. Start it as soon as the clips exist.
 
-Retry loop, per scene (scenes in parallel):
+Retry loop (scenes in parallel; each round's new clips are validated together in one call):
 
 ```text
 retries = 0
@@ -136,7 +141,7 @@ maxRetries = config.clipRetries, or 1 if the last score is below 30 (even at eff
 while score < config.passScore and retries < maxRetries and budget allows:
     recliner stage <runId> clip_validation retrying "<sceneId> attempt <n>"
     recliner generate-clips <runId> --scene <sceneId> --steering "<steering from the last validation>"
-    validate the new attempt (one sub-agent, steps/validate-clip.md)
+    validate the new attempts (one sub-agent call for all of them, steps/validate-clip.md)
     retries += 1
 recliner accept-clips <runId>
 ```
