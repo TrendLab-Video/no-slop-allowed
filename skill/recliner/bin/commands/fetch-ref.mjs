@@ -6,6 +6,15 @@ import { spawn, spawnSync } from 'node:child_process';
 import { runPath, readJson } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 import { extractFrames, probeDuration } from '../../lib/compositors/ffmpeg.mjs';
+import { searchProvider, pageImages, imageSearch } from '../../lib/search.mjs';
+
+// "<brand> <product> product photo", product cut to its first clause, brand not repeated.
+function brandImageQuery(brand, product) {
+  const p = String(product).split(/[(,.;:]/)[0].trim().split(/\s+/).slice(0, 6).join(' ');
+  const b = String(brand).trim();
+  const both = p.toLowerCase().startsWith(b.toLowerCase()) ? p : `${b} ${p}`;
+  return `${both.trim()} product photo`.replace(/\s+/g, ' ');
+}
 
 const VIDEO_POST = /(tiktok\.com\/@[^/]+\/video\/|vm\.tiktok\.com\/|youtube\.com\/(watch\?|shorts\/)|youtu\.be\/|instagram\.com\/(reel|reels|p)\/|(x|twitter)\.com\/[^/]+\/status\/)/i;
 const onPath = (bin) => spawnSync(process.platform === 'win32' ? 'where' : 'which', [bin], { stdio: 'ignore' }).status === 0;
@@ -167,7 +176,43 @@ export default async function ([runId, refId, url], flags) {
     }
   }
   const file = targetFile(runId, refId, typeof flags.file === 'string' ? flags.file : null);
-  const rels = video ? video.frames.map((f) => `references/${refId}/${path.basename(f)}`) : saved ? [`references/${refId}/${path.basename(saved.file)}`] : [];
+  // 3. Search-provider fallback (key-gated, Tavily only: Parallel returns no images). For references with no
+  //    image yet: images on that page (extract), else an image search on title + platform. For the brand:
+  //    always add an image search for "<brand> <product> product photo" so goals see the real product.
+  const sources = {};
+  const extra = [];
+  const isBrand = flags.kind === 'brand';
+  if (!video && (!saved || isBrand) && searchProvider() === 'tavily') {
+    const existing = (readJson(runId, file, {}).references || []).find((r) => r.id === refId) || {};
+    const brief = readJson(runId, 'brief.json', {});
+    const q = typeof flags['image-query'] === 'string' ? flags['image-query']
+      : isBrand ? brandImageQuery(brief.promote || flags.title || '', readJson(runId, 'goals.json', {})?.intent?.product || '')
+        : `${existing.title || flags.title || refId} ${existing.platform || ''}`.trim();
+    let found = [];
+    try {
+      if (!isBrand) found = (await pageImages(url)).map((u) => ({ url: u, via: 'tavily-extract' }));
+      tried.push({ tool: 'tavily-extract', url, result: `${found.length} images` });
+    } catch (err) { tried.push({ tool: 'tavily-extract', url, result: err.message.slice(0, 160) }); }
+    if (!found.length) {
+      try {
+        found = (await imageSearch(q, 4)).map((i) => ({ url: i.url, via: 'tavily-image-search', description: i.description }));
+        tried.push({ tool: 'tavily-image-search', url: q, result: `${found.length} images` });
+      } catch (err) { tried.push({ tool: 'tavily-image-search', url: q, result: err.message.slice(0, 160) }); }
+    }
+    let n = saved ? 2 : 1;
+    for (const img of found) {
+      if (extra.length >= 2) break;
+      try {
+        const d = await download(img.url, dir, n);
+        const r = `references/${refId}/${path.basename(d.file)}`;
+        extra.push(r);
+        sources[r] = { url: img.url, via: img.via, description: img.description || null, query: img.via === 'tavily-image-search' ? q : null };
+        n++;
+      } catch (err) { tried.push({ url: img.url, error: err.message }); }
+    }
+  }
+  if (saved) sources[`references/${refId}/${path.basename(saved.file)}`] = { url: saved.source, via: 'page' };
+  const rels = video ? video.frames.map((f) => `references/${refId}/${path.basename(f)}`) : [...(saved ? [`references/${refId}/${path.basename(saved.file)}`] : []), ...extra];
   const rel = rels[0] || null;
   updateJson(runId, file, { references: [] }, (doc) => {
     doc.references ||= [];
@@ -179,6 +224,7 @@ export default async function ([runId, refId, url], flags) {
     if (flags.kind) ref.kind = flags.kind;
     ref.screenshots ||= [];
     for (const r of rels) if (!ref.screenshots.includes(r)) ref.screenshots.push(r);
+    if (Object.keys(sources).length) ref.screenshotSources = { ...(ref.screenshotSources || {}), ...sources };
     if (video) {
       ref.structure = { ...(ref.structure || {}), durationSeconds: video.durationSeconds, measuredCuts: video.cuts, measuredSecondsPerShot: video.secondsPerShot, measured: true };
       ref.video = `references/${refId}/video.mp4`;
@@ -187,8 +233,8 @@ export default async function ([runId, refId, url], flags) {
   });
   const out = video
     ? { ok: true, referenceId: refId, mode: 'video', frames: rels, durationSeconds: video.durationSeconds, cuts: video.cuts, secondsPerShot: video.secondsPerShot, recordedIn: file }
-    : saved
-      ? { ok: true, referenceId: refId, mode: 'image', file: rel, source: saved.source, bytes: saved.bytes, recordedIn: file }
+    : rels.length
+      ? { ok: true, referenceId: refId, mode: saved ? 'image' : 'search', files: rels, sources, recordedIn: file }
       : { ok: false, referenceId: refId, reason: 'no image found', recordedIn: file, tried: tried.slice(-6) };
   appendTraceLocked(runId, { name: 'fetch-ref', stage: 'references', inputs: { referenceId: refId, url, kind: flags.kind || 'reference' }, tool_calls: tried.map((t) => ({ tool: t.tool || 'fetch', arguments: { url: t.url }, result: t.error || t.status || t.result })), outputs: out, duration_ms: Date.now() - t0 });
   return out;
