@@ -25,8 +25,10 @@
         "hook": "Sound of the first tap before any visuals"
       },
       "screenshots": [
-        "references/r1-1.jpg",
-        "references/r1-2.jpg"
+        "references/r1/1.jpg",
+        "references/r1/frame-1.jpg",
+        "references/r1/frame-2.jpg",
+        "references/r1/frame-3.jpg"
       ]
     },
     {
@@ -53,8 +55,7 @@
         "hook": "Text: \"my whole studio fits in my coat\""
       },
       "screenshots": [
-        "references/r2-1.jpg",
-        "references/r2-2.jpg"
+        "references/r2/1.png"
       ]
     },
     {
@@ -82,8 +83,20 @@
         "hook": "On-screen timer from frame 1"
       },
       "screenshots": [
-        "references/r3-1.jpg",
-        "references/r3-2.jpg"
+        "references/r3/1.webp"
+      ]
+    },
+    {
+      "id": "brand",
+      "kind": "brand",
+      "title": "Teenage Engineering",
+      "url": "https://teenage.engineering/products/ep-133",
+      "platform": "web",
+      "metrics": { "views": null, "likes": null, "comments": null, "shares": null },
+      "why": "The brand's own look: grey chassis, orange pads, calculator-sized.",
+      "structure": null,
+      "screenshots": [
+        "references/brand/1.jpg"
       ]
     }
   ],

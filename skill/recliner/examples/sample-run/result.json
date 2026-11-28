@@ -6,7 +6,7 @@
       "file": "compositions/2/final.mp4",
       "thumbnail": "compositions/2/thumb.jpg",
       "compositor": "ffmpeg",
-      "durationSeconds": 9,
+      "durationSeconds": 12,
       "validation": {
         "score": 84,
         "passed": true,
@@ -26,7 +26,7 @@
       "file": "compositions/1/final.mp4",
       "thumbnail": "compositions/1/thumb.jpg",
       "compositor": "ffmpeg",
-      "durationSeconds": 9,
+      "durationSeconds": 12,
       "validation": {
         "score": 68,
         "passed": false,
