@@ -41,7 +41,8 @@ Each input describes what is being promoted and the objective, without creative 
 ├── SUBMISSION.md        # Fill this in before the submission deadline
 ├── traces.example.json  # Example trace structure
 ├── briefs/              # Starter briefs
-└── outputs/             # Put rendered videos and traces.json here
+├── outputs/             # Put traces.json here (upload videos on the portal, not in git)
+└── presentation/        # Put your 2-minute finalist deck here
 ```
 
 ## What you submit
@@ -58,7 +59,7 @@ For each submitted video, include both artifacts:
 
 See [`traces.example.json`](traces.example.json) for a minimal shape. Add any extra fields that show how your system works.
 
-If a video file is too large for GitHub (>100 MB), keep `traces.json` in the repo and link the video in `SUBMISSION.md`.
+Do **not** commit video files to GitHub — upload all rendered videos into their slots on the [Your team](https://hack.36labs.ai/team) page of the hackathon portal (MP4, MOV, or WebM up to 2 GB), and commit only your `traces.json` logs under `outputs/`.
 
 ## Finalist presentations
 
