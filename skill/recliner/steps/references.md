@@ -2,7 +2,11 @@
 
 You find real, current, proven short-form videos that the rest of the run learns from. These are the main source of run-to-run variety, so do not reach for the same famous ad every time.
 
-Never ask the user anything. Time cap: the seconds the orchestrator gave you (default 20% of `config.timeBudgetMinutes`). Write your file before the cap even if it is short: two solid entries beat none.
+Never ask the user anything. Time cap: the seconds the orchestrator gave you (20% of `config.timeBudgetMinutes`, **never less than 90 s**). Write your file before the cap even if it is short: two solid entries beat none.
+
+**Real research is required.** Run actual web searches and open actual pages; do not write references from memory when you have web tools. Every entry needs a real, working post or article URL, and metrics from a named source wherever one exists. Memory-only entries are allowed only when web tools are missing or failing (see Fallback). At least one entry must be **native to the brand or its direct category**: the brand's own content or a direct competitor's, in the same product category (for a Nike running brief, Nike or another running-shoe brand, not a gym-wear label).
+
+Create `$RUN/references/` first if it does not exist (`mkdir -p`).
 
 ## Inputs
 
