@@ -12,9 +12,10 @@ Never ask the user anything. Time cap: the seconds the orchestrator gave you (de
 
 ## 0. Steer away from recent runs (diversity is judged)
 
-Before writing goals, list the modalities, hook types and palettes in the recent entries. Then:
+`recliner style-memory --recent 8` prints one line per recent run: `modality`, `hook`, `opening`, `palette`, `pacing`, `camera`, `music`. Before writing goals, list them. Then:
 - No goal may repeat the **modality + hookType** pair of any of the last 3 entries, whatever the brief.
-- At most one goal may reuse a modality from the last 8 entries; it must change the hook and the palette.
+- No goal may reuse an **openingAction** or the same **palette** (two or more of the same colour words) from the last 3 entries.
+- At most one goal may reuse a modality from the last 8 entries; it must change the hook, the opening action and the palette.
 - If an earlier entry has the same `briefSlug` (a repeat run of this brief), every goal must differ from that run's goal in modality **and** palette, and should borrow from different references.
 - If the orchestrator gave you a **modality hint**, make your strongest goal in that modality (goal-1).
 - Say in your return summary what you avoided.
@@ -100,7 +101,7 @@ Also:
       "referenceIds": ["ref-2"],
       "audio": { "musicPrompt": "...", "voiceover": null },
       "endCard": { "headline": "Nike Pegasus 41", "subline": "For the runs nobody sees", "durationSeconds": 2 },
-      "styleTags": { "modality": "kinetic sports montage", "hookType": "sound-first physical action", "palette": "sodium orange / pre-dawn blue", "pacing": "0.5s cuts to a 2s hold" },
+      "styleTags": { "modality": "athlete-talent", "hookType": "physical-action", "openingAction": "foot slams into a puddle", "palette": ["sodium orange", "pre-dawn blue", "black"], "pacing": "three 5s takes, hard cuts", "cameraLanguage": "low static ankle height to handheld follow", "musicGenre": "dark UK garage" },
       "scenes": [
         { "id": "goal-1-s1", "index": 1, "durationSeconds": 5, "description": "...", "keyframePrompt": "the still: subject first ...", "prompt": "the motion from that still ...", "onScreenText": "..." }
       ]
@@ -110,7 +111,16 @@ Also:
 }
 ```
 
-Ids: goals `goal-1`…; scenes `<goalId>-s<index>`. `intent` is an extra field the validators read. `styleTags` (extra) feeds the style memory: short plain labels, one each.
+Ids: goals `goal-1`…; scenes `<goalId>-s<index>`. `intent` is an extra field the validators read.
+
+**`styleTags` is required on every goal** (it feeds the style memory; `score` copies it into `plan.json`). Short controlled-vocabulary strings:
+- `modality`, one of: `product-macro`, `kinetic-type`, `ugc-creator`, `talking-head`, `athlete-talent`, `ui-demo`, `stop-motion`, `mockumentary`, `pov`, `documentary`, `lifestyle-montage`, `animation`, `other`.
+- `hookType`, one of: `physical-action`, `sound-first`, `reveal`, `question`, `bold-claim`, `pattern-interrupt`, `pov-entry`, `before-after`, `text-first`, `other`.
+- `openingAction`: what happens in the first second, at most 6 words ("hand slams the red pad").
+- `palette`: exactly 3 colour words.
+- `pacing`, `cameraLanguage`, `musicGenre`: at most 8 words each.
+
+No two goals in the file may share both `modality` and `hookType`.
 
 ## Return
 
