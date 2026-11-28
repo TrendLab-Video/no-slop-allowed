@@ -158,3 +158,174 @@ export function needRun() {
   m.innerHTML = `<div class="empty">No run selected. <a href="/">Pick a run</a> or start one with <code>recliner new-run</code>.</div>`;
   return true;
 }
+
+// ---------- Media stage: the best visual available so far, upgraded in place ----------
+// Modes, in order of preference: final/composed video > scene clips (storyboard that clips replace)
+// > goals being scored > reference mosaic > brief keywords. References are always badged REFERENCE
+// with a dashed, desaturated frame; our own output is badged GENERATED.
+
+const arCls = (ar) => ({ '16:9': 'r16-9', '1:1': 'r1-1' })[ar] || 'r9-16';
+
+// Keyed patch: keep children whose html is unchanged (videos keep playing), replace the rest.
+export function patch(container, items) {
+  const existing = new Map([...container.children].map((el) => [el.dataset.key, el]));
+  let prev = null;
+  for (const { key, html } of items) {
+    let el = existing.get(key);
+    if (!el || el.dataset.h !== html) {
+      const tpl = document.createElement('template');
+      tpl.innerHTML = html.trim();
+      const fresh = tpl.content.firstElementChild;
+      fresh.dataset.key = key;
+      fresh.dataset.h = html;
+      if (el) el.replaceWith(fresh); 
+      el = fresh;
+    }
+    existing.delete(key);
+    const want = prev ? prev.nextElementSibling : container.firstElementChild;
+    if (want !== el) container.insertBefore(el, want);
+    prev = el;
+  }
+  for (const el of existing.values()) el.remove();
+}
+
+const KW_STOP = new Set('about after again against their there these those which while would could should being through product brand video known along every other where into from with that this your make made more most also than them they will just over what when only even very much such into across bringing together'.split(' '));
+function keywords(b) {
+  const text = `${b.objective || ''} ${b.raw || ''} ${b.notes || ''}`.toLowerCase();
+  const counts = {};
+  for (const w of text.match(/[a-z][a-z-]{4,}/g) || []) if (!KW_STOP.has(w)) counts[w] = (counts[w] || 0) + 1;
+  return Object.entries(counts).sort((a, z) => z[1] - a[1]).slice(0, 10).map(([w]) => w);
+}
+
+function refTile(r, shot, i) {
+  const m = r.metrics || {};
+  const proof = `<span>${fmtNum(m.views)} views</span><span>${fmtNum(m.likes)} likes</span>`;
+  const head = `<div class="tl"><span class="tag refb">Reference</span><span class="tag">${esc(r.platform || '')}</span></div>`;
+  if (shot) return `<div class="mt ref" style="animation-delay:${i * 60}ms"><img src="${esc(fileUrl(shot))}" alt="" loading="lazy">${head}
+    <div class="cap"><b>${esc(r.title || '')}</b><span class="proof">${proof}</span></div></div>`;
+  const s = r.structure || {};
+  return `<div class="mt ref card-ref" style="animation-delay:${i * 60}ms">${head}
+    <div class="refbody"><div class="rt">${esc(r.title || 'Untitled reference')}</div>
+      <div class="proof big">${proof}${m.shares ? `<span>${fmtNum(m.shares)} shares</span>` : ''}</div>
+      ${s.hook ? `<div class="rk"><b>Hook</b>${esc(s.hook)}</div>` : ''}${s.pacing ? `<div class="rk"><b>Pacing</b>${esc(s.pacing)}</div>` : ''}
+      ${s.durationSeconds ? `<div class="rk"><b>Length</b>${esc(s.durationSeconds)}s</div>` : ''}</div></div>`;
+}
+
+function sceneTile(scene, i, clipScene, ar, total) {
+  const atts = clipScene?.attempts || [];
+  const gen = atts.filter((a) => a.status === 'generated' && a.file);
+  const shown = gen.find((a) => a.attempt === clipScene?.acceptedAttempt) || gen[gen.length - 1];
+  const latest = atts[atts.length - 1];
+  const retrying = shown && latest && latest !== shown && latest.status === 'generating';
+  const label = `Scene ${String(i + 1).padStart(2, '0')}${scene?.durationSeconds ? ` · ${scene.durationSeconds}s` : ''}`;
+  let inner, cls = '', badges = '';
+  if (shown) {
+    const v = shown.validation;
+    const acc = clipScene.acceptedAttempt === shown.attempt;
+    cls = acc ? 'acc' : v && !v.passed ? 'rej' : '';
+    badges = `<div class="tl"><span class="tag genb">Generated</span>${v ? `<span class="tag ${acc ? 'ok' : v.passed ? 'ok' : 'bad'}">${esc(v.score)} · ${acc ? 'accepted' : v.passed ? 'passed' : 'rejected'}</span>` : '<span class="tag">validating</span>'}</div>
+      ${retrying ? '<div class="tr"><span class="tag retry">↻ retrying</span></div>' : atts.length > 1 ? `<div class="tr"><span class="tag">try ${esc(shown.attempt)}</span></div>` : ''}`;
+    inner = `<video src="${esc(fileUrl(shown.file))}" autoplay muted loop playsinline preload="auto"></video>`;
+  } else {
+    const failed = latest?.status === 'failed';
+    const state = !clipScene ? 'Planned' : failed ? 'Failed' : 'Generating';
+    inner = `<div class="ph ${!clipScene ? 'dim' : failed ? 'fail' : ''}" style="animation-delay:-${i * 0.7}s"></div>
+      <div class="sb-text">${scene?.onScreenText ? `<div class="ost-big">${esc(scene.onScreenText)}</div>` : ''}
+        <div class="prompt">${esc((scene?.prompt || scene?.description || '').slice(0, 140))}${(scene?.prompt || '').length > 140 ? '…' : ''}</div></div>`;
+    badges = `<div class="tl"><span class="tag ${state === 'Generating' ? 'run' : state === 'Failed' ? 'bad' : ''}">${state}</span></div>${failed && latest.error ? `<div class="tr"><span class="tag bad" title="${esc(latest.error)}">error</span></div>` : ''}`;
+  }
+  return `<div class="tile ${arCls(ar)} ${cls}" style="--n:${total}">${inner}${badges}
+    <div class="cap"><b>${esc(label)}</b>${esc(scene?.description || '')}</div></div>`;
+}
+
+export function mediaStage(container) {
+  container.innerHTML = `<section class="stage"><div class="stage-info"></div><div class="stage-media"></div></section>`;
+  const info = container.querySelector('.stage-info');
+  const media = container.querySelector('.stage-media');
+  let mode = null;
+  const setMode = (m, shell) => { if (mode !== m) { mode = m; media.dataset.mode = m; media.innerHTML = shell; } };
+
+  return {
+    render(d) {
+      const b = d['brief.json'] || {}, state = d.state || {}, refs = d['references.json'], goals = d['goals.json'], scores = d['scores.json'], plan = d['plan.json'], clips = d['clips.json'], result = d['result.json'];
+      const ar = plan?.aspectRatio || b.aspectRatio || '9:16';
+      const cur = state.stages?.find((s) => s.id === state.currentStage);
+      const q = `?run=${encodeURIComponent(runId)}`;
+      const links = `<div class="links"><a class="btn ghost" href="/steps.html${q}">Steps <span class="arrow">→</span></a><a class="btn" href="/result.html${q}">Result <span class="arrow">→</span></a></div>`;
+      const pill = (t) => `<span class="pillb">${state.status === 'running' ? '<span class="pulse"></span>' : ''}${esc(t)}</span>`;
+      const curNote = cur && cur.status !== 'done' ? `<div class="sub">${esc(cur.label)} · ${esc(cur.status)}${cur.note ? ` — ${esc(cur.note)}` : ''}</div>` : '';
+      const results = result?.results || [];
+
+      if (results.length) {
+        const sel = results.find((r) => r.id === result.selectedId) || [...results].sort((a, z) => (z.validation?.score ?? -1) - (a.validation?.score ?? -1))[0];
+        const final = state.status === 'done' || !!result.selectedId && ['done'].includes(state.stages?.find((s) => s.id === 'final_validation')?.status);
+        const v = sel.validation || {};
+        info.innerHTML = `${pill(final ? 'Final video' : 'Composed video')}<h1>${esc(b.promote || 'Untitled')}</h1>
+          ${v.score != null ? `<div class="bignum">${esc(v.score)}<small>/100</small></div>` : '<div class="sub">Validating…</div>'}
+          <p>${esc(v.reason || plan?.title || '')}</p>
+          <div class="sub">${results.length} composition${results.length === 1 ? '' : 's'} · ${esc(sel.compositor || '')} · ${esc(sel.durationSeconds ?? '')}s</div>${curNote}${links}`;
+        setMode('final', '<div class="tiles"></div>');
+        patch(media.firstElementChild, [{ key: sel.id, html: `<div class="tile hero-tile ${arCls(ar)}" style="--n:1"><video src="${esc(fileUrl(sel.file))}" ${sel.thumbnail ? `poster="${esc(fileUrl(sel.thumbnail))}"` : ''} autoplay muted loop playsinline controls preload="auto"></video>
+          <div class="tl"><span class="tag genb">Generated</span>${final ? '<span class="tag ok">selected</span>' : ''}</div></div>` }]);
+        return;
+      }
+
+      if (plan || clips) {
+        const scenes = plan?.scenes || (clips?.scenes || []).map((s) => ({ id: s.sceneId }));
+        const byId = Object.fromEntries((clips?.scenes || []).map((s) => [s.sceneId, s]));
+        const ready = (clips?.scenes || []).filter((s) => s.attempts.some((a) => a.status === 'generated')).length;
+        const total = scenes.reduce((n, s) => n + (Number(s.durationSeconds) || 0), 0);
+        info.innerHTML = `${pill(clips ? `Clips · ${ready}/${scenes.length} ready` : 'Storyboard')}<h1>${esc(plan?.title || b.promote || '')}</h1>
+          <p>${esc(plan?.description || '')}</p>
+          <div class="sub">${scenes.length} scenes · ${total}s · ${esc(ar)}${plan?.confidence != null ? ` · ${Math.round(plan.confidence * 100)}% brief fit` : ''}</div>${curNote}${links}`;
+        setMode('board', '<div class="board"><div class="tiles"></div><div class="timeline"></div></div>');
+        patch(media.querySelector('.tiles'), scenes.map((s, i) => ({ key: s.id, html: sceneTile(s, i, byId[s.id], ar, scenes.length) })));
+        patch(media.querySelector('.timeline'), scenes.map((s, i) => {
+          const cs = byId[s.id]; const done = cs?.attempts?.some((a) => a.status === 'generated');
+          return { key: s.id, html: `<div class="seg-t ${done ? 'done' : cs ? 'gen' : ''}" style="flex-grow:${Number(s.durationSeconds) || 1}"><span>${String(i + 1).padStart(2, '0')}</span><span>${esc(s.durationSeconds ?? '')}s</span></div>` };
+        }));
+        return;
+      }
+
+      if (goals?.goals?.length) {
+        const conf = (id) => scores?.scores?.find((s) => s.goalId === id);
+        const scored = scores?.scores?.length || 0;
+        info.innerHTML = `${pill(scores?.selectedGoalId ? 'Goal selected' : scored ? `Scoring · ${scored}/${goals.goals.length}` : 'Goals written')}<h1>${esc(b.promote || '')}</h1>
+          <p>${scores?.selectedGoalId ? `Winner: ${esc(goals.goals.find((g) => g.id === scores.selectedGoalId)?.title || '')}` : `${goals.goals.length} distinct creative directions, scored against the brief${scores?.scorer ? ` by ${esc(scores.scorer)}` : ''}.`}</p>${curNote}${links}`;
+        setMode('goals', `<div class="goalgrid"></div>`);
+        const g = media.firstElementChild;
+        g.style.setProperty('--cols', goals.goals.length > 4 ? 3 : Math.min(goals.goals.length, 2));
+        patch(g, goals.goals.map((goal, i) => {
+          const s = conf(goal.id); const win = scores?.selectedGoalId === goal.id; const lose = scores?.selectedGoalId && !win;
+          return { key: goal.id, html: `<div class="gcard ${win ? 'win' : ''} ${lose ? 'lose' : ''}" style="animation-delay:${i * 80}ms">
+            <div class="gtop"><span class="mono">${esc(goal.id)}</span><span class="mono">${esc(goal.durationSeconds ?? '')}s · ${esc(goal.scenes?.length ?? 0)} scenes</span>${win ? '<span class="tag ok">winner</span>' : ''}</div>
+            <div class="gt">${esc(goal.title)}</div><div class="gd">${esc(goal.description || '')}</div>
+            <div class="gconf"><div class="bar"><i style="--w:${s ? Math.round(s.confidence * 100) : 0}%"></i></div><span class="mono">${s ? `${Math.round(s.confidence * 100)}%` : 'scoring…'}</span></div></div>` };
+        }));
+        return;
+      }
+
+      if (refs?.references?.length) {
+        const items = refs.references.flatMap((r) => (r.screenshots?.length ? r.screenshots.slice(0, 2).map((s, k) => ({ r, s, key: `${r.id}-${k}` })) : [{ r, s: null, key: r.id }])).slice(0, 12);
+        info.innerHTML = `${pill(`References · ${refs.references.length}`)}<h1>${esc(b.promote || '')}</h1>
+          <p>Proven, current examples for ${esc(b.platform || 'the platform')}. These are other people's videos, used only to learn what works.</p>
+          ${refs.takeaways?.length ? `<div class="sub">${refs.takeaways.slice(0, 3).map((t) => `· ${esc(t)}`).join('<br>')}</div>` : ''}${curNote}${links}`;
+        setMode('refs', '<div class="mosaic"></div>');
+        const m = media.firstElementChild;
+        const n = items.length;
+        m.style.setProperty('--cols', n <= 3 ? n : n <= 6 ? 3 : 4);
+        patch(m, items.map((it, i) => ({ key: it.key, html: refTile(it.r, it.s, i) })));
+        return;
+      }
+
+      // Brief: keywords, platform and the chosen frame, while research starts.
+      const kws = keywords(b);
+      info.innerHTML = `${pill(cur ? `${cur.label} · ${cur.status}` : 'Brief')}<h1>${esc(b.promote || 'Untitled brief')}</h1><p>${esc((b.objective || '').slice(0, 220))}</p>${curNote}${links}`;
+      setMode('brief', '<div class="briefviz"><div class="tiles"></div><div class="kw"></div></div>');
+      patch(media.querySelector('.tiles'), [{ key: 'frame', html: `<div class="tile frame ${arCls(ar)}" style="--n:1"><div class="ph"></div>
+        <div class="sb-text"><div class="ost-big">${esc(b.promote || '')}</div><div class="prompt">${esc(b.platform || '')} · ${esc(ar)}${b.videoType ? ` · ${esc(b.videoType)}` : ''}</div></div>
+        <div class="tl"><span class="tag">frame ${esc(ar)}</span></div></div>` }]);
+      patch(media.querySelector('.kw'), [b.platform, b.videoType, b.domain, ...kws].filter(Boolean).map((k, i) => ({ key: k, html: `<span class="kwp" style="animation-delay:${i * 90}ms">${esc(k)}</span>` })));
+    },
+  };
+}
