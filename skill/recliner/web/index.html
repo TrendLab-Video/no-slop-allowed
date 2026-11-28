@@ -14,7 +14,7 @@
 </main>
 <footer>Recliner · local only · runs/<span id="fr"></span></footer>
 <script type="module">
-import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage } from '/app.js';
+import { runId, esc, $, api, getJson, getRun, poll, changed, flow, header, fileUrl, video, statusTag, fmtNum, arClass, scoreBar, mediaStage, withKeyframeValidations, metrics } from '/app.js';
 
 header(runId ? 'brief' : 'runs');
 $('#fr').textContent = runId || '';
@@ -29,7 +29,7 @@ const MAIN_CFG = [
 ];
 const ADV_CFG = [
   ['clipRetries', 'Clip retries', 'number'], ['finalRetries', 'Final retries', 'number'], ['passScore', 'Pass score (0–100)', 'number'],
-  ['scorer', 'Scorer', ['jev', 'haiku']], ['compositor', 'Compositor', ['blender', 'ffmpeg']],
+  ['scorer', 'Scorer', ['jev', 'haiku']], ['compositor', 'Compositor', ['blender', 'ffmpeg']], ['keyframes', 'Keyframes (still per scene first)', ['true', 'false']],
 ];
 const ALL_CFG = [...MAIN_CFG, ...ADV_CFG];
 const PLATFORMS = ['TikTok', 'Instagram Reels', 'YouTube Shorts', 'YouTube', 'LinkedIn', 'X'];
@@ -182,8 +182,10 @@ async function falStatus(fresh) {
   if (!el) return;
   try {
     const r = await api(`/api/preflight${fresh ? '?fresh=1' : ''}`);
-    const cls = { accepted: 'ok', present: 'info', missing: 'bad', rejected: 'bad' }[r.status] || '';
-    const label = { accepted: 'fal · ready', present: 'fal · key present', missing: 'fal · no key', rejected: 'fal · rejected' }[r.status] || `fal · ${r.status}`;
+    const cls = r.low ? 'retry' : { accepted: 'ok', present: 'info', missing: 'bad', rejected: 'bad' }[r.status] || '';
+    let label = { accepted: 'fal · ready', present: 'fal · key present', missing: 'fal · no key', rejected: 'fal · rejected' }[r.status] || `fal · ${r.status}`;
+    if (r.balance != null) label += ` · $${r.balance.toFixed(2)}`;
+    if (r.low) { r.status = 'low'; r.reason = `Balance is below the $${r.floor} floor: top up at fal.ai before starting`; }
     el.innerHTML = `<span class="tag ${cls}" title="${esc(r.reason || '')}">${esc(label)}</span>${r.status === 'accepted' || r.status === 'present' ? '' : `<span class="small" style="color:#ff6b85">${esc(r.reason || '')}${r.status === 'missing' ? ' · add it under Advanced' : ''}</span>`}`;
   } catch (e) {
     el.innerHTML = `<span class="tag">fal · status unknown</span>`;
@@ -201,6 +203,7 @@ async function live(view, state) {
     stage = mediaStage($('#stage'));
   }
   liveData = await getRun(LIVE_FILES);
+  await withKeyframeValidations(liveData['clips.json']);
   const d = { ...liveData, state };
   stage.render(d);
   if (changed('live', { ...liveData, status: state?.status, cur: state?.currentStage })) $('#detail').innerHTML = renderLive(d);
@@ -226,7 +229,7 @@ function renderLive(d) {
       <div class="card"><div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px"><h2>References</h2><span class="eyebrow" style="margin-left:auto">${refs ? `${refs.references.length} found` : 'pending'}</span></div>
         ${refs ? `<div class="grid">${refs.references.map((r) => `<div style="display:flex;gap:10px;align-items:center">
             ${r.screenshots?.[0] ? `<img src="${fileUrl(r.screenshots[0])}" alt="" style="width:44px;height:58px;object-fit:cover;border-radius:2px;border:1px solid var(--line-soft)">` : ''}
-            <div style="min-width:0"><div style="font-size:13.5px;font-weight:500">${esc(r.title)}</div><div class="metrics"><span>${esc(r.platform)}</span><span><b>${fmtNum(r.metrics?.views)}</b> views</span><span><b>${fmtNum(r.metrics?.likes)}</b> likes</span></div></div></div>`).join('')}</div>`
+            <div style="min-width:0"><div style="font-size:13.5px;font-weight:500">${esc(r.title)}</div><div class="metrics"><span>${esc(r.platform)}</span>${metrics(r.metrics, ['views', 'likes'])}</div></div></div>`).join('')}</div>`
           : '<div class="empty">Searching for proven references…</div>'}</div>
     </div>
     <div class="grid">

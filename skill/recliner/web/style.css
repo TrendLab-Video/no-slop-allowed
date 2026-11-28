@@ -455,3 +455,33 @@ main > * { min-width: 0; }
 .head.slim h1 { font-size: 40px; }
 .head.slim p { font-size: 15px; margin-top: 8px; }
 .tile .tl { right: 8px; }
+
+.top-right { display: flex; gap: 14px; align-items: center; justify-content: flex-end; }
+.top-right .rid { overflow: hidden; text-overflow: ellipsis; }
+.bal { display: inline-flex; align-items: center; gap: 6px; font: 12px var(--mono); color: var(--ink); padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--pill); background: var(--card); white-space: nowrap; }
+.bal:empty { display: none; }
+.bal span { color: var(--muted); }
+.bal i { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+.bal.okb i { background: var(--green); }
+.bal.low { border-color: rgba(255, 45, 85, 0.5); color: #ff6b85; }
+.bal.low i { background: var(--red); }
+
+.tag.kfb { color: #0b0b0b; background: #ffb020 !important; border-color: #ffb020; }
+.tile.kf img { filter: saturate(0.9); }
+.tile.kf::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.14) 50%, transparent 65%); background-size: 250% 100%; animation: shimmer 2.4s linear infinite; pointer-events: none; }
+.seg-t.kf { background: rgba(255, 176, 32, 0.35); border-color: rgba(255, 176, 32, 0.5); }
+.seg-t.end { background: rgba(11, 11, 11, 0.6); border-style: dashed; }
+.tile.endcard { background: #0b0b0b; }
+.tile.endcard .ec { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center; background: radial-gradient(80% 60% at 50% 45%, rgba(59, 63, 255, 0.35), transparent 70%), #0b0b0b; }
+.tile.endcard .ec-t { color: #fff; font-size: clamp(15px, 1.6vw, 24px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
+.errtxt { font: 11.5px/1.45 var(--mono); color: #ff6b85; background: rgba(255, 45, 85, 0.08); border: 1px solid rgba(255, 45, 85, 0.2); border-radius: 8px; padding: 7px 9px; word-break: break-word; }
+.media img { position: absolute; inset: 0; }
+
+/* Real-data hardening: long tags truncate, failed scores read as failures. */
+.item > div:first-child { flex-wrap: wrap; }
+.item .tag, .attempt .tag, .tile .tag, .gcard .tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.item.sel > div:first-child { padding-right: 84px; }
+.bignum.fail { color: #ff8aa0; }
+.stage-info .bignum.fail { color: #ffd0da; }
+.stage-info .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.timeline .seg-t { flex-basis: 0; flex-shrink: 1; }

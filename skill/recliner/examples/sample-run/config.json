@@ -11,8 +11,9 @@
   "clipRetries": 1,
   "finalRetries": 0,
   "passScore": 60,
-  "timeBudgetMinutes": 8,
+  "timeBudgetMinutes": 10,
   "scorer": "haiku",
   "compositor": "blender",
-  "audio": true
+  "audio": true,
+  "keyframes": true
 }

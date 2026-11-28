@@ -65,7 +65,11 @@ export function fmtMs(ms) {
 }
 export const elapsed = (from, to) => (from ? (to ? Date.parse(to) : Date.now()) - Date.parse(from) : null);
 export const fmtNum = (n) => (n == null || n === '' ? '–' : Number(n) >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : Number(n) >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : String(n));
-export const arClass = (ar) => `ar-${String(ar || '9:16').replace(':', '-')}`;
+// Reference proof metrics, skipping nulls (research often only finds views).
+export function metrics(m = {}, keys = ['views', 'likes', 'comments', 'shares'], bold = true) {
+  return keys.filter((k) => m?.[k] != null && m[k] !== '').map((k) => `<span>${bold ? `<b>${fmtNum(m[k])}</b>` : fmtNum(m[k])} ${k}</span>`).join('');
+}
+export const arClass =(ar) => `ar-${String(ar || '9:16').replace(':', '-')}`;
 
 export function scoreBar(score, max = 100, pass) {
   const pct = Math.max(0, Math.min(100, (Number(score) / max) * 100)) || 0;
@@ -102,9 +106,29 @@ export function header(active) {
       <a href="/steps.html${q}" class="${active === 'steps' ? 'on' : ''} ${off}">Steps</a>
       <a href="/result.html${q}" class="${active === 'result' ? 'on' : ''} ${off}">Result</a>
     </nav>
-    <div class="top-right">${runId ? esc(runId) : 'local'}</div>
+    <div class="top-right"><span class="bal" id="bal" title="fal account balance and the minimum a run should start with"></span><span class="rid">${runId ? esc(runId) : 'local'}</span></div>
   </div>`;
   document.body.prepend(el);
+  balance();
+  setInterval(balance, 60000);
+}
+
+// fal balance and floor in the header, from /api/preflight (cached server side). Never shows the key.
+export async function balance() {
+  const el = document.getElementById('bal');
+  if (!el) return;
+  try {
+    const r = await api('/api/preflight');
+    const usd = (n) => `$${Number(n).toFixed(2)}`;
+    if (r.balance != null) {
+      el.className = `bal ${r.low || r.status === 'rejected' ? 'low' : 'okb'}`;
+      el.innerHTML = `<i></i>fal ${usd(r.balance)} <span>· floor ${usd(r.floor)}</span>`;
+    } else {
+      el.className = `bal ${r.status === 'missing' || r.status === 'rejected' ? 'low' : ''}`;
+      el.innerHTML = `<i></i>fal ${esc({ missing: 'no key', rejected: 'rejected', present: 'key set', accepted: 'ok' }[r.status] || r.status)} <span>· floor ${usd(r.floor)}</span>`;
+    }
+    el.title = r.reason || '';
+  } catch { el.textContent = ''; }
 }
 
 // Live workflow diagram: 9 stages, horizontal. Call render(state) on every poll.
@@ -159,6 +183,22 @@ export function needRun() {
   return true;
 }
 
+// Keyframe validations: clips/<sceneId>/<attempt>.keyframe.validation.json beside attempt.keyframe.
+// Found files are cached; missing ones are retried on the next poll. Sets attempt.keyframeValidation.
+const kfCache = {};
+export const kfValidationPath = (kf) => String(kf).replace(/\.(jpe?g|png|webp)$/i, '') + '.validation.json';
+export async function withKeyframeValidations(clips) {
+  const atts = (clips?.scenes || []).flatMap((sc) => sc.attempts || []).filter((a) => a.keyframe);
+  await Promise.all(atts.map(async (a) => {
+    const p = kfValidationPath(a.keyframe);
+    if (!kfCache[p]) { const v = await getJson(p); if (v) kfCache[p] = v; }
+    const v = kfCache[p];
+    if (v) a.keyframeValidation = { score: v.score ?? v.validation?.score, passed: v.passed ?? v.validation?.passed, reason: v.reason ?? v.validation?.reason };
+  }));
+  return clips;
+}
+export const kfBadge = (v) => (v && v.score != null ? `<span class="tag ${v.passed === false ? 'bad' : 'ok'}" title="${esc(v.reason || '')}">key ${esc(v.score)}</span>` : '');
+
 // ---------- Media stage: the best visual available so far, upgraded in place ----------
 // Modes, in order of preference: final/composed video > scene clips (storyboard that clips replace)
 // > goals being scored > reference mosaic > brief keywords. References are always badged REFERENCE
@@ -199,7 +239,7 @@ function keywords(b) {
 
 function refTile(r, shot, i) {
   const m = r.metrics || {};
-  const proof = `<span>${fmtNum(m.views)} views</span><span>${fmtNum(m.likes)} likes</span>`;
+  const proof = metrics(m, ['views', 'likes'], false) || '<span>metrics unavailable</span>';
   const head = `<div class="tl"><span class="tag refb">Reference</span><span class="tag">${esc(r.platform || '')}</span></div>`;
   if (shot) return `<div class="mt ref" style="animation-delay:${i * 60}ms"><img src="${esc(fileUrl(shot))}" alt="" loading="lazy">${head}
     <div class="cap"><b>${esc(r.title || '')}</b><span class="proof">${proof}</span></div></div>`;
@@ -225,6 +265,12 @@ function sceneTile(scene, i, clipScene, ar, total) {
     cls = acc ? 'acc' : v && !v.passed ? 'rej' : '';
     badges = `<div class="tl"><span class="tag genb">Generated</span>${v ? `<span class="tag ${acc ? 'ok' : v.passed ? 'ok' : 'bad'}">${esc(v.score)} · ${acc ? 'accepted' : v.passed ? 'passed' : 'rejected'}</span>` : '<span class="tag">validating</span>'}${retrying ? '<span class="tag retry">↻ retrying</span>' : atts.length > 1 ? `<span class="tag">try ${esc(shown.attempt)}</span>` : ''}</div>`;
     inner = `<video src="${esc(fileUrl(shown.file))}" autoplay muted loop playsinline preload="auto"></video>`;
+  } else if (atts.some((a) => a.keyframe)) {
+    const k = [...atts].reverse().find((a) => a.keyframe);
+    const failed = latest?.status === 'failed';
+    cls = 'kf';
+    inner = `<img src="${esc(fileUrl(k.keyframe))}" alt="">`;
+    badges = `<div class="tl"><span class="tag kfb">Keyframe</span>${kfBadge(k.keyframeValidation)}<span class="tag ${failed ? 'bad' : 'run'}">${failed ? 'clip failed' : 'animating'}</span></div>`;
   } else {
     const failed = latest?.status === 'failed';
     const state = !clipScene ? 'Planned' : failed ? 'Failed' : 'Generating';
@@ -260,7 +306,8 @@ export function mediaStage(container) {
         const final = state.status === 'done' || !!result.selectedId && ['done'].includes(state.stages?.find((s) => s.id === 'final_validation')?.status);
         const v = sel.validation || {};
         info.innerHTML = `${pill(final ? 'Final video' : 'Composed video')}<h1>${esc(b.promote || 'Untitled')}</h1>
-          ${v.score != null ? `<div class="bignum">${esc(v.score)}<small>/100</small></div>` : '<div class="sub">Validating…</div>'}
+          ${v.score != null ? `<div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score)}<small>/100</small></div>
+            <div class="tags">${v.passed === false ? `<span class="tag bad">below pass score${d['config.json']?.passScore != null ? ` ${esc(d['config.json'].passScore)}` : ''}</span>` : v.passed ? '<span class="tag ok">passed</span>' : ''}</div>` : '<div class="sub">Validating…</div>'}
           <p>${esc(v.reason || plan?.title || '')}</p>
           <div class="sub">${results.length} composition${results.length === 1 ? '' : 's'} · ${esc(sel.compositor || '')} · ${esc(sel.durationSeconds ?? '')}s</div>${curNote}${links}`;
         setMode('final', '<div class="tiles"></div>');
@@ -273,16 +320,23 @@ export function mediaStage(container) {
         const scenes = plan?.scenes || (clips?.scenes || []).map((s) => ({ id: s.sceneId }));
         const byId = Object.fromEntries((clips?.scenes || []).map((s) => [s.sceneId, s]));
         const ready = (clips?.scenes || []).filter((s) => s.attempts.some((a) => a.status === 'generated')).length;
-        const total = scenes.reduce((n, s) => n + (Number(s.durationSeconds) || 0), 0);
+        const total = Math.round((scenes.reduce((n, s) => n + (Number(s.durationSeconds) || 0), 0) + (Number(plan?.endCard?.seconds) || 0)) * 10) / 10;
         info.innerHTML = `${pill(clips ? `Clips · ${ready}/${scenes.length} ready` : 'Storyboard')}<h1>${esc(plan?.title || b.promote || '')}</h1>
           <p>${esc(plan?.description || '')}</p>
           <div class="sub">${scenes.length} scenes · ${total}s · ${esc(ar)}${plan?.confidence != null ? ` · ${Math.round(plan.confidence * 100)}% brief fit` : ''}</div>${curNote}${links}`;
         setMode('board', '<div class="board"><div class="tiles"></div><div class="timeline"></div></div>');
-        patch(media.querySelector('.tiles'), scenes.map((s, i) => ({ key: s.id, html: sceneTile(s, i, byId[s.id], ar, scenes.length) })));
-        patch(media.querySelector('.timeline'), scenes.map((s, i) => {
-          const cs = byId[s.id]; const done = cs?.attempts?.some((a) => a.status === 'generated');
-          return { key: s.id, html: `<div class="seg-t ${done ? 'done' : cs ? 'gen' : ''}" style="flex-grow:${Number(s.durationSeconds) || 1}"><span>${String(i + 1).padStart(2, '0')}</span><span>${esc(s.durationSeconds ?? '')}s</span></div>` };
-        }));
+        const end = plan?.endCard && (plan.endCard.text || typeof plan.endCard === 'string') ? (typeof plan.endCard === 'string' ? { text: plan.endCard } : plan.endCard) : null;
+        const n = scenes.length + (end ? 1 : 0);
+        const tiles = scenes.map((s, i) => ({ key: s.id, html: sceneTile(s, i, byId[s.id], ar, n) }));
+        if (end) tiles.push({ key: '__end', html: `<div class="tile endcard ${arCls(ar)}" style="--n:${n}"><div class="ec"><div class="ec-t">${esc(end.text || '')}</div></div>
+          <div class="tl"><span class="tag">End card</span></div><div class="cap"><b>End card${end.seconds ? ` · ${esc(end.seconds)}s` : ''}</b>Added at composition</div></div>` });
+        patch(media.querySelector('.tiles'), tiles);
+        const segs = scenes.map((s, i) => {
+          const cs = byId[s.id]; const done = cs?.attempts?.some((a) => a.status === 'generated'); const kf = cs?.attempts?.some((a) => a.keyframe);
+          return { key: s.id, html: `<div class="seg-t ${done ? 'done' : kf ? 'kf' : cs ? 'gen' : ''}" style="flex-grow:${Number(s.durationSeconds) || 1}"><span>${String(i + 1).padStart(2, '0')}</span><span>${esc(s.durationSeconds ?? '')}s</span></div>` };
+        });
+        if (end) segs.push({ key: '__end', html: `<div class="seg-t end" style="flex-grow:${Number(end.seconds) || 1.5}"><span>end</span><span>${esc(end.seconds ?? '')}${end.seconds ? 's' : ''}</span></div>` });
+        patch(media.querySelector('.timeline'), segs);
         return;
       }
 
