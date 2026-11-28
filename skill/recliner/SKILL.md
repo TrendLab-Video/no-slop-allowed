@@ -116,9 +116,9 @@ recliner rank <runId>
 
 ## Time budget
 
-`config.timeBudgetMinutes` is a hard budget measured from `brief.submittedAt` (`accept-clips`, `score` and `rank` print `elapsedMinutes` and `remainingMinutes`).
+`config.timeBudgetMinutes` is a hard budget measured from `brief.submittedAt` (`score`, `accept-clips` and `rank` print `elapsedMinutes`, `remainingMinutes` and `stopRetrying`).
 
-- Before every retry, check the time. When less than 30% of the budget remains (or less than 4 minutes, whichever is larger), **stop retrying**: run `accept-clips`, `compose` if there is no result yet, `rank`, `export`.
+- Before every retry, check the time. When `stopRetrying` is true (less than 30% of the budget or less than 4 minutes remains, whichever is larger), **stop retrying**: run `accept-clips`, `compose` if there is no result yet, `rank`, `export`.
 - Never start a new fal generation that cannot finish inside the remaining time.
 - Hidden briefs must finish in well under 20 minutes: headless runs use the config `new-run` writes; do not raise effort above it.
 
