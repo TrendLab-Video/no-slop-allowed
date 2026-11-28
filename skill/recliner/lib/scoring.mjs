@@ -145,11 +145,29 @@ export function normaliseStyleTags(goal = {}) {
   return out;
 }
 
+function splitEndCardText(text) {
+  const value = String(text || '').trim();
+  const lines = value.split(/\n+/).map((x) => x.trim()).filter(Boolean);
+  if (lines.length > 1) return [lines[0], lines.slice(1).join(' ')];
+  const explicit = value.match(/^(.*?)(?:\s+[—–|]\s+|\s+-\s+|:\s+)(.+)$/);
+  if (explicit) return [explicit[1], explicit[2]];
+  const idx = value.lastIndexOf('. ');
+  if (idx > 0) return [value.slice(0, idx + 1), value.slice(idx + 2)];
+  return [value, ''];
+}
+
 export function normaliseEndCard(card, brief = {}, intent = null) {
   const c = card || {};
-  const headline = c.headline || (c.text ? String(c.text).split(/[\n:—–-]/)[0].trim() : '') || brief.promote || String(intent?.product || '').split(/[(,.;]/)[0].trim().split(/\s+/).slice(0, 5).join(' ');
-  const subline = c.subline ?? (c.text && c.text.trim() !== headline ? c.text.replace(headline, '').replace(/^[\s:—–-]+/, '').trim() : '');
-  return { headline, subline, durationSeconds: Number(c.durationSeconds ?? c.seconds) || 2 };
+  const [legacyHeadline, legacySubline] = c.text ? splitEndCardText(c.text) : ['', ''];
+  const headline = String(c.headline || legacyHeadline || brief.promote || String(intent?.product || '').split(/[(,.;]/)[0].trim().split(/\s+/).slice(0, 5).join(' ')).trim().replace(/[.]+$/, '');
+  const subline = c.subline ?? legacySubline;
+  const out = { headline, subline, durationSeconds: Number(c.durationSeconds ?? c.seconds) || 2 };
+  // Optional art direction for the compositor. Goals may leave these out; composition then infers them from
+  // styleTags and uses the final frame as the card background.
+  for (const key of ['visualMode', 'palette', 'typography', 'materialCue', 'accent', 'color', 'textColor']) {
+    if (c[key] !== undefined) out[key] = c[key];
+  }
+  return out;
 }
 
 function checkGoals(goals) {

@@ -91,6 +91,46 @@ export function wrap(text, maxChars, maxLines = 3) {
 export const FONT_FILES = ['/System/Library/Fonts/Supplemental/Arial Black.ttf', '/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'];
 const FONT_FAMILY = "'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
+
+// Palette words are creative-direction data, not exact brand tokens. Map them to restrained screen colours so
+// fallbacks still belong to the film rather than to a universal grey template.
+const PALETTE_HEX = [
+  [/\bblack\b|charcoal|noir/, '#101114'], [/\bwhite\b/, '#F7F5EF'], [/\bivory\b|\bcream\b|\bbone\b/, '#F1E8D7'],
+  [/paper|ecru/, '#EFE4D2'], [/caramel|tan|camel/, '#B9824E'], [/brass|gold/, '#C8A45D'],
+  [/brown|leather|chocolate/, '#5B3A27'], [/blue|navy|midnight|pre-dawn/, '#16263D'], [/sky|ice/, '#A8C7DE'],
+  [/sodium|orange|amber/, '#D88432'], [/volt|yellow/, '#E6D84A'], [/red|crimson/, '#A83B3B'],
+  [/pink|magenta/, '#C95787'], [/purple|violet/, '#5A3E75'], [/green|forest/, '#244B37'],
+  [/grey|gray|silver/, '#8B8F94'], [/concrete/, '#6F7276'],
+];
+const DARK_COLOUR = /black|charcoal|noir|brown|leather|chocolate|blue|navy|midnight|pre-dawn|green|forest|purple|violet|concrete/i;
+const LIGHT_COLOUR = /white|ivory|cream|bone|paper|ecru|grey|gray|silver|sky|ice/i;
+
+function paletteHex(words, category) {
+  const list = (Array.isArray(words) ? words : []).map((x) => String(x).toLowerCase()).filter(Boolean);
+  // Respect the order the goal gave the palette in: the first matching colour word wins.
+  for (const word of list) {
+    for (const [pattern, hex] of PALETTE_HEX) {
+      if (pattern.test(word) && category.test(pattern.source)) return hex;
+    }
+  }
+  return null;
+}
+
+export function paletteDesign(words = [], fallback = {}) {
+  const list = Array.isArray(words) ? words.filter(Boolean).map(String) : [];
+  return {
+    background: paletteHex(list, DARK_COLOUR) || fallback.background || '#101114',
+    accent: paletteHex(list, /caramel|tan|camel|brass|gold|sodium|orange|amber|volt|yellow|red|crimson|pink|magenta/i) || paletteHex(list, LIGHT_COLOUR) || fallback.accent || '#C8A45D',
+    text: paletteHex(list, /white|ivory|cream|bone|paper|ecru/i) || fallback.text || '#F7F5EF',
+  };
+}
+
+function inferTypography(modality) {
+  if (['ugc-creator', 'pov', 'mockumentary'].includes(modality)) return 'native';
+  if (['kinetic-type', 'ui-demo', 'athlete-talent', 'lifestyle-montage'].includes(modality)) return 'bold';
+  return 'editorial';
+}
+
 // Caption layout: centred in the lower third, never over the bottom 15% (platform UI) and within 84% of the
 // width; at most 3 balanced lines.
 export function textLayout(text, width, height) {
@@ -232,43 +272,122 @@ export async function loudness(file) {
   return { lufs: Number.isFinite(I) ? I : -Infinity, truePeak: Number.isFinite(peak) ? peak : null };
 }
 
-// End card: brand-tinted background, large headline, small subline, as a short clip that the compositors
-// cross-fade into like any scene. Accepts { headline, subline, durationSeconds } or { text, seconds }.
-export function endCardSpec(card) {
+function splitCardText(text) {
+  const value = String(text || '').trim();
+  const lines = value.split(/\n+/).map((x) => x.trim()).filter(Boolean);
+  if (lines.length > 1) return [lines[0], lines.slice(1).join(' ')];
+  const explicit = value.match(/^(.*?)(?:\s+[—–|]\s+|\s+-\s+|:\s+)(.+)$/);
+  if (explicit) return [explicit[1], explicit[2]];
+  const idx = value.lastIndexOf('. ');
+  if (idx > 0) return [value.slice(0, idx + 1), value.slice(idx + 2)];
+  return [value, ''];
+}
+
+// End card: the last designed beat of the film, not a generic title slide. The default visual mode uses a
+// frame from the final scene; product-texture uses ground-truth product imagery; solid is the explicit fallback.
+export function endCardSpec(card, plan = {}) {
   if (!card) return null;
   let headline = card.headline || '';
   let subline = card.subline || '';
-  if (!headline && card.text) {
-    const m = String(card.text).split(/\s+[—–|-]\s+|:\s+|\.\s+/);
-    headline = m[0];
-    subline = m.slice(1).join(' ');
-  }
+  if (!headline && card.text) [headline, subline] = splitCardText(card.text);
   headline = String(headline).trim().replace(/[.]+$/, '');
   if (!headline) return null;
   const seconds = Number(card.durationSeconds ?? card.seconds) || 1.5;
-  return { headline, subline: String(subline).trim(), seconds: Math.min(4, Math.max(1, seconds)), color: card.color || card.background || null };
+  const palette = Array.isArray(card.palette) && card.palette.length
+    ? card.palette
+    : (Array.isArray(plan?.styleTags?.palette) ? plan.styleTags.palette : []);
+  const design = paletteDesign(palette);
+  const hex = (v) => (/^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? v : null);
+  const mode = ['final-frame', 'product-texture', 'solid'].includes(card.visualMode) ? card.visualMode : 'final-frame';
+  const typography = ['editorial', 'bold', 'native'].includes(card.typography) ? card.typography : inferTypography(plan?.styleTags?.modality);
+  return {
+    headline,
+    subline: String(subline).trim(),
+    seconds: Math.min(4, Math.max(1, seconds)),
+    visualMode: mode,
+    palette,
+    typography,
+    materialCue: card.materialCue || null,
+    color: hex(card.color || card.background) || design.background,
+    accent: hex(card.accent) || design.accent,
+    textColor: hex(card.textColor) || design.text,
+  };
 }
 
-export async function endCardClip(spec, { width, height, fps = 30, file }) {
+async function endCardBackgroundData(image, { width, height, file }) {
+  if (!image || !fs.existsSync(image)) return null;
+  const bgFile = file.replace(/\.mp4$/, '-background.jpg');
+  await ff([
+    '-i', image,
+    '-vf', `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},eq=brightness=-0.10:saturation=0.95`,
+    '-frames:v', '1', '-q:v', '3', bgFile,
+  ]);
+  return fs.readFileSync(bgFile).toString('base64');
+}
+
+export async function endCardClip(spec, { width, height, fps = 30, file, backgroundImage = null }) {
   if (!which('rsvg-convert')) return null;
   const vertical = height > width;
-  const hSize = Math.round(vertical ? width * 0.115 : height * 0.11);
-  const sSize = Math.round(hSize * 0.42);
-  const hLines = wrap(spec.headline, Math.max(6, Math.floor((width * 0.84) / (hSize * 0.62))), 3);
-  const sLines = spec.subline ? wrap(spec.subline, Math.max(10, Math.floor((width * 0.8) / (sSize * 0.55))), 2) : [];
-  const hLH = Math.round(hSize * 1.08), sLH = Math.round(sSize * 1.3);
-  const gap = sLines.length ? Math.round(hSize * 0.55) : 0;
-  const blockH = hLines.length * hLH + gap + sLines.length * sLH;
-  let y = Math.round(height / 2 - blockH / 2 + hSize * 0.8);
-  const bg = /^#[0-9a-f]{3,8}$/i.test(spec.color || '') ? spec.color : '#101114';
-  const head = hLines.map((l, i) => `<tspan x="${width / 2}" y="${y + i * hLH}">${esc(l)}</tspan>`).join('');
-  y += (hLines.length - 1) * hLH + gap + (sLines.length ? sLH * 0.75 : 0);
-  const sub = sLines.map((l, i) => `<tspan x="${width / 2}" y="${Math.round(y + i * sLH)}">${esc(l)}</tspan>`).join('');
+  const bold = spec.typography === 'bold';
+  const native = spec.typography === 'native';
+  const hSize = Math.round((vertical ? width : height) * (bold ? 0.086 : native ? 0.078 : 0.072));
+  const sSize = Math.round(hSize * (bold ? 0.46 : 0.42));
+  const display = native ? spec.headline : spec.headline.toUpperCase();
+  const widthFactor = native ? 0.58 : 0.66;
+  const hLines = wrap(display, Math.max(6, Math.floor((width * 0.82) / (hSize * widthFactor))), 3);
+  const sLines = spec.subline ? wrap(spec.subline, Math.max(10, Math.floor((width * 0.78) / (sSize * 0.54))), 2) : [];
+  const hLH = Math.round(hSize * 1.06), sLH = Math.round(sSize * 1.28);
+  const ruleW = Math.round(Math.min(width * 0.12, hSize * 2.4));
+  const ruleH = Math.max(2, Math.round(hSize * 0.035));
+  const ruleGap = Math.round(hSize * 0.52);
+  const subGap = sLines.length ? Math.round(hSize * 0.42) : 0;
+  const blockH = ruleH + ruleGap + hLines.length * hLH + subGap + sLines.length * sLH;
+  const centerY = Math.round(height * (vertical ? 0.74 : 0.72));
+  const ruleY = Math.round(centerY - blockH / 2);
+  const firstBaseline = Math.round(ruleY + ruleH + ruleGap + hSize * 0.78);
+  const tracking = bold ? hSize * 0.012 : native ? hSize * 0.005 : hSize * 0.042;
+  const headX = width / 2 - tracking / 2;
+  const head = hLines.map((l, i) => `<tspan x="${headX}" y="${firstBaseline + i * hLH}">${esc(l)}</tspan>`).join('');
+  const subY = firstBaseline + (hLines.length - 1) * hLH + subGap + sLH * 0.72;
+  const sub = sLines.map((l, i) => `<tspan x="${width / 2}" y="${Math.round(subY + i * sLH)}">${esc(l)}</tspan>`).join('');
+  const fontWeight = bold ? 800 : 600;
+
+  let imageData = null;
+  try {
+    imageData = backgroundImage ? await endCardBackgroundData(backgroundImage, { width, height, file }) : null;
+  } catch {
+    imageData = null;
+  }
+
+  const bg = spec.color || '#101114';
+  const textFill = spec.textColor || '#F7F5EF';
+  const accent = spec.accent || '#C8A45D';
+  spec.backgroundUsed = Boolean(imageData);
+  const imageLayer = imageData
+    ? `<image href="data:image/jpeg;base64,${imageData}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice"/>`
+    : `<rect width="100%" height="100%" fill="${bg}"/><rect width="100%" height="100%" fill="url(#brandGlow)"/>`;
+  const scrim = imageData
+    ? `<rect width="100%" height="100%" fill="#000" opacity="0.12"/><rect width="100%" height="100%" fill="url(#legibility)"/>`
+    : '';
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-  <defs><radialGradient id="g" cx="0.5" cy="0.45" r="0.75"><stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/><stop offset="1" stop-color="#000000" stop-opacity="0.35"/></radialGradient></defs>
-  <rect width="100%" height="100%" fill="${bg}"/><rect width="100%" height="100%" fill="url(#g)"/>
-  <text font-family="${FONT_FAMILY}" font-weight="900" font-size="${hSize}" fill="#ffffff" text-anchor="middle" letter-spacing="${(-hSize * 0.01).toFixed(1)}">${head}</text>
-  ${sub ? `<text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="500" font-size="${sSize}" fill="#ffffff" fill-opacity="0.82" text-anchor="middle">${sub}</text>` : ''}
+  <defs>
+    <radialGradient id="brandGlow" cx="0.5" cy="0.44" r="0.78"><stop offset="0" stop-color="${accent}" stop-opacity="0.16"/><stop offset="1" stop-color="#000000" stop-opacity="0.36"/></radialGradient>
+    <linearGradient id="legibility" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0.03"/><stop offset="0.48" stop-color="#000" stop-opacity="0.16"/>
+      <stop offset="0.72" stop-color="#000" stop-opacity="0.56"/><stop offset="1" stop-color="#000" stop-opacity="0.76"/>
+    </linearGradient>
+    <filter id="typeShadow" x="-20%" y="-80%" width="140%" height="260%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="${Math.max(1, Math.round(hSize * 0.045))}" result="blur"/>
+      <feComponentTransfer in="blur" result="shadow"><feFuncA type="linear" slope="0.65"/></feComponentTransfer>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  ${imageLayer}
+  ${scrim}
+  <rect x="${Math.round(width / 2 - ruleW / 2)}" y="${ruleY}" width="${ruleW}" height="${ruleH}" fill="${accent}" fill-opacity="0.9"/>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="${fontWeight}" font-size="${hSize}" fill="${textFill}" text-anchor="middle" letter-spacing="${tracking.toFixed(1)}" filter="url(#typeShadow)">${head}</text>
+  ${sub ? `<text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="500" font-size="${sSize}" fill="${textFill}" fill-opacity="0.84" text-anchor="middle" letter-spacing="${(sSize * 0.018).toFixed(1)}" filter="url(#typeShadow)">${sub}</text>` : ''}
 </svg>`;
   const png = file.replace(/\.mp4$/, '.png');
   fs.writeFileSync(file.replace(/\.mp4$/, '.svg'), svg);

@@ -47,14 +47,14 @@ Presets live in `lib/effort.mjs`. Effort 1 must finish a whole run in about 3 mi
 `{ references: [{ id, kind: reference|brand, title, url, platform, metrics: { views, likes, comments, shares }, why, structure: { durationSeconds, scenes: [string], pacing, music, hook }, screenshots: [path] }], takeaways: [string], diversityNote }`
 
 **`goals.json`**
-`{ goals: [{ id, title, creativeThesis, description, realWorldGrounding: [string], creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds }, styleTags: { modality, hookType, openingAction, palette: [3 colour words], pacing, cameraLanguage, musicGenre }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
+`{ goals: [{ id, title, creativeThesis, description, realWorldGrounding: [string], creativeGuidance, durationSeconds, aspectRatio, style, referenceIds: [id], audio: { musicPrompt, voiceover }, endCard: { headline, subline, durationSeconds, visualMode?, typography?, materialCue?, accent?, palette? }, styleTags: { modality, hookType, openingAction, palette: [3 colour words], pacing, cameraLanguage, musicGenre }, scenes: [{ id, index, durationSeconds, description, keyframePrompt, prompt, onScreenText }] }] }`
 `styleTags` is required (controlled vocabulary for `modality` and `hookType` in steps/goals.md); `score` copies it into `plan.json`, deriving missing fields from `style`, `description` and the scenes (listed in `styleTags.derived`), and `style-memory` records it per run.
 `keyframePrompt` is the still (image model); `prompt` is the motion from that still (image-to-video), or the text-to-video prompt when `config.keyframes` is false.
 
 **`scores.json`**
 `{ scorer, question, scores: [{ goalId, confidence: 0..1, reason }], selectedGoalId }`
 
-**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. `score` guarantees `endCard` and a `keyframePrompt` per scene, and adds `productImages: [path]` (run-relative, up to 3): the brand reference's selected front/hero product photos, the ground truth for the product's look and the image references for keyframe generation. The brand entry in `references.json` carries them as `productImages` (plus `rejectedImages: [{ path, reason }]`). This is the input to clip generation.
+**`plan.json`**: the selected goal, unchanged in shape, plus `{ goalId, confidence }`. `score` guarantees `endCard` and a `keyframePrompt` per scene, preserving optional end-card art direction (`visualMode`, `typography`, `materialCue`, `accent`, `palette`), and adds `productImages: [path]` (run-relative, up to 3): the brand reference's selected front/hero product photos, the ground truth for the product's look and the image references for keyframe generation. The brand entry in `references.json` carries them as `productImages` (plus `rejectedImages: [{ path, reason }]`). This is the input to clip generation. End cards default to `visualMode: final-frame` during composition, so the closing card inherits the film's palette, texture and product presence instead of falling back to a generic neutral template.
 
 **`clips.json`**
 `{ scenes: [{ sceneId, acceptedKeyframe, acceptedAttempt, attempts: [{ attempt, keyframe: { file: "clips/<sceneId>/<attempt>.keyframe.png", prompt, model, requestId, status: generating|generated|failed, error, validation }, file: "clips/<sceneId>/<attempt>.mp4", model, prompt, steering, requestId, status: generating|generated|failed, error, durationSeconds, validation: { score: 0..100, passed, reason, steering } }] }] }`
@@ -65,13 +65,13 @@ Keyframe validators write `clips/<sceneId>/<attempt>.keyframe.validation.json` (
 Validation sub-agents run in parallel, so they never write `clips.json`: each writes `clips/<sceneId>/<attempt>.validation.json` (`{ sceneId, attempt, score, passed, reason, steering }`) and `accept-clips` merges them.
 
 **`result.json`**
-`{ results: [{ id, attempt, file: "compositions/<attempt>/final.mp4", thumbnail, compositor, durationSeconds, validation: { score: 0..100, passed, reason, breakdown: { hook, briefFit, craft, originality, slop }, slopHits, biggestProblem }, technicalValidation: { status, report, repairPlan, contactSheet, blockerCount, majorCount, minorCount, wallTimeMs, mode } }], selectedId }`
+`{ results: [{ id, attempt, file: "compositions/<attempt>/final.mp4", thumbnail, compositor, durationSeconds, endCard: { headline, subline, seconds, visualMode, typography, palette, background: { mode, source, at } }, validation: { score: 0..100, passed, reason, breakdown: { hook, briefFit, craft, originality, slop }, slopHits, biggestProblem }, technicalValidation: { status, report, repairPlan, contactSheet, blockerCount, majorCount, minorCount, wallTimeMs, mode } }], selectedId }`
 `selectedId` is the highest scoring result.
 The final validator writes `compositions/<attempt>/validation.json` (`{ id, attempt, score, passed, reason, breakdown, slopHits, biggestProblem, repairs: [{ sceneId, steering }] }`) and `rank` merges it.
 
 `technicalValidation` is written by `validate-output`. It is deterministic ffmpeg/audio validation, separate from the creative validator's `validation` score. The report and repair plan live beside the composition (`compositions/<attempt>/validation_report.json`, `repair_plan.json`, `contact-sheet.png`) and are copied into `outputs/<brief-slug>/` by `export` when present. In video-only mode Blender scene metadata gates are skipped because this pipeline uses Blender as a compositor rather than a scene-generation substrate.
 
-**`creative_rationale.json`** is written by `export` into both the run folder and `outputs/<brief-slug>/`. It compresses the judging story into one artifact: brief, one-sentence creative thesis, real-world grounding, selected goal, scoring evidence, rejected alternatives, references used, compositor and validation evidence. It is explanatory evidence, not a generation input.
+**`creative_rationale.json`** is written by `export` into both the run folder and `outputs/<brief-slug>/`. It compresses the judging story into one artifact: brief, one-sentence creative thesis, real-world grounding, selected goal, end-card art direction/background provenance, scoring evidence, rejected alternatives, references used, compositor and validation evidence. It is explanatory evidence, not a generation input.
 
 **`traces.json`**: shape of `traces.example.json`, appended through `appendTrace`. Each step also carries `stage` and `at`.
 

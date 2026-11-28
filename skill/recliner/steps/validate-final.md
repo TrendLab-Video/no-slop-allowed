@@ -27,6 +27,7 @@ If the fal skills **fal-video-production** (its review of the finished ad), **vi
    - illegible typography, text outside safe areas, text over busy backgrounds
    - awkward AI-generated hands or faces, garbled or invented text, misshapen or wrong logos (the briefed brand's real mark on the product is correct and is never a hit); morphing objects
    - scenes that set something up and never pay it off; no product hero beat where the product and mark are unmistakable
+   - an end card that looks like a generic template: it shares no palette, texture, typography energy, product presence or reference-native language with the film before it
    - default "slow zoom over a generated image" energy
    - stock-like people, perfect-smile crowds
    - output that looks like a template rather than a response to this brief
@@ -34,7 +35,7 @@ If the fal skills **fal-video-production** (its review of the finished ad), **vi
    - one consistent voice; music ducked under any voiceover; no silent gaps or abrupt audio cuts
    - text legible, one element at a time, inside the safe area, on screen long enough to read
    - cuts land on beats or actions; no repeated or near-identical shots
-   - a plain end card with the product's real name, set in type
+   - an end card with the product's real name, set in type, that visually belongs to the film: normally built from the final frame or product texture, inheriting the established palette and typography rather than dropping to a neutral template
 4. Score each part 0–100, then the overall score:
 
 ```text

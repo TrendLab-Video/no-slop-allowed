@@ -52,6 +52,7 @@ function buildCreativeRationale(runId, brief, selected) {
       style: plan.style || null,
       styleTags: plan.styleTags || null,
     },
+    endCard: selected.endCard || plan.endCard || null,
     decisionEvidence: {
       scorer: scores.scorer || null,
       selectedReason: selectedScore?.reason || null,

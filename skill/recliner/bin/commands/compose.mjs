@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { readJson, runPath } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 import * as ffmpeg from '../../lib/compositors/ffmpeg.mjs';
@@ -23,6 +24,36 @@ export function pickAttempt(sceneClips, runId) {
   };
   const scored = ok.map((a) => [a, score(a)]).filter(([, sc]) => sc !== null).sort((x, y) => y[1] - x[1]);
   return scored[0]?.[0] || ok[ok.length - 1] || null;
+}
+
+// Pick the visual basis for the end card. Final-frame is the default because it guarantees continuity with the
+// film; product-texture is available when the goal explicitly wants a cleaner product/material close-up. The
+// extracted frame is only an intermediate — the source identity is what matters for traces.
+async function endCardBackground(runId, plan, segments, card, workDir) {
+  if (!card || card.visualMode === 'solid') return null;
+  const product = (Array.isArray(plan.productImages) ? plan.productImages : [])
+    .map((rel) => ({ rel, file: runPath(runId, rel) }))
+    .find((x) => fs.existsSync(x.file));
+
+  if (card.visualMode !== 'product-texture') {
+    const last = segments[segments.length - 1];
+    if (last?.file && fs.existsSync(last.file)) {
+      const still = path.join(workDir, 'endcard-final-frame.jpg');
+      try {
+        const duration = (await ffmpeg.probeDuration(last.file)) || last.seconds || 1;
+        const at = Math.max(0, duration - 0.18);
+        await ffmpeg.ff(['-ss', at.toFixed(3), '-i', last.file, '-frames:v', '1', '-q:v', '2', still]);
+        if (fs.existsSync(still)) {
+          const source = path.relative(runPath(runId), last.file);
+          return { file: still, mode: 'final-frame', source: source.startsWith('..') ? last.file : source, at: +at.toFixed(2) };
+        }
+      } catch {
+        // Fall through to product imagery or the designed solid card.
+      }
+    }
+  }
+  if (product) return { file: product.file, mode: 'product-texture', source: product.rel };
+  return null;
 }
 
 export default async function ([runId], flags) {
@@ -60,11 +91,17 @@ export default async function ([runId], flags) {
   const { width, height } = ffmpeg.dimensions(aspect, config.outputLongEdge || 1920);
   const fps = 30;
 
-  // End card (plan.endCard, either contract shape): a designed card the last scene cross-fades into.
-  const card = ffmpeg.endCardSpec(plan.endCard);
+  // End card (plan.endCard, either contract shape): a designed final beat the last scene cross-fades into.
+  // It inherits the goal palette/typography and uses the end of the final scene as its background by default.
+  const card = ffmpeg.endCardSpec(plan.endCard, plan);
   if (card) {
     try {
-      const file = await ffmpeg.endCardClip({ ...card, seconds: card.seconds + TRANSITION }, { width, height, fps, file: runPath(runId, dir, 'work', 'endcard.mp4') });
+      const background = await endCardBackground(runId, plan, segments, card, workDir);
+      const renderCard = { ...card, seconds: card.seconds + TRANSITION };
+      const file = await ffmpeg.endCardClip(renderCard, { width, height, fps, file: runPath(runId, dir, 'work', 'endcard.mp4'), backgroundImage: background?.file || null });
+      card.background = background && renderCard.backgroundUsed
+        ? { mode: background.mode, source: background.source, at: background.at ?? null }
+        : { mode: 'solid', intended: background?.mode || card.visualMode };
       if (file) {
         // The last scene now overlaps the card, so it gains the transition (as far as its clip allows).
         const last = segments[segments.length - 1];
@@ -135,7 +172,8 @@ export default async function ([runId], flags) {
 
   const entry = {
     id: `comp-${n}`, attempt: n, file: `${dir}/final.mp4`, thumbnail: `${dir}/thumb.jpg`, compositor,
-    durationSeconds: out.durationSeconds, width, height, clips: used, endCard: card ? { headline: card.headline, subline: card.subline, seconds: card.seconds } : null,
+    durationSeconds: out.durationSeconds, width, height, clips: used,
+    endCard: card ? { headline: card.headline, subline: card.subline, seconds: card.seconds, visualMode: card.visualMode, typography: card.typography, palette: card.palette, background: card.background } : null,
     audio, notes, validation: null,
   };
   // Append only our entry under the lock, so validation that rank merged into other entries is kept.
