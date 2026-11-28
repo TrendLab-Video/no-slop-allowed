@@ -3,12 +3,12 @@ import { readJson, runPath } from '../../lib/store.mjs';
 import { updateJson, appendTraceLocked } from '../../lib/lock.mjs';
 import {
   run as falRun, download, toolCall, videoArgs, imageArgs, imageToVideoModel, imageToVideoArgs, dataUri,
-  checkAccount, getBalance, minBalance, VIDEO_MODELS, IMAGE_MODEL, REFERENCE_IMAGE_MODEL,
+  checkAccount, getBalance, minBalance, VIDEO_MODELS, IMAGE_MODEL, PRODUCT_IMAGE_MODEL,
 } from '../../lib/fal.mjs';
 import { probeDuration, kenBurns, dimensions } from '../../lib/compositors/ffmpeg.mjs';
 import { generateAssets } from '../../lib/audio.mjs';
 
-export const describe = 'generate-clips <runId> [--keyframes-only] [--scene id] [--steering "..."] [--no-keyframes]: keyframe stills, then image-to-video per scene in parallel; updates clips.json';
+export const describe = 'generate-clips <runId> [--keyframes-only] [--scene id | --scenes a,b] [--steering "..."] [--no-keyframes]: keyframe stills (from plan.productImages when set), then image-to-video per scene in parallel; updates clips.json';
 
 // Bounded parallel map.
 export async function mapLimit(items, limit, fn) {
@@ -23,7 +23,9 @@ const clean = (t) => String(t || '').trim().replace(/[\s.,;:]+$/, '');
 // The briefed brand's real mark on the product is wanted; invented or garbled text is not.
 const VIDEO_SUFFIX = 'Single continuous take, no cuts. No captions, no garbled or fake text, no watermarks.';
 const STILL_SUFFIX = 'No captions, no garbled or fake text, no watermarks.';
-const withSteering = (p, steering) => (steering ? `${p} Important correction from review: ${clean(steering)}.` : p);
+// Steering goes first so a retry visibly changes the shot (models weight the start of the prompt most).
+const withSteering = (p, steering) => (steering ? `${clean(steering)}. This is the required change from the previous attempt. ${p}` : p);
+export const PRODUCT_LOCK = 'The product must match the reference images exactly: same shape, colours, controls and markings.';
 
 // Text-to-video prompt (config.keyframes false, or the fallback when the still or image-to-video fails).
 export function scenePrompt(plan, scene, steering) {
@@ -33,13 +35,16 @@ export function scenePrompt(plan, scene, steering) {
 }
 
 // Still keyframe prompt: the scene's first frame, composed and lit like a finished shot.
-export function keyframePrompt(plan, scene, steering, { withReference = false } = {}) {
+export function keyframePrompt(plan, scene, steering, { withProduct = false } = {}) {
   let p = clean(scene.keyframePrompt || scene.prompt || scene.description);
   if (plan.style) p += `. Style: ${clean(plan.style)}`;
   p += `. Single cinematic still frame, sharp focus on the subject, professional composition, photoreal. ${STILL_SUFFIX}`;
-  if (withReference) p = `Keep the same product, people, wardrobe, colour palette and lighting as the reference image, in a new shot: ${p}`;
+  if (withProduct) p += ` ${PRODUCT_LOCK}`;
   return withSteering(p, steering);
 }
+
+// plan.productImages (run-relative paths of real product photos) that exist on disk.
+export const productImages = (runId, plan) => (Array.isArray(plan.productImages) ? plan.productImages : []).filter((f) => typeof f === 'string' && fs.existsSync(runPath(runId, f)));
 
 // Image-to-video prompt: the motion from the still (scene.prompt per the contract).
 export function motionPrompt(plan, scene, steering) {
@@ -81,7 +86,10 @@ export default async function ([runId], flags) {
 
   const model = config.videoModel || VIDEO_MODELS[config.effort || 3];
   const imageModel = config.imageModel || IMAGE_MODEL;
-  const referenceModel = config.referenceImageModel === false ? null : config.referenceImageModel || REFERENCE_IMAGE_MODEL;
+  const productModel = config.productImageModel || PRODUCT_IMAGE_MODEL;
+  const products = productImages(runId, plan);
+  // Real product photos as data URIs, encoded once and shared by every scene's keyframe call.
+  const productUrls = products.slice(0, 4).map((f) => dataUri(runPath(runId, f)));
   const keyframesOnly = !!flags['keyframes-only'];
   const useKeyframes = keyframesOnly || (config.keyframes !== false && !flags['no-keyframes']);
   const aspectRatio = config.aspectRatio || plan.aspectRatio || readJson(runId, 'brief.json', {})?.aspectRatio || '16:9';
@@ -89,8 +97,11 @@ export default async function ([runId], flags) {
   // Per-clip fal budget; past it the request is cancelled and the scene falls back to a Ken Burns still.
   const clipTimeoutSeconds = Number(config.clipTimeoutSeconds) || 240;
   const scenes = [...plan.scenes].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-  const targets = flags.scene ? scenes.filter((s) => s.id === flags.scene) : scenes;
-  if (!targets.length) throw new Error(`Scene ${flags.scene} not in plan.json`);
+  // --scene id (one) or --scenes a,b (several, e.g. video for the scenes whose stills passed).
+  const wanted = [flags.scene, flags.scenes].filter((x) => typeof x === 'string').flatMap((x) => x.split(',')).map((x) => x.trim()).filter(Boolean);
+  const targets = wanted.length ? scenes.filter((s) => wanted.includes(s.id)) : scenes;
+  const missing = wanted.filter((id) => !scenes.some((s) => s.id === id));
+  if (missing.length || !targets.length) throw new Error(`Scene(s) ${missing.join(', ') || wanted.join(', ')} not in plan.json`);
   const steering = typeof flags.steering === 'string' ? flags.steering : null;
 
   // Several generate-clips processes may run at once (parallel per-scene retries), and accept-clips merges
@@ -117,11 +128,7 @@ export default async function ([runId], flags) {
   // Plan every job under one lock: animate an existing still (same attempt if it has no video yet), or reserve
   // a new attempt number. A steering retry makes a fresh still unless acceptedKeyframe pins one.
   const jobs = [];
-  let referenceStill = null; // the first scene's still, the reference for the others' keyframes
   edit((doc) => {
-    const first = doc.scenes.find((x) => x.sceneId === scenes[0].id);
-    const firstStill = first && reusableKeyframe(runId, first);
-    if (firstStill) referenceStill = { file: firstStill.keyframe.file, url: firstStill.keyframe.url || null };
     for (const scene of targets) {
       const s = sceneOf(doc, scene.id);
       const reuse = useKeyframes && !keyframesOnly && (!steering || s.acceptedKeyframe != null) ? reusableKeyframe(runId, s) : null;
@@ -145,8 +152,8 @@ export default async function ([runId], flags) {
   });
 
   // Start the music bed (and voiceover) alongside the clips so compose finds them cached.
+  // Not for single-scene retries (they run in parallel and would each start it); the result is cached.
   const audioJob = flags.scene || keyframesOnly || config.audio === false ? null : generateAssets(runId, plan, config).catch((e) => ({ notes: [e.message] }));
-
   // A 401/403 (bad key, locked or exhausted account) or the spend floor stops every job that has not started yet.
   let stopError = null;
   const fail = (job, error, notes = []) => {
@@ -154,24 +161,20 @@ export default async function ([runId], flags) {
     return { sceneId: job.scene.id, attempt: job.attempt, status: 'failed', file: null, error };
   };
 
-  // Scene 1's new still is the reference for the others, so they wait for it (cheap: a few seconds).
-  let resolveFirst;
-  const firstStillReady = new Promise((r) => (resolveFirst = r));
-  const firstJob = jobs.find((j) => j.scene.id === scenes[0].id && useKeyframes && !j.keyframe);
-  if (!firstJob) resolveFirst(referenceStill);
-
+  // Keyframe: with plan.productImages, a multi-reference edit model works from the real product photos for every
+  // scene (independently, so scenes keep their own framing and steering takes effect); otherwise text-to-image.
   async function makeKeyframe(job, traceBase) {
     const sid = job.scene.id;
-    const isFirst = job === firstJob;
-    const ref = isFirst || !referenceModel ? null : await firstStillReady;
-    const refUrl = ref ? ref.url || (hasFile(runId, ref.file) ? dataUri(runPath(runId, ref.file)) : null) : null;
-    const m = refUrl ? referenceModel : imageModel;
-    const prompt = keyframePrompt(plan, job.scene, steering, { withReference: !!refUrl });
-    update(sid, job.attempt, {}, { status: 'generating', model: m, prompt, reference: ref?.file || null });
-    let rec = await falRun(m, imageArgs(m, { prompt, aspectRatio }, refUrl ? [refUrl] : null), { timeoutMs: 3 * 60000 });
+    const withProduct = productUrls.length > 0;
+    const m = withProduct ? productModel : imageModel;
+    const prompt = keyframePrompt(plan, job.scene, steering, { withProduct });
+    update(sid, job.attempt, {}, { status: 'generating', model: m, prompt, productImages: withProduct ? products : undefined });
+    let rec = await falRun(m, imageArgs(m, { prompt, aspectRatio }, withProduct ? productUrls : null), { timeoutMs: 3 * 60000 });
+    rec.prompt = prompt;
+    if (withProduct) rec.arguments = { ...rec.arguments, image_urls: products }; // trace the paths, not the data URIs
     const calls = [rec];
-    // A failed reference edit falls back to a plain still from the base model.
-    if (rec.status !== 'ok' && refUrl && !rec.stop) {
+    // A failed product edit falls back to a plain text-to-image still.
+    if (rec.status !== 'ok' && withProduct && !rec.stop) {
       const plain = keyframePrompt(plan, job.scene, steering);
       rec = await falRun(imageModel, imageArgs(imageModel, { prompt: plain, aspectRatio }), { timeoutMs: 3 * 60000 });
       rec.prompt = plain;
@@ -183,33 +186,30 @@ export default async function ([runId], flags) {
     if (rec.status === 'ok' && rec.url) {
       try {
         await download(rec.url, runPath(runId, rel));
-        still = { file: rel, url: rec.url, prompt: rec.prompt || prompt, model: rec.endpoint, requestId: rec.requestId, reference: rec.endpoint === referenceModel ? ref?.file || null : null };
+        still = { file: rel, url: rec.url, prompt: rec.prompt, model: rec.endpoint, requestId: rec.requestId, productImages: rec.endpoint === productModel ? products : null };
       } catch (err) { rec.error = `download: ${err.message}`; }
     }
     update(sid, job.attempt, {}, still ? { ...still, status: 'generated', error: null } : { status: 'failed', error: rec.error || 'no image url' });
     appendTraceLocked(runId, {
-      ...traceBase, name: `keyframe:${sid}#${job.attempt}`, model: rec.endpoint, prompt: rec.prompt || prompt,
-      tool_calls: calls.map(toolCall), outputs: { file: still?.file || null, reference: still?.reference || null, error: still ? null : rec.error, cost: rec.cost },
+      ...traceBase, name: `keyframe:${sid}#${job.attempt}`, model: rec.endpoint, prompt: rec.prompt,
+      tool_calls: calls.map(toolCall), outputs: { file: still?.file || null, productImages: still?.productImages || null, error: still ? null : rec.error, cost: rec.cost, costEstimated: rec.costEstimated },
       duration_ms: calls.reduce((a, c) => a + c.duration_ms, 0),
     });
-    if (isFirst) resolveFirst(still ? { file: still.file, url: still.url } : referenceStill);
     return still;
   }
 
-  // Jobs run in scene order, so scene 1's still starts first; the others then wait on it.
   const results = await mapLimit(jobs, parallelism, async (job) => {
     const sid = job.scene.id;
     const traceBase = { stage: 'clips', inputs: { sceneId: sid, attempt: job.attempt, steering, aspectRatio, seconds: job.seconds, resolution: job.resolution, keyframesOnly } };
     const notes = [];
     if (stopError) {
-      if (job === firstJob) resolveFirst(referenceStill);
       appendTraceLocked(runId, { ...traceBase, name: `generate-clip:${sid}#${job.attempt}`, model, outputs: { status: 'failed', error: stopError, skipped: true } });
       return fail(job, stopError);
     }
 
     // 1. Keyframe still (unless animating an existing one).
     if (useKeyframes && !job.keyframe) {
-      try { job.keyframe = await makeKeyframe(job, traceBase); } finally { if (job === firstJob) resolveFirst(referenceStill); }
+      job.keyframe = await makeKeyframe(job, traceBase);
       if (stopError) return fail(job, stopError);
       if (!job.keyframe) notes.push('keyframe failed');
     }
@@ -289,7 +289,7 @@ export default async function ([runId], flags) {
   const produced = results.length - failed.length;
   const spent = balanceBefore !== null && balanceAfter !== null ? Math.round((balanceBefore - balanceAfter) * 10000) / 10000 : null;
   const summary = {
-    model, imageModel: useKeyframes ? imageModel : null, referenceModel: useKeyframes ? referenceModel : null, keyframesOnly,
+    model, imageModel: useKeyframes ? (products.length ? productModel : imageModel) : null, productImages: products, keyframesOnly,
     scenes: results.length, produced, failed: failed.length, stopped: stopError, clipTimeoutSeconds,
     balanceBefore, balanceAfter, floor: minBalance(), spent, seconds: Math.round((Date.now() - started) / 1000),
     note: 'spent is the account balance delta: it lags by a few seconds and includes any concurrent fal use on the account',
