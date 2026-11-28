@@ -69,13 +69,15 @@ Upload every rendered video into its matching slot on the hackathon portal. **Do
 
 | Hidden brief | Video | Uploaded on portal? | Trace path in repo |
 |---|---:|---|---|
-| Louis Vuitton | 1 | pending upload (`outputs/hidden-01-louis-vuitton/final.mp4` locally) | `outputs/hidden-01-louis-vuitton/traces.json` |
-| Louis Vuitton | 2 | pending upload (`outputs/hidden-01-louis-vuitton-2/final.mp4` locally) | `outputs/hidden-01-louis-vuitton-2/traces.json` |
-| Louis Vuitton | 3 | pending upload (`outputs/hidden-01-louis-vuitton-3/final.mp4` locally) | `outputs/hidden-01-louis-vuitton-3/traces.json` |
-| No Slop Allowed | 1 | pending upload (`outputs/hidden-02-no-slop-allowed/final.mp4` locally) | `outputs/hidden-02-no-slop-allowed/traces.json` |
-| No Slop Allowed | 2 | pending upload (`outputs/hidden-02-no-slop-allowed-2/final.mp4` locally) | `outputs/hidden-02-no-slop-allowed-2/traces.json` |
-| Drake | 1 | pending upload (`outputs/hidden-03-drake/final.mp4` locally) | `outputs/hidden-03-drake/traces.json` |
+| Louis Vuitton | 1 | yes | `outputs/hidden-01-louis-vuitton/traces.json` |
+| Louis Vuitton | 2 | yes | `outputs/hidden-01-louis-vuitton-2/traces.json` |
+| Louis Vuitton | 3 | yes | `outputs/hidden-01-louis-vuitton-3/traces.json` |
+| No Slop Allowed | 1 | yes | `outputs/hidden-02-no-slop-allowed/traces.json` |
+| No Slop Allowed | 2 | yes | `outputs/hidden-02-no-slop-allowed-2/traces.json` |
+| Drake | 1 | yes | `outputs/hidden-03-drake/traces.json` |
 | Rehearsal evidence | sample | not a submission slot | `outputs/rehearsal/traces.json` |
+
+An optional extra demo video (`recliner-hidden-demo.mp4`) was uploaded on the portal; videos are intentionally not committed to Git.
 
 Adjust the rows to the exact per-brief video counts shown on the Task page when hidden briefs unlock.
 
