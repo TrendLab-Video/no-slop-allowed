@@ -1,0 +1,22 @@
+{
+  "artifact_type": "validation_standards",
+  "version": "0.1.0",
+  "domain": "avatar",
+  "standards": [
+    {
+      "id": "avatar.visible_when_required",
+      "severity": "major",
+      "description": "If the scene plan requires an avatar, the avatar is visible in the intended shots."
+    },
+    {
+      "id": "avatar.pose_plausible",
+      "severity": "major",
+      "description": "Avatar poses are plausible and do not show obvious joint or mesh breakage."
+    },
+    {
+      "id": "avatar.stylisation_consistent",
+      "severity": "minor",
+      "description": "Avatar style remains consistent with the scene and avoids accidental realism."
+    }
+  ]
+}
