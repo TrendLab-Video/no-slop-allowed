@@ -61,6 +61,40 @@ async function withRetry(fn) {
   }
 }
 
+// 401/403 from fal: bad key, locked account or exhausted balance. Retrying or trying other scenes cannot help.
+export const isAuthError = (err) => err?.status === 401 || err?.status === 403 || / -> 40[13]:/.test(err?.message || err || '');
+
+// Cheapest authenticated check: the balance endpoint is free. If it is unavailable for this key, submit the
+// smallest possible job (1-step 256px SDXL, a fraction of a cent) and cancel it. Never throws.
+export async function checkAccount({ probe = false } = {}) {
+  const started = Date.now();
+  const out = { ok: false, reason: null, balance: null, method: null, status: null, duration_ms: null };
+  try { falKey(); } catch (e) { return { ...out, reason: e.message, duration_ms: 0 }; }
+  try {
+    const res = await fetch('https://rest.alpha.fal.ai/billing/user_balance', { headers: { Authorization: `Key ${falKey()}` }, signal: AbortSignal.timeout(10000) });
+    out.status = res.status;
+    out.method = 'billing/user_balance';
+    const text = (await res.text()).trim();
+    if (res.status === 401) return { ...out, reason: 'fal rejected FAL_KEY (401): the key is wrong or revoked', duration_ms: Date.now() - started };
+    if (res.ok && !Number.isNaN(parseFloat(text))) {
+      out.balance = parseFloat(text);
+      if (out.balance <= 0 && !probe) return { ...out, reason: `fal balance is ${out.balance}: top up at fal.ai/dashboard/billing`, duration_ms: Date.now() - started };
+      if (!probe) return { ...out, ok: true, duration_ms: Date.now() - started };
+    }
+  } catch {}
+  // Fallback (or --probe): a real queue submit, which is where fal reports locked accounts.
+  out.method = 'queue submit fal-ai/fast-sdxl';
+  try {
+    const sub = await request(`${QUEUE}/fal-ai/fast-sdxl`, { method: 'POST', body: { prompt: 'preflight', num_inference_steps: 1, image_size: { width: 256, height: 256 } }, timeoutMs: 15000 });
+    out.status = 200;
+    if (sub.cancel_url) fetch(sub.cancel_url, { method: 'PUT', headers: { Authorization: `Key ${falKey()}` } }).catch(() => {});
+    return { ...out, ok: true, duration_ms: Date.now() - started };
+  } catch (err) {
+    out.status = err.status || null;
+    return { ...out, reason: isAuthError(err) ? err.message.replace(/^fal POST \S+ -> /, 'fal ') : `fal unreachable: ${err.message}`, duration_ms: Date.now() - started };
+  }
+}
+
 export async function submit(endpoint, args) {
   return withRetry(() => request(`${QUEUE}/${endpoint}`, { method: 'POST', body: args }));
 }

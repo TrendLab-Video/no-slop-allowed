@@ -7,11 +7,9 @@ export const describe = 'export <runId> [--slug s]: copy the selected video and 
 
 const slugify = (s) => String(s).toLowerCase().replace(/\.md$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 
-// Brief slug: the brief file name when the run came from a file, else the run's slug part.
+// Brief slug: the brief file's name (briefs/02-nike.md -> 02-nike), else the run slug (runId minus the timestamp).
 export function briefSlug(runId, brief) {
-  const src = brief?.file || brief?.briefFile || brief?.path;
-  if (src) return slugify(path.basename(src));
-  if (brief?.promote) return slugify(brief.promote);
+  if (brief?.file) return slugify(path.basename(brief.file).replace(/\.\w+$/, ''));
   return slugify(runId.replace(/^\d{8}-\d{6}-/, ''));
 }
 
@@ -37,9 +35,10 @@ export default async function ([runId], flags) {
     outputs: { video: `${outRel}/final.mp4`, traces: `${outRel}/traces.json` },
   });
   // Fill the top-level trace fields in the run's own traces.json too, so both copies agree.
-  const briefRef = brief.file || brief.briefFile || brief.path || (brief.raw ? `brief.json (${runId})` : null);
+  // traces.brief is a path: the brief file when there is one, else the run's brief.json.
+  const briefRef = brief.file || `runs/${runId}/brief.json`;
   const traces = updateJson(runId, 'traces.json', { steps: [] }, (t) => {
-    t.brief = t.brief || (briefRef ? briefRef : { promote: brief.promote, objective: brief.objective, platform: brief.platform, raw: brief.raw });
+    t.brief = briefRef;
     t.output_video = `${outRel}/final.mp4`;
     t.finished_at = new Date().toISOString();
     t.run_id = runId;
