@@ -23,6 +23,8 @@ If the fal skills **fal-shot-craft** and **cinematography** are available in you
 | 20 | **Artefacts**: no warped hands or faces, melted objects, garbled or invented text, a misshapen mark, extra limbs or doubled products |
 | 15 | **Style and brand safety**: light, palette and texture match `style`; nothing off-brand, unsafe, sexualised or showing another brand's mark (the briefed brand's own mark is wanted, never penalised) |
 
+**The still is the first frame of its motion.** Read the scene's `prompt` (the planned motion) and ask: can this frame carry that motion with the product readable to the last frame? If the product would be hidden, covered, turned away or shrunk by the planned motion, or there is no room for it, the score is at most 50 and `steering` reframes the still (for example "product already front-on and centred, hand resting beside it, space above for the push-in").
+
 **Automatic fail:** if the product is not visible, or the subject is missing, the score is at most 30, whatever else is good.
 
 `passed` = `score >= config.passScore`.

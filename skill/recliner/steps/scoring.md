@@ -18,7 +18,7 @@ Judge, in this order:
 1. Does it sell **this** product toward **this** objective on **this** platform? (A goal that is beautiful but could be for any brand scores below 0.5.)
 2. Is the `creativeThesis` specific enough to repeat in one sentence, and is it carried by concrete `realWorldGrounding` rather than atmosphere alone? A goal with no verifiable product truth, real UI/workflow detail, real data, physical specificity or documented brand fact scores below 0.6.
 3. Is the one message clear within the first scene or two?
-4. Can it be produced as written: scene count, length, no reliance on rendered text or logos, no complex hand action?
+4. **Can current video models produce this?** Lower confidence (about 0.15 per scene that needs one) for: speaking faces (no lip-sync), fine hand work or object manipulation, crowds, readable text inside the shot, complex physics, precise multi-step actions. Also check scene count, length, and that text and logos come from composition.
 5. Does it borrow something proven from the references?
 
 Use the whole range. Do not give every goal 0.8; the scores must separate the goals. Ties are broken by you: no two goals get the same confidence.

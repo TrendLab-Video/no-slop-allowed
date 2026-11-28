@@ -69,6 +69,10 @@ Each scene is made in two steps: a still (`keyframePrompt`, sent to an image mod
 
 **`keyframePrompt`** (the still): subject first, then composition (shot size, angle, where the product sits in frame), setting, light by source, style and texture. One frozen moment, no motion words. Example: "A white engineered-mesh running shoe with a volt-yellow foam midsole and black curved stripe, centred in frame on a runner's foot planted on wet black asphalt, low ankle-height close-up, sodium streetlight from the left, blue pre-dawn sky behind, rain droplets on the mesh, 35mm film grain."
 
+**Write `keyframePrompt` and `prompt` together: the still is the first frame of its motion.** The still already shows the product in its readable hero position. The motion must never hide, rotate away, cover or shrink the product. No big object turns, flips, hand-overs or fine finger work unless the product stays readable to the last frame. Prefer camera moves (push-in, slow orbit under 30°, rack focus) and simple subject motion.
+
+**Design for what video models do well:** a single subject, simple camera moves, a product on a surface, macro texture, light and atmosphere changes, one simple action. Avoid speaking faces (no lip-sync), fine hand work, crowds, readable text in the shot, complex physics and multi-step actions. On-screen text and logos come from composition, never from the video model.
+
 **`prompt`** (the motion from that still): subject first, then **one settled action that ends on a clear payoff**, one camera move, and always the words **"a single continuous take, no cuts"**. Real motion, not a near-static drift. Example: "The white-and-volt Nike running shoe pushes off the wet asphalt, spray kicks back and the next stride lands hard in the puddle, camera holds low and static, shoe stays sharp, a single continuous take, no cuts."
 
 Also:
