@@ -317,6 +317,40 @@ function keywords(b) {
   return Object.entries(counts).sort((a, z) => z[1] - a[1]).slice(0, 10).map(([w]) => w);
 }
 
+
+function hostOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
+}
+
+function researchEvents(traces) {
+  const out = [];
+  for (const s of traces?.steps || []) {
+    if (s.stage !== 'references') continue;
+    if (s.name === 'search') {
+      const n = s.outputs?.urls?.length ?? s.outputs?.results?.length ?? null;
+      out.push({
+        key: `search-${out.length}`,
+        kind: 'query',
+        title: s.inputs?.query || 'reference search',
+        meta: `${s.model || 'search'}${n != null ? ` · ${n} candidates` : ''}`,
+        state: s.outputs?.error ? 'failed' : n != null ? 'done' : 'running',
+      });
+    } else if (s.name === 'fetch-ref') {
+      const frames = s.outputs?.frames?.length || 0;
+      const files = s.outputs?.files?.length || 0;
+      const views = s.outputs?.metrics?.views;
+      out.push({
+        key: `fetch-${s.inputs?.referenceId || out.length}`,
+        kind: s.inputs?.kind === 'brand' ? 'brand truth' : 'extract',
+        title: s.inputs?.referenceId || hostOf(s.inputs?.url) || 'reference fetch',
+        meta: `${hostOf(s.inputs?.url) || 'source'}${s.outputs?.mode ? ` · ${s.outputs.mode}` : ''}${frames ? ` · ${frames} frames` : files ? ` · ${files} images` : ''}${views ? ` · ${fmtNum(views)} views` : ''}`,
+        state: s.outputs?.ok ? 'done' : 'failed',
+      });
+    }
+  }
+  return out.slice(-6);
+}
+
 // All images for a reference: screenshots plus frame strips (references/<id>/frame-N.jpg), any of png/jpg/webp/svg.
 export const refImages = (r) => [...new Set([...(r?.screenshots || []), ...(r?.frames || [])].filter(Boolean))];
 export const isBrand = (r) => r?.kind === 'brand';
@@ -467,6 +501,32 @@ export function mediaStage(container) {
         m.style.setProperty('--cols', n <= 4 ? n : n <= 6 ? 3 : 4);
         m.style.setProperty('--rows', n <= 4 ? 1 : 2);
         patch(m, items.map((r, i) => ({ key: r.id, html: refTile(r, i) })));
+        return;
+      }
+
+      if (cur?.id === 'references') {
+        const events = researchEvents(d['traces.json']);
+        const fetches = events.filter((e) => e.kind !== 'query');
+        const frames = (d['traces.json']?.steps || []).reduce((n, s) => n + (s.stage === 'references' ? (s.outputs?.frames?.length || 0) : 0), 0);
+        const candidates = (d['traces.json']?.steps || []).reduce((n, s) => n + (s.stage === 'references' && s.name === 'search' ? (s.outputs?.urls?.length || 0) : 0), 0);
+        info.innerHTML = `${pill('References · evidence scan')}<h1>${esc(b.promote || '')}</h1>
+          <p>Searching proven, current examples for ${esc(b.platform || 'the platform')}, then extracting frames, metrics and brand truth before any creative goal is written.</p>
+          <div class="sub">${events.length ? `${events.length} research events` : 'research agents preparing'}${candidates ? ` · ${candidates} candidates` : ''}${frames ? ` · ${frames} frames extracted` : ''}${fetches.length ? ` · ${fetches.length} fetches` : ''}</div>${curNote}${links}`;
+        setMode('research', `<div class="researchviz">
+          <video class="researchloop" src="/assets/reference-radar.mp4" autoplay muted loop playsinline preload="auto"></video>
+          <div class="researchshade"></div>
+          <div class="research-contract"><div class="rcap">Input contract</div>
+            ${[['Platform', b.platform], ['Format', b.videoType], ['Domain', b.domain], ['Frame', ar]].filter(([, v]) => v).map(([k, v]) => `<div class="rline"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}
+          </div>
+          <div class="research-ops"><div class="rcap">Research operations</div><div class="rops"></div></div>
+        </div>`);
+        const fallbackOps = [
+          { key: 'prepare', kind: 'query', title: 'forming platform-native searches', meta: 'waiting for research events', state: 'running' },
+          { key: 'extract', kind: 'extract', title: 'candidate posts and frame capture', meta: 'yt-dlp / page images when available', state: 'pending' },
+          { key: 'brand', kind: 'brand truth', title: 'product image verification', meta: 'hero images become generation ground truth', state: 'pending' },
+        ];
+        const ops = events.length ? events : fallbackOps;
+        patch(media.querySelector('.rops'), ops.map((e, i) => ({ key: e.key, html: `<div class="rop ${esc(e.state)}" style="animation-delay:${i * 90}ms"><span class="ropk">${esc(e.kind)}</span><div><b>${esc(e.title)}</b><span>${esc(e.meta)}</span></div><i></i></div>` })));
         return;
       }
 
