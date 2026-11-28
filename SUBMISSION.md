@@ -26,12 +26,16 @@ Required environment variables (names only, no keys):
 
 ## Outputs
 
-Include the final video (repo path or public link) and `traces.json` path for each hidden brief:
+Use one row per video. Follow the count shown for each brief on the Task page. Link the final video (repo path or public link) and the corresponding `traces.json` in your fork. If one run produces multiple videos, those rows can link to the same trace.
 
-| Brief | Final video | Trace |
-|---|---|---|
-| Hidden brief 1 | | |
-| Hidden brief 2 | | |
+| Hidden brief | Video | Final video link | Trace path |
+|---|---|---|---|
+| Brief 1 | 1 | | |
+| Brief 1 | 2 | | |
+| Brief 1 | 3 | | |
+| Brief 2 | 1 | | |
+| Brief 2 | 2 | | |
+| Brief 3 | 1 | | |
 
 ## Notes for judges
 
