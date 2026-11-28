@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect width='22' height='22' rx='2' fill='%230a0a0a'/%3E%3Cpath d='M5 15.5 L11 5.5 L17 15.5' stroke='%23adff00' stroke-width='2' fill='none'/%3E%3C/svg%3E">
 </head>
-<body>
+<body class="page-result">
 <main>
   <div id="flow"></div>
   <div id="view"></div>
@@ -48,17 +48,17 @@ function render() {
   const LABELS = { hook: 'Hook', briefFit: 'Brief fit', craft: 'Craft', originality: 'Originality', slop: 'No slop' };
 
   view.innerHTML = `
-  <div class="head"><div><span class="eyebrow">${isSel ? 'Selected result' : `Alternate · rank ${rank} of ${ranked.length}`}</span><h1>${esc(b.promote || 'Result')}</h1>
-    ${plan ? `<p>${esc(plan.title)} · ${esc(plan.description || '')}</p>` : ''}</div>
-    <div class="links"><a class="btn ghost" href="${fileUrl(hero.file)}" download>Download mp4</a><a class="btn ghost" href="${fileUrl('traces.json')}" target="_blank">traces.json</a><a class="btn" href="/steps.html?run=${encodeURIComponent(runId)}">Steps <span class="arrow">→</span></a></div></div>
   <div class="hero ${ar === '16:9' ? 'wide' : ''}">
     <div id="hero-video">${video(fileUrl(hero.file), { ar, poster: hero.thumbnail ? fileUrl(hero.thumbnail) : '' })}</div>
     <div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">${isSel ? '<span class="tag ok">selected</span>' : '<span class="tag">alternate</span>'}<span class="tag ${v.passed ? 'ok' : 'bad'}">${v.passed ? 'passed' : 'below pass score'}</span></div>
-      <div class="bignum">${esc(v.score ?? '–')}<small>/100</small></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tag genb">Generated</span>${isSel ? '<span class="tag ok">selected</span>' : `<span class="tag">alternate · rank ${rank} of ${ranked.length}</span>`}<span class="tag ${v.passed ? 'ok' : 'bad'}">${v.passed ? 'passed' : 'below pass score'}</span></div>
+      <h1>${esc(b.promote || 'Result')}</h1>
+      ${plan ? `<p class="muted" style="margin:0 0 18px">${esc(plan.title)} · ${esc(plan.description || '')}</p>` : ''}
+      <div class="bignum ${v.passed === false ? 'fail' : ''}">${esc(v.score ?? '–')}<small>/100</small></div>
       <p style="margin:12px 0 0">${esc(v.reason || '')}</p>
       <div class="breakdown">${Object.keys(bd).length ? Object.entries(bd).map(([k, n]) => `<div class="score"><span>${esc(LABELS[k] || k)}</span>${scoreBar(n)}<span>${esc(n)}</span></div>`).join('') : '<span class="small muted">No breakdown.</span>'}</div>
-      <dl class="kv" style="margin-top:20px">
+      <div class="links" style="margin-top:22px"><a class="btn ghost" href="${fileUrl(hero.file)}" download>Download mp4</a><a class="btn ghost" href="${fileUrl('traces.json')}" target="_blank">traces.json</a><a class="btn" href="/steps.html?run=${encodeURIComponent(runId)}">Steps <span class="arrow">→</span></a></div>
+      <dl class="kv" style="margin-top:22px">
         <dt>Result</dt><dd class="mono small">${esc(hero.id)} · attempt ${esc(hero.attempt)}</dd>
         <dt>Duration</dt><dd>${esc(hero.durationSeconds ?? '–')}s</dd>
         <dt>Compositor</dt><dd>${esc(hero.compositor || '–')}</dd>

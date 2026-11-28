@@ -7,6 +7,7 @@
         {
           "attempt": 1,
           "file": "clips/s1/1.mp4",
+          "keyframe": "clips/s1/1.keyframe.jpg",
           "model": "fal-ai/kling-video/v2.1/standard/text-to-video",
           "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light",
           "steering": "Make the pad clearly orange rubber, one finger, slower press.",
@@ -24,6 +25,7 @@
         {
           "attempt": 2,
           "file": "clips/s1/2.mp4",
+          "keyframe": "clips/s1/2.keyframe.jpg",
           "model": "fal-ai/kling-video/v2.1/standard/text-to-video",
           "prompt": "extreme macro of a finger pressing an orange rubber pad on a small grey sampler, shallow depth of field, warm light. Make the pad clearly orange rubber, one finger, slower press.",
           "steering": "",
@@ -47,6 +49,7 @@
         {
           "attempt": 1,
           "file": "clips/s2/1.mp4",
+          "keyframe": "clips/s2/1.keyframe.jpg",
           "model": "fal-ai/kling-video/v2.1/standard/text-to-video",
           "prompt": "first-person view on a train, small grey hardware sampler resting on knee, city lights streaking past window",
           "steering": "",
@@ -70,6 +73,7 @@
         {
           "attempt": 1,
           "file": "clips/s3/1.mp4",
+          "keyframe": "clips/s3/1.keyframe.jpg",
           "model": "fal-ai/kling-video/v2.1/standard/text-to-video",
           "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections",
           "steering": "Keep the sampler rigid and grey; no phone.",
@@ -87,6 +91,7 @@
         {
           "attempt": 2,
           "file": "clips/s3/2.mp4",
+          "keyframe": "clips/s3/2.keyframe.jpg",
           "model": "fal-ai/kling-video/v2.1/standard/text-to-video",
           "prompt": "slow pull back revealing a person putting on headphones while holding a tiny sampler, neon reflections. Keep the sampler rigid and grey; no phone.",
           "steering": "",

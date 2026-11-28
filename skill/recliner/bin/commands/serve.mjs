@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runsDir, runDir, readJson, createRun, newRunId } from '../../lib/store.mjs';
-import { PRESETS, VIDEO_MODEL_OPTIONS, submitBrief, writeKeys } from '../../lib/effort.mjs';
+import { PRESETS, VIDEO_MODEL_OPTIONS, submitBrief, writeKeys, balanceFloor } from '../../lib/effort.mjs';
 import { loadEnv } from '../../lib/env.mjs';
 
 export const describe = 'serve [--port 4600]: serve the Brief, Steps and Result pages and the API on 127.0.0.1';
@@ -62,6 +62,34 @@ function listRuns() {
   return ids.sort().reverse().map((id) => ({ runId: id, state: readJson(id, 'state.json'), brief: readJson(id, 'brief.json') }));
 }
 
+// fal status for the Brief page and header: lib/fal.mjs checkAccount() (free balance check) when it
+// exists, otherwise whether a key is present. Cached for 60 s. Never returns the key.
+let preflightCache = null;
+async function preflight(fresh) {
+  if (!fresh && preflightCache && Date.now() - preflightCache.at < 60000) return preflightCache.value;
+  loadEnv();
+  const floor = balanceFloor();
+  const present = !!process.env.FAL_KEY;
+  let value = { key: present ? 'present' : 'missing', status: present ? 'present' : 'missing', reason: present ? 'Key present (not checked with fal)' : 'FAL_KEY is not set', balance: null, floor, low: false };
+  if (present) {
+    try {
+      const fal = await import('../../lib/fal.mjs');
+      const check = fal.checkAccount || fal.preflight;
+      if (typeof check === 'function') {
+        const r = await Promise.race([check(), new Promise((_, rej) => setTimeout(() => rej(new Error('fal did not answer in 15 s')), 15000))]);
+        const ok = r === true || r?.ok === true;
+        const balance = Number.isFinite(r?.balance) ? r.balance : null;
+        value = { key: 'present', status: ok ? 'accepted' : 'rejected', reason: ok ? 'fal accepted the key' : String(r?.reason || r?.error || 'fal rejected the key'), balance, floor, low: balance != null && balance < floor };
+      }
+    } catch (err) {
+      value = { ...value, status: 'rejected', reason: String(err.message || err) };
+    }
+  }
+  if (process.env.FAL_KEY) value.reason = value.reason.split(process.env.FAL_KEY).join('[key]');
+  preflightCache = { at: Date.now(), value };
+  return value;
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, 'http://127.0.0.1');
   const p = url.pathname;
@@ -79,12 +107,14 @@ async function handle(req, res) {
       loadEnv();
       return send(res, 200, { fal: !!process.env.FAL_KEY, jev: !!process.env.JEV_API_KEY });
     }
+    if (p === '/api/preflight' && req.method === 'GET') return send(res, 200, await preflight(url.searchParams.has('fresh')));
     let m = p.match(/^\/api\/runs\/([^/]+)\/brief$/);
     if (m && req.method === 'POST') {
       if (!RUN_ID.test(m[1])) return send(res, 400, { error: 'Bad run id' });
       const body = await readBody(req);
       const out = submitBrief(m[1], body, 'page');
       const saved = writeKeys(body.keys);
+      if (saved.length) preflightCache = null;
       return send(res, 200, { ...out, keysSaved: saved });
     }
     m = p.match(/^\/runs\/([^/]+)\/(.+)$/);

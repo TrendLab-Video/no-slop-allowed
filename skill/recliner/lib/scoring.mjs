@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { readJson, writeJson, runPath } from './store.mjs';
 import { loadEnv } from './env.mjs';
+import { updateJson, appendTraceLocked } from './lock.mjs';
 
 export const QUESTION = 'Does this goal match the intended brief?';
 export const JEV_URL = process.env.JEV_URL || 'https://api.typesafe.ai/v1/systemone'; // override for tests
@@ -17,7 +18,7 @@ export function budget(runId) {
   const total = Number(config.timeBudgetMinutes) || 15;
   const elapsed = (Date.now() - start) / 60000;
   const remaining = total - elapsed;
-  const reserve = Math.max(4, total * 0.3);
+  const reserve = total * 0.25; // stop retries when less than 25% of the budget remains
   return {
     budgetMinutes: total,
     elapsedMinutes: +elapsed.toFixed(1),
@@ -84,6 +85,14 @@ export async function jevScoreGoal(brief, goal, intent, key = jevKey()) {
   };
 }
 
+// plan.json always carries endCard { headline, subline, durationSeconds } (older shape { text, seconds } is converted).
+export function normaliseEndCard(card, brief = {}, intent = null) {
+  const c = card || {};
+  const headline = c.headline || (c.text ? String(c.text).split(/[\n:—–-]/)[0].trim() : '') || brief.promote || String(intent?.product || '').split(/[(,.;]/)[0].trim().split(/\s+/).slice(0, 5).join(' ');
+  const subline = c.subline ?? (c.text && c.text.trim() !== headline ? c.text.replace(headline, '').replace(/^[\s:—–-]+/, '').trim() : '');
+  return { headline, subline, durationSeconds: Number(c.durationSeconds ?? c.seconds) || 2 };
+}
+
 function checkGoals(goals) {
   const list = goals?.goals;
   if (!Array.isArray(list) || !list.length) throw new Error('goals.json has no goals. Run steps/goals.md first.');
@@ -102,6 +111,7 @@ export async function scoreRun(runId, { scorer } = {}) {
   const config = readJson(runId, 'config.json', {});
   const goalsDoc = readJson(runId, 'goals.json');
   const goals = checkGoals(goalsDoc);
+  const t0 = Date.now();
   const want = scorer || config.scorer || 'jev';
   const key = jevKey();
   let scores = readJson(runId, 'scores.json');
@@ -137,7 +147,25 @@ export async function scoreRun(runId, { scorer } = {}) {
   writeJson(runId, 'scores.json', scores);
 
   const goal = goals.find((g) => g.id === best.goalId);
-  writeJson(runId, 'plan.json', { ...goal, goalId: goal.id, confidence: best.confidence, intent: goalsDoc.intent ?? null });
+  writeJson(runId, 'plan.json', {
+    ...goal,
+    goalId: goal.id,
+    confidence: best.confidence,
+    intent: goalsDoc.intent ?? null,
+    endCard: normaliseEndCard(goal.endCard, brief, goalsDoc.intent),
+    scenes: goal.scenes.map((sc) => ({ ...sc, keyframePrompt: sc.keyframePrompt || sc.prompt })),
+  });
+  appendTraceLocked(runId, {
+    name: 'score-goals',
+    stage: 'scoring',
+    model: scores.scorer === 'jev' ? (scores.model || JEV_MODEL) : scores.scorer,
+    inputs: { question: QUESTION, goals: goals.map((g) => g.id), requestedScorer: want },
+    prompt: scores.scorer === 'jev' ? QUESTION : 'steps/scoring.md',
+    tool_calls: scores.scorer === 'jev' ? goals.map((g) => ({ tool: 'jev', arguments: { url: JEV_URL, goalId: g.id }, result: (scores.raw || []).find((x) => x.goalId === g.id)?.answer ?? null })) : [],
+    outputs: { scores: valid, selectedGoalId: best.goalId, confidence: best.confidence, files: ['scores.json', 'plan.json'] },
+    duration_ms: Date.now() - t0,
+    extra: { decision: `selected ${best.goalId}`, rationale: best.reason || 'highest confidence', fallback: jevError ? `Jev unavailable: ${jevError}` : null },
+  });
   return { scorer: scores.scorer, selectedGoalId: best.goalId, confidence: best.confidence, scores: valid.map((s) => [s.goalId, s.confidence]), jevError, ...budget(runId) };
 }
 
@@ -163,30 +191,51 @@ function best(items, scoreOf) {
 
 // accept-clips <runId>: merge clips/<sceneId>/<attempt>.validation.json, set acceptedAttempt per scene.
 export function acceptClips(runId) {
-  const clips = readJson(runId, 'clips.json');
-  if (!clips?.scenes) throw new Error(`No clips.json in run ${runId}. Run generate-clips first.`);
-  const passScore = num(readJson(runId, 'config.json', {}).passScore) ?? 70;
+  if (!readJson(runId, 'clips.json')?.scenes) throw new Error(`No clips.json in run ${runId}. Run generate-clips first.`);
   const summary = [];
+  updateJson(runId, 'clips.json', { scenes: [] }, (clips) => mergeClips(runId, clips, summary));
+  appendTraceLocked(runId, { name: 'accept-clips', stage: 'clip_validation', outputs: { scenes: summary }, extra: { decision: 'best-scoring attempt per scene' } });
+  // allKeyframesPassed is null when no scene has a keyframe (keyframes off or not generated yet).
+  return { scenes: summary, allPassed: summary.every((s) => s.passed),
+    allKeyframesPassed: summary.some((s) => s.keyframePassed !== null) ? summary.every((s) => s.keyframePassed === true) : null, ...budget(runId) };
+}
+
+function mergeClips(runId, clips, summary) {
+  const passScore = num(readJson(runId, 'config.json', {}).passScore) ?? 70;
   for (const scene of clips.scenes) {
     for (const a of scene.attempts || []) {
       const v = readFile(`clips/${scene.sceneId}/${a.attempt}.validation.json`, runId);
       if (v && num(v.score) !== null) {
         a.validation = { score: v.score, passed: typeof v.passed === 'boolean' ? v.passed : v.score >= passScore, reason: v.reason || '', steering: v.steering || '' };
       }
+      const kv = a.keyframe && readFile(`clips/${scene.sceneId}/${a.attempt}.keyframe.validation.json`, runId);
+      if (kv && num(kv.score) !== null) {
+        a.keyframe.validation = { score: kv.score, passed: typeof kv.passed === 'boolean' ? kv.passed : kv.score >= passScore, reason: kv.reason || '', steering: kv.steering || '' };
+      }
     }
+    // Best still per scene (keyframe-first flow); generate-clips animates scene.acceptedKeyframe.
+    const stills = (scene.attempts || []).filter((a) => a.keyframe?.file && a.keyframe.status !== 'failed' && fs.existsSync(runPath(runId, a.keyframe.file)));
+    if (stills.length) scene.acceptedKeyframe = best(stills, (a) => num(a.keyframe.validation?.score)).attempt;
     const usable = (scene.attempts || []).filter((a) => a.status === 'generated' || (a.status !== 'failed' && a.status !== 'generating' && a.file && fs.existsSync(runPath(runId, a.file))));
     const pick = best(usable, (a) => num(a.validation?.score));
     scene.acceptedAttempt = pick ? pick.attempt : null;
-    summary.push({ sceneId: scene.sceneId, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
+    const kf = stills.find((a) => a.attempt === scene.acceptedKeyframe);
+    summary.push({ sceneId: scene.sceneId, acceptedKeyframe: scene.acceptedKeyframe ?? null, keyframeScore: kf?.keyframe?.validation?.score ?? null, keyframePassed: kf ? (kf.keyframe.validation?.passed ?? false) : null, acceptedAttempt: scene.acceptedAttempt, score: pick?.validation?.score ?? null, passed: pick?.validation?.passed ?? false, attempts: (scene.attempts || []).length });
   }
-  writeJson(runId, 'clips.json', clips);
-  return { scenes: summary, allPassed: summary.every((s) => s.passed), ...budget(runId) };
+  return clips;
 }
 
 // rank <runId>: merge compositions/<attempt>/validation.json, set selectedId.
 export function rankResults(runId) {
-  const result = readJson(runId, 'result.json');
-  if (!result?.results?.length) throw new Error(`No results in result.json for run ${runId}. Run compose first.`);
+  if (!readJson(runId, 'result.json')?.results?.length) throw new Error(`No results in result.json for run ${runId}. Run compose first.`);
+  let pick;
+  const result = updateJson(runId, 'result.json', { results: [] }, (doc) => { pick = mergeResults(runId, doc); return doc; });
+  const out = { selectedId: pick.id, score: pick.validation?.score ?? null, passed: pick.validation?.passed ?? false, ranking: result.results.map((r) => [r.id, r.validation?.score ?? null]) };
+  appendTraceLocked(runId, { name: 'rank', stage: 'final_validation', outputs: out, extra: { decision: `selected ${pick.id}`, rationale: 'highest final validation score' } });
+  return { ...out, ...budget(runId) };
+}
+
+function mergeResults(runId, result) {
   const passScore = num(readJson(runId, 'config.json', {}).passScore) ?? 70;
   for (const r of result.results) {
     const v = readFile(`compositions/${r.attempt}/validation.json`, runId);
@@ -197,6 +246,5 @@ export function rankResults(runId) {
   const usable = result.results.filter((r) => !r.file || fs.existsSync(runPath(runId, r.file)));
   const pick = best(usable.length ? usable : result.results, (r) => num(r.validation?.score));
   result.selectedId = pick.id;
-  writeJson(runId, 'result.json', result);
-  return { selectedId: pick.id, score: pick.validation?.score ?? null, passed: pick.validation?.passed ?? false, ranking: result.results.map((r) => [r.id, r.validation?.score ?? null]), ...budget(runId) };
+  return pick;
 }

@@ -1,6 +1,6 @@
 ---
 name: recliner
-description: Turn a brief into a finished, validated promo video with no further input. Use when the user types /recliner followed by free text ("new content for <product>") or by the path of a brief file (headless, for hidden briefs). Finds proven reference videos, writes and scores distinct creative goals, generates clips on fal, validates and retries them, composes, validates and exports final.mp4 plus traces.json.
+description: Turn a brief into a finished, validated promo video with no further input. Use when the user types /recliner followed by free text ("new content for <product>") or by one or more brief files or a folder of briefs (headless; several briefs run in parallel, for hidden briefs). Finds proven reference videos, writes and scores distinct creative goals, generates clips on fal, validates and retries them, composes, validates and exports final.mp4 plus traces.json.
 ---
 
 # /recliner
@@ -11,7 +11,7 @@ You are the orchestrator. You run the stages below in order, hand each stage's s
 
 ## The one rule
 
-**After the brief, never ask the user anything.** No questions, no confirmations, no "should I". When something is unclear, pick the sensible default, note it in the trace, and continue. A run always ends with a video and `recliner export`, unless a required key is missing (then fail the stage with a clear message and stop).
+**After the brief, never ask the user anything.** No questions, no confirmations, no "should I". When something is unclear, pick the sensible default, note it in the trace, and continue. A run always ends with a video and `recliner export`, unless fal cannot be used (missing `FAL_KEY`, or fal answers 401/403: bad key, locked account, exhausted balance); then fail the stage with fal's message and stop.
 
 ## fal skills
 
@@ -38,9 +38,30 @@ Two invocations:
   4. Open `url` in the user's browser (`open` on macOS, `xdg-open` on Linux, `start` on Windows, or tell the user the URL if no opener exists).
   5. `recliner wait-brief <runId>` blocks until the user presses Start, then prints `brief.json` and `config.json`. This is the last user input.
 - **`/recliner <path/to/brief.md>`** (headless, required for hidden briefs)
-  1. `recliner new-run --slug <file-name> --brief <path>` writes `brief.json` and `config.json` at once and prints `{ runId }`. Do not start the server or open a browser unless asked.
+  1. `recliner new-run --slug <file-name> --brief <path> [--effort n]` writes `brief.json` and `config.json` at once and prints `{ runId }`. `--effort` is 1–5 (default 1; use 3 for hidden briefs unless told otherwise). Do not start the server or open a browser unless asked.
 
 Read `$RUN/brief.json` and `$RUN/config.json` now and keep them in mind. Note the start time: the time budget is measured from `brief.submittedAt`.
+
+**Preflight, immediately after the brief:** `recliner preflight <runId>` checks `FAL_KEY` and fal auth cheaply. If it fails, `recliner stage <runId> clips failed "<its message>"`, tell the user the message, and stop. Do not start references or goals.
+
+## Hidden-brief mode: several briefs at once
+
+`/recliner <brief1.md> <brief2.md> ... [--effort n]` or `/recliner <folder>` (every `*.md` in it). Default effort here is **2**.
+
+1. **Hard rule: every brief finishes, exported, inside 12 minutes** of the start. Note the start time.
+2. For each brief, in parallel: `recliner new-run --slug <file-name> --brief <path> --effort <n>`. Then run `recliner preflight` once (on the first run): if it fails, mark `clips` failed on every run and stop.
+3. Launch **one orchestrating sub-agent per brief, all in one message**. Hand each one this SKILL.md, its `runId`, the brief's 12-minute deadline as a clock time, and a **different modality hint** per brief (parallel runs cannot see each other in the style memory). Pick hints from: product macro, kinetic type, creator/UGC, athlete or talent documentary, UI demo, tactile stop-motion, deadpan comedy. Match each hint to the brief it suits best. Each follows the single-brief pipeline from stage 1 to `export`, headless, with no questions. Each ends with `outputs/<brief-slug>/final.mp4` and `traces.json`.
+   > **Recommendation (Claude Code):** sub-agents cannot start their own sub-agents, so each brief's orchestrator follows the step files itself. It runs the per-clip validations as parallel shell or tool calls where it can, and otherwise one after another.
+4. **When time is short, degrade in this order**, per brief:
+   1. Skip all retries.
+   2. Gather fewer references: one angle, 2 references.
+   3. Use ffmpeg: `recliner compose <runId> --compositor ffmpeg`.
+   4. Skip final validation, then `rank` and `export`.
+
+   At 10 minutes, any brief without a result composes what it has and exports.
+5. When all are done, print one table: brief, runId, selected goal, final score, duration, output path, and any failed stage or degradation used.
+
+Runs share fal: with several briefs, keep effort at 2 unless told otherwise.
 
 ## Stage protocol (every stage, no exceptions)
 
@@ -48,7 +69,7 @@ Read `$RUN/brief.json` and `$RUN/config.json` now and keep them in mind. Note th
 2. Do the work (usually: one or more sub-agents with a step file).
 3. Append at least one trace step: `recliner trace <runId> -` with JSON on stdin:
    `{ "name": "<what>", "stage": "<stageId>", "model": "<model or null>", "inputs": {...}, "prompt": "<prompt or null>", "tool_calls": [...], "outputs": {...}, "duration_ms": 1234, "extra": { "decision": "...", "rationale": "...", "alternatives_rejected": [...] } }`
-   Record decisions and why, defaults you picked, fallbacks used, scores, model ids and fal request ids.
+   Keys inside `extra` are flattened onto the step (the trace shows `decision`, `rationale`, … at the step's top level). Record decisions and why, defaults you picked, fallbacks used, scores, model ids and fal request ids. `generate-clips`, `compose`, `score`, `accept-clips`, `rank` and `export` append their own steps; add yours for the agent work (sub-agents, merges, decisions).
 4. `recliner stage <runId> <stageId> done "<short note>"`, or `failed "<reason>"` if the stage could not produce its file even after its fallback.
 
 ## Sub-agents
@@ -60,11 +81,11 @@ Hand each sub-agent: the step file path, the `runId`, the run folder path, and t
 ## 1. References (stage `references`)
 
 Sub-agent: `steps/references.md`. Writes `$RUN/references.json` and `$RUN/references/`.
-Parallel: split `config.referencesCount` across 2 sub-agents by angle, passing each its angle name and share: `platform` (the platform's top performers in this domain) and `transfer` (an adjacent category or unexpected format from another brand). Each writes `$RUN/references.<angle>.json`. Then merge into `$RUN/references.json` yourself: concatenate `references` (drop near-duplicates of format and hook), concatenate `takeaways` (keep the best 5), join the `diversityNote`s into one sentence or two. Hard cap: 4 minutes; merge whatever angle files exist by then. Fallback: if web search is unavailable or slow, use what you know plus `examples/references/` as a shape guide, set unknown metrics to `null`, and say so in `why` and the trace.
+Parallel: launch both sub-agents at the same time (one message), splitting `config.referencesCount` across 2 sub-agents by angle, passing each its angle name and share: `platform` (the platform's top performers in this domain) and `transfer` (an adjacent category or unexpected format from another brand). Each writes `$RUN/references.<angle>.json`. Then merge into `$RUN/references.json` yourself: concatenate `references` (drop near-duplicates of format and hook), concatenate `takeaways` (keep the best 5), join the `diversityNote`s into one sentence or two. Keep any `kind: "brand"` entry when merging. Time cap: 20% of `config.timeBudgetMinutes`, **minimum 90 s** whatever the budget (real web research is required); pass the cap in seconds to each sub-agent and merge whatever angle files exist by then. Fallback: if web search is unavailable or slow, use what you know plus `examples/references/` as a shape guide, set unknown metrics to `null`, and say so in `why` and the trace.
 
 ## 2. Goals (stage `goals`)
 
-Sub-agent: `steps/goals.md`. Writes `$RUN/goals.json` with about `config.goalsCount` genuinely distinct goals, each with `config.scenes` scenes of about `config.clipSeconds` seconds. Fallback: if it fails, write one goal yourself from the brief and the best reference.
+Sub-agent: `steps/goals.md`. Writes `$RUN/goals.json` with about `config.goalsCount` genuinely distinct goals, each with `config.scenes` scenes of about `config.clipSeconds` seconds. Time cap: 15% of the budget (minimum 30 s), passed to the sub-agent. Fallback: if it fails or overruns, write one goal yourself from the brief and the best reference.
 
 ## 3. Scoring (stage `scoring`)
 
@@ -72,13 +93,29 @@ Question for every goal: **"Does this goal match the intended brief?"** confiden
 
 - If `config.scorer` is `jev` and `JEV_API_KEY` is set: `recliner score <runId>`. It scores every goal, writes `scores.json` and `plan.json`.
 - Otherwise, or if that fails: one Haiku sub-agent with `steps/scoring.md` writes `$RUN/scores.json`, then run `recliner score <runId> --scorer haiku` to validate it, select the top goal and write `plan.json`.
-- Last resort: write `scores.json` yourself per `steps/scoring.md`, then `recliner score <runId>`.
+- Last resort: write `scores.json` yourself per `steps/scoring.md`, then `recliner score <runId> --scorer haiku`.
 
-`plan.json` is the input to everything after this point.
+Time cap: 5% of the budget (minimum 15 s). `score` appends its own trace step.
+
+`plan.json` is the input to everything after this point. Then record the chosen style: `recliner style-memory <runId>` (appends to `runs/style-memory.json`, which later runs' goals steer away from).
 
 ## 4. Clips (stage `clips`)
 
-fal is the generation path (instructed, not optional). `recliner generate-clips <runId>` generates every scene of `plan.json` in parallel and writes `clips.json`. If fal-video-generation is available, follow it when choosing a model override or wording `--steering`. If `FAL_KEY` is missing it fails with a clear message: fail the stage and stop. If one scene fails, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
+fal is the generation path (instructed, not optional).
+
+**Keyframes first** (when `config.keyframes` is true, the default). No video is paid for until every scene has an accepted still:
+
+```text
+recliner generate-clips <runId> --keyframes-only          # one still per scene, from scene.keyframePrompt
+validate every still in parallel: one fast sub-agent (Haiku) per still with steps/validate-keyframe.md
+  → clips/<sceneId>/<attempt>.keyframe.validation.json
+per scene, while keyframe score < config.passScore and retries < max(1, config.clipRetries) and budget allows:
+    recliner generate-clips <runId> --keyframes-only --scene <sceneId> --steering "<keyframe steering>"
+    validate the new still
+recliner accept-clips <runId>                             # sets scene.acceptedKeyframe (best still)
+```
+
+Then video: `recliner generate-clips <runId>` animates each scene's accepted still with `scene.prompt`, all scenes in parallel, and writes `clips.json`. With `config.keyframes` false, it generates video straight from `scene.prompt`. If fal-video-generation is available, follow it when choosing a model override or wording `--steering`. **This first generation always runs, whatever the time budget says.** If `FAL_KEY` is missing or fal answers 401/403 (bad key, locked, exhausted balance), the command fails with fal's message: `recliner stage <runId> clips failed "<message>"` and stop, with no per-scene retry. If one scene fails for any other reason, rerun that scene once with `--scene <sceneId>`; if it still fails, continue without it as long as one scene succeeded.
 
 ## 5. Clip validation (stage `clip_validation`)
 
@@ -88,7 +125,8 @@ Retry loop, per scene (scenes in parallel):
 
 ```text
 retries = 0
-while score < config.passScore and retries < config.clipRetries and budget allows:
+maxRetries = config.clipRetries, or 1 if the last score is below 30 (even at effort 1)
+while score < config.passScore and retries < maxRetries and budget allows:
     recliner stage <runId> clip_validation retrying "<sceneId> attempt <n>"
     recliner generate-clips <runId> --scene <sceneId> --steering "<steering from the last validation>"
     validate the new attempt (one sub-agent, steps/validate-clip.md)
@@ -96,7 +134,9 @@ while score < config.passScore and retries < config.clipRetries and budget allow
 recliner accept-clips <runId>
 ```
 
-`accept-clips` merges every validation file into `clips.json` and sets `acceptedAttempt` to the best-scoring attempt per scene, passed or not. Run it after the loops and again after any later clip retry.
+A score below 30 means the product or subject is missing: that scene gets one retry even when `clipRetries` is 0, as long as `stopRetrying` is false. Use the validator's steering. With keyframes on, regenerate the still first (`--keyframes-only --scene`), validate it, then the video.
+
+`accept-clips` merges every validation file (clips and keyframes) into `clips.json`, sets `acceptedKeyframe` to the best still and `acceptedAttempt` to the best-scoring clip per scene, passed or not. Run it after the loops and again after any later clip retry.
 
 ## 6. Composition (stage `composition`)
 
@@ -126,15 +166,16 @@ recliner rank <runId>
 
 ## 8. Output (stage `output`)
 
-`recliner export <runId>` copies the selected video and `traces.json` to `outputs/<brief-slug>/`. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
+First write the output trace step (`recliner trace <runId> -`: the selected result, its score, retries and degradations used), **then** `recliner export <runId>`, which copies the selected video and `traces.json` to `outputs/<brief-slug>/`; a step written after export is missing from the exported trace. Then mark `output` done and tell the user, in two or three lines: the output path, the selected goal and its score, and the Result page `/result.html?run=<runId>` if the server is running.
 
 ## Time budget
 
-`config.timeBudgetMinutes` is a hard budget measured from `brief.submittedAt` (`score`, `accept-clips` and `rank` print `elapsedMinutes`, `remainingMinutes` and `stopRetrying`).
+`config.timeBudgetMinutes` is measured from `brief.submittedAt` (`score`, `accept-clips` and `rank` print `elapsedMinutes`, `remainingMinutes` and `stopRetrying`).
 
-- Before every retry, check the time. When `stopRetrying` is true (less than 30% of the budget or less than 4 minutes remains, whichever is larger), **stop retrying**: run `accept-clips`, `compose` if there is no result yet, `rank`, `export`.
-- Never start a new fal generation that cannot finish inside the remaining time.
-- Hidden briefs must finish in well under 20 minutes: headless runs use the config `new-run` writes; do not raise effort above it.
+- **The budget gates retries only.** The first `generate-clips`, the first `compose` and `export` always run, even over budget: a run always ends with a video.
+- Pre-production stages have their own caps (references 20%, goals 15%, scoring 5% of the budget); when a cap is hit, take what exists and move on.
+- Before every retry, check `stopRetrying`. When it is true (less than 25% of the budget remains), **stop retrying**: `accept-clips`, then `compose` if there is no result yet, `rank`, `export`.
+- Hidden briefs must finish in well under 20 minutes: use the config `new-run` writes; do not raise effort above it.
 
 ## Failure fallbacks (summary)
 
@@ -143,7 +184,8 @@ recliner rank <runId>
 | references | Use known examples, `null` metrics, say so; never block |
 | goals | Write one goal yourself |
 | scoring | Haiku sub-agent, then your own scores, then `score` |
-| clips | Retry the scene once; continue with the scenes that worked; no `FAL_KEY` means stop with a clear message |
+| preflight | Fail with its message and stop |
+| clips | Missing `FAL_KEY` or fal 401/403: fail with fal's message and stop. Other errors: retry the scene once; continue with the scenes that worked |
 | clip_validation | A validator that fails counts as score 50 with reason "validation unavailable"; never block on it |
 | composition | The command falls back to ffmpeg; retry once |
 | final_validation | Same as clip validation: score 50 and continue to `rank` |

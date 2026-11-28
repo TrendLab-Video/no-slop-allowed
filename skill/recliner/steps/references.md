@@ -2,7 +2,11 @@
 
 You find real, current, proven short-form videos that the rest of the run learns from. These are the main source of run-to-run variety, so do not reach for the same famous ad every time.
 
-Never ask the user anything. Hard cap: 4 minutes. A good file in 3 minutes beats a perfect one in 10.
+Never ask the user anything. Time cap: the seconds the orchestrator gave you (20% of `config.timeBudgetMinutes`, **never less than 90 s**). Write your file before the cap even if it is short: two solid entries beat none.
+
+**Real research is required.** Run actual web searches and open actual pages; do not write references from memory when you have web tools. Every entry needs a real, working post or article URL, and metrics from a named source wherever one exists. Memory-only entries are allowed only when web tools are missing or failing (see Fallback). At least one entry must be **native to the brand or its direct category**: the brand's own content or a direct competitor's, in the same product category (for a Nike running brief, Nike or another running-shoe brand, not a gym-wear label).
+
+Create `$RUN/references/` first if it does not exist (`mkdir -p`).
 
 ## Inputs
 
@@ -29,10 +33,12 @@ If the fal skill **cinematography** is available in your environment, load and f
 
 - Search the web for the platform plus the domain plus terms like "most viewed", "top performing", "case study", "campaign results", "Cannes Lions", "ad of the year", the creator or brand name. Brand newsrooms, Ads of the World, The Drum, Campaign, Think with Google, TikTok Creative Center and the post pages themselves are good sources.
 - Open the post page where you can to read metrics and timing.
-- **Screenshots** (when obtainable): save 1–3 stills per reference to `$RUN/references/<id>-<n>.jpg` (the post's thumbnail or `og:image`; or a frame via `recliner frames <video> $RUN/references/<id> --count 3` if you can fetch the video). Skip screenshots rather than spend more than 30 seconds per reference on them; `screenshots: []` is fine. Paths in the JSON are relative to the run folder.
+- **`url` is the post itself** (a YouTube watch or Shorts URL, a TikTok `/video/` URL, an Instagram `/reel/` or `/p/` URL) or, failing that, the article covering it. Never a profile page: profiles yield no image and no metrics.
+- **Images, for every reference:** write your JSON file first, then for each entry run `recliner fetch-ref <runId> <id> <url>`. Add `--file references.<angle>.json` if you have an angle. It tries the YouTube thumbnail, oEmbed `thumbnail_url` and the page's `og:image`/`twitter:image`, saves one image to `references/<id>/` and adds it to that entry's `screenshots`. It never fails. If it prints `ok: false`, run it once more with the covering article's URL. If that also fails, leave `screenshots: []`. Run the calls in parallel.
+- **The brand's own image:** if you have no angle or the `platform` angle, also run `recliner fetch-ref <runId> brand <brief.url> --kind brand --title "<brand> site"` (plus `--file` as above). This adds a `kind: "brand"` entry whose image shows what the product, logo and palette actually look like. Skip it when `brief.url` is empty.
 - `structure.scenes` may be reconstructed from coverage when you cannot watch the video; say so in `why`.
 
-> **Recommendation:** use your host's web search and fetch tools. Download `og:image` with `curl -sL -o <file> <url>`. Do not log in anywhere.
+> **Recommendation:** use your host's web search and fetch tools. Do not log in anywhere.
 
 Fallback: if search or fetch is unavailable, write entries from what you reliably know, with `null` metrics where you do not know the figure, and add "metrics unverified (no web access)" to `why`.
 
@@ -57,8 +63,9 @@ If you were given an angle, write `$RUN/references.<angle>.json` instead and the
         "music": "trending sped-up track, drops at 6s; or VO only; or diegetic sound",
         "hook": "The exact first-second mechanic"
       },
-      "screenshots": ["references/ref-1-1.jpg"]
-    }
+      "screenshots": ["references/ref-1/1.jpg"]
+    },
+    { "id": "brand", "kind": "brand", "title": "Nike site", "url": "https://www.nike.com", "screenshots": ["references/brand/1.jpg"] }
   ],
   "takeaways": ["3-5 concrete, borrowable lessons across the set, each naming its reference id"],
   "diversityNote": "How the set is varied, and which obvious picks were excluded and why"
